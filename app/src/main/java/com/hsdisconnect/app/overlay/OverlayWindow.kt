@@ -75,6 +75,10 @@ class OverlayWindow(private val context: Context) {
         view.setDisconnecting(durationMs)
     }
 
+    fun setCounter(count: Int) {
+        view.setCounter(count)
+    }
+
     private fun clampX(v: Int): Int {
         val w = context.resources.displayMetrics.widthPixels
         return v.coerceIn(0, max(0, w - sizePx))
@@ -109,6 +113,14 @@ class OverlayWindow(private val context: Context) {
         }
         private val arcRect = android.graphics.RectF()
 
+        private var counter = 0
+        private val counterPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = sizePx * 0.3f
+            textAlign = Paint.Align.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+
         private var disconnectStartTime: Long = 0L
         private var disconnectDurationMs: Long = 0L
         private var disconnecting = false
@@ -127,6 +139,12 @@ class OverlayWindow(private val context: Context) {
                 disconnectDurationMs = durationMs
                 invalidate()
             }
+        }
+
+        fun setCounter(count: Int) {
+            if (counter == count) return
+            counter = count
+            invalidate()
         }
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -148,6 +166,15 @@ class OverlayWindow(private val context: Context) {
                 } else {
                     disconnecting = false
                 }
+            }
+            if (counter > 0) {
+                val cx = width * 0.75f
+                val cy = height * 0.75f
+                canvas.drawCircle(cx, cy, sizePx * 0.18f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = Color.argb(255, 30, 30, 30)
+                })
+                val baseline = cy - (counterPaint.descent() + counterPaint.ascent()) / 2
+                canvas.drawText(counter.toString(), cx, baseline, counterPaint)
             }
         }
 

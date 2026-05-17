@@ -95,6 +95,9 @@ class OverlayService : Service() {
                 }
             }
         }
+        counterObserverJob = scope.launch {
+            controller.counter.collect { count -> window.setCounter(count) }
+        }
         return START_STICKY
     }
 
