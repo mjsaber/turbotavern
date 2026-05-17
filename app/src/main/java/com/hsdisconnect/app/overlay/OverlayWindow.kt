@@ -71,6 +71,10 @@ class OverlayWindow(private val context: Context) {
 
     fun isShown(): Boolean = attached
 
+    fun setDisconnecting(durationMs: Long?) {
+        view.setDisconnecting(durationMs)
+    }
+
     private fun clampX(v: Int): Int {
         val w = context.resources.displayMetrics.widthPixels
         return v.coerceIn(0, max(0, w - sizePx))
@@ -88,7 +92,6 @@ class OverlayWindow(private val context: Context) {
         var onDragEnd: () -> Unit = {}
 
         private val touchSlopPx = (8 * context.resources.displayMetrics.density).toInt()
-
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.argb(220, 220, 60, 60)
             style = Paint.Style.FILL
@@ -98,24 +101,58 @@ class OverlayWindow(private val context: Context) {
             style = Paint.Style.STROKE
             strokeWidth = 6f
         }
+        private val arcPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.STROKE
+            strokeWidth = 10f
+            strokeCap = Paint.Cap.ROUND
+        }
+        private val arcRect = android.graphics.RectF()
 
-        private var downX = 0f
-        private var downY = 0f
-        private var lastX = 0f
-        private var lastY = 0f
+        private var disconnectStartTime: Long = 0L
+        private var disconnectDurationMs: Long = 0L
+        private var disconnecting = false
+
+        private var downX = 0f; private var downY = 0f
+        private var lastX = 0f; private var lastY = 0f
         private var isDragging = false
+
+        fun setDisconnecting(durationMs: Long?) {
+            if (durationMs == null) {
+                disconnecting = false
+                invalidate()
+            } else {
+                disconnecting = true
+                disconnectStartTime = System.currentTimeMillis()
+                disconnectDurationMs = durationMs
+                invalidate()
+            }
+        }
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             setMeasuredDimension(sizePx, sizePx)
         }
 
         override fun onDraw(canvas: Canvas) {
-            val r = min(width, height) / 2f - strokePaint.strokeWidth
+            val r = min(width, height) / 2f - arcPaint.strokeWidth
             canvas.drawCircle(width / 2f, height / 2f, r, paint)
             canvas.drawCircle(width / 2f, height / 2f, r, strokePaint)
+            if (disconnecting) {
+                val elapsed = System.currentTimeMillis() - disconnectStartTime
+                val fraction = (elapsed.toFloat() / disconnectDurationMs).coerceIn(0f, 1f)
+                val remainingFraction = 1f - fraction
+                arcRect.set(width / 2f - r, height / 2f - r, width / 2f + r, height / 2f + r)
+                canvas.drawArc(arcRect, -90f, 360f * remainingFraction, false, arcPaint)
+                if (remainingFraction > 0f) {
+                    postInvalidateOnAnimation()
+                } else {
+                    disconnecting = false
+                }
+            }
         }
 
         override fun onTouchEvent(event: MotionEvent): Boolean {
+            if (disconnecting) return true  // disable clicks while disconnecting
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     downX = event.rawX; downY = event.rawY
