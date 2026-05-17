@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.VpnService
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import androidx.core.app.NotificationCompat
 import com.hsdisconnect.app.R
 import com.hsdisconnect.app.core.Constants
@@ -47,17 +48,44 @@ class DropVpnService : VpnService() {
         fun onVpnFailed(message: String)
     }
 
+    private var pfd: ParcelFileDescriptor? = null
+    @Volatile private var closed = false
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
                 startForegroundWithNotification()
-                // T15 will add: establish() and start drop loop
-                listener?.onVpnActive()
+                try {
+                    pfd = establishTunnel()
+                    if (pfd == null) {
+                        listener?.onVpnFailed("establish returned null")
+                        stopAndRelease()
+                    } else {
+                        listener?.onVpnActive()
+                    }
+                } catch (t: Throwable) {
+                    listener?.onVpnFailed(t.message ?: t.javaClass.simpleName)
+                    stopAndRelease()
+                }
             }
             ACTION_STOP -> stopAndRelease()
             else -> stopAndRelease()
         }
         return START_NOT_STICKY
+    }
+
+    private fun establishTunnel(): ParcelFileDescriptor? {
+        val builder = Builder()
+            .setSession(getString(R.string.app_name))
+            .addAddress(Constants.VPN_TUN_ADDRESS, Constants.VPN_TUN_PREFIX)
+            .addRoute("0.0.0.0", 0)
+            .addRoute("::", 0)
+        try {
+            builder.addAllowedApplication(Constants.HEARTHSTONE_PACKAGE)
+        } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
+            throw IllegalStateException("Hearthstone not installed")
+        }
+        return builder.establish()
     }
 
     override fun onRevoke() {
@@ -72,7 +100,10 @@ class DropVpnService : VpnService() {
     }
 
     private fun stopAndRelease() {
-        // T15 will add: close ParcelFileDescriptor
+        if (closed) return
+        closed = true
+        try { pfd?.close() } catch (_: Exception) {}
+        pfd = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
