@@ -35,6 +35,10 @@ class OverlayService : Service() {
     private var counterObserverJob: Job? = null
     private var stateObserverJob: Job? = null
 
+    private val notificationManager by lazy {
+        getSystemService(NotificationManager::class.java)
+    }
+
     private val launcher = object : VpnLauncher {
         override fun start(durationMs: Long) {
             try {
@@ -93,10 +97,18 @@ class OverlayService : Service() {
         stateObserverJob = scope.launch {
             controller.state.collect { state ->
                 when (state) {
-                    is DisconnectState.Active -> window.setDisconnecting(state.durationMs)
+                    is DisconnectState.Active -> {
+                        window.setDisconnecting(state.durationMs)
+                        clearFailureNotification()
+                    }
                     is DisconnectState.Failed -> {
                         window.setDisconnecting(null)
-                        // T24 will show a notification
+                        postFailureNotification(state.reason)
+                        // Auto-clear failure after 3s so user can tap again
+                        scope.launch {
+                            kotlinx.coroutines.delay(3_000L)
+                            controller.clearFailure()
+                        }
                     }
                     else -> window.setDisconnecting(null)
                 }
@@ -156,5 +168,29 @@ class OverlayService : Service() {
                 NotificationManager.IMPORTANCE_LOW,
             )
         )
+    }
+
+    private fun postFailureNotification(reason: FailureReason) {
+        val text = when (reason) {
+            FailureReason.VpnNotAuthorized -> "VPN 授权失效，点击修复"
+            is FailureReason.VpnLaunchFailed -> "拔线失败：${reason.message}"
+        }
+        val tapIntent = PendingIntent.getActivity(
+            this, 1, Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+        val n = NotificationCompat.Builder(this, Constants.NOTIF_CHANNEL_OVERLAY)
+            .setContentTitle("炉石拔线")
+            .setContentText(text)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(tapIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+        notificationManager.notify(Constants.NOTIF_ID_OVERLAY + 1, n)
+    }
+
+    private fun clearFailureNotification() {
+        notificationManager.cancel(Constants.NOTIF_ID_OVERLAY + 1)
     }
 }
