@@ -29,19 +29,44 @@ class OverlayService : Service() {
     private lateinit var prefs: Prefs
     private lateinit var detector: ForegroundDetector
     private lateinit var window: OverlayWindow
+    private lateinit var controller: DisconnectController
     private var pollingJob: Job? = null
     private var observerJob: Job? = null
+    private var counterObserverJob: Job? = null
+    private var stateObserverJob: Job? = null
+
+    private val launcher = object : VpnLauncher {
+        override fun start(durationMs: Long) {
+            com.hsdisconnect.app.vpn.DropVpnService.start(this@OverlayService, durationMs)
+        }
+        override fun stop() {
+            com.hsdisconnect.app.vpn.DropVpnService.stop(this@OverlayService)
+        }
+    }
+
+    private val vpnListener = object : com.hsdisconnect.app.vpn.DropVpnService.Listener {
+        override fun onVpnActive() { controller.onVpnActive() }
+        override fun onVpnStopped() { /* timer-driven stop already handled */ }
+        override fun onVpnRevoked() { controller.onVpnRevoked() }
+        override fun onVpnFailed(message: String) { controller.onVpnFailed(message) }
+    }
 
     override fun onCreate() {
         super.onCreate()
         prefs = Prefs.from(this)
         val usm = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         detector = ForegroundDetector.fromUsageStats(usm)
+        controller = DisconnectController(
+            scope = scope,
+            launcher = launcher,
+            checkVpnPrepared = { android.net.VpnService.prepare(this) == null },
+        )
+        com.hsdisconnect.app.vpn.DropVpnService.listener = vpnListener
         window = OverlayWindow(this).apply {
             val (x, y) = prefs.buttonPosition
             if (x >= 0 && y >= 0) setPosition(x, y)
             onPositionChanged = { newX, newY -> prefs.buttonPosition = newX to newY }
-            onClick = { /* T22 will wire to controller */ }
+            onClick = { controller.onTap(prefs.durationMs) }
         }
     }
 
@@ -50,10 +75,26 @@ class OverlayService : Service() {
         pollingJob = detector.startPolling(scope)
         observerJob = scope.launch {
             detector.isForeground.collect { foreground ->
-                if (foreground) window.show() else window.hide()
+                if (foreground) {
+                    window.show()
+                } else {
+                    window.hide()
+                    controller.resetCounter()
+                }
             }
         }
-        // T21 will instantiate DisconnectController
+        stateObserverJob = scope.launch {
+            controller.state.collect { state ->
+                when (state) {
+                    is DisconnectState.Active -> window.setDisconnecting(state.durationMs)
+                    is DisconnectState.Failed -> {
+                        window.setDisconnecting(null)
+                        // T24 will show a notification
+                    }
+                    else -> window.setDisconnecting(null)
+                }
+            }
+        }
         return START_STICKY
     }
 
@@ -61,7 +102,10 @@ class OverlayService : Service() {
         super.onDestroy()
         pollingJob?.cancel()
         observerJob?.cancel()
+        stateObserverJob?.cancel()
+        counterObserverJob?.cancel()
         if (window.isShown()) window.hide()
+        com.hsdisconnect.app.vpn.DropVpnService.listener = null
         scope.cancel()
     }
 
