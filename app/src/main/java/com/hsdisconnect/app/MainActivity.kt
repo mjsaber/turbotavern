@@ -1,6 +1,8 @@
 package com.hsdisconnect.app
 
 import android.Manifest
+import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.net.VpnService
@@ -20,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.hsdisconnect.app.core.PermissionGate
 import com.hsdisconnect.app.core.Prefs
+import com.hsdisconnect.app.overlay.OverlayService
 import com.hsdisconnect.app.ui.SettingsActions
 import com.hsdisconnect.app.ui.SettingsScreen
 import com.hsdisconnect.app.ui.SettingsUiState
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
             HsDisconnectTheme {
                 var perms by remember { mutableStateOf(PermissionGate.check(this)) }
                 var duration by remember { mutableStateOf(prefs.durationMs) }
+                var running by remember { mutableStateOf(isOverlayServiceRunning()) }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
                 LaunchedEffect(lifecycleOwner) {
@@ -55,7 +59,7 @@ class MainActivity : ComponentActivity() {
                     ActivityResultContracts.RequestPermission()
                 ) { perms = PermissionGate.check(this) }
 
-                val state = SettingsUiState(perms, duration, isRunning = false)
+                val state = SettingsUiState(perms, duration, isRunning = running)
                 val actions = object : SettingsActions {
                     override fun requestOverlay() {
                         startActivity(
@@ -82,10 +86,31 @@ class MainActivity : ComponentActivity() {
                         prefs.durationMs = ms
                         duration = ms
                     }
-                    override fun toggleService() { /* T13 */ }
+                    override fun toggleService() {
+                        val intent = Intent(this@MainActivity, OverlayService::class.java)
+                        if (running) {
+                            stopService(intent)
+                            running = false
+                        } else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(intent)
+                            } else {
+                                startService(intent)
+                            }
+                            running = true
+                        }
+                    }
                 }
                 SettingsScreen(state, actions)
             }
+        }
+    }
+
+    private fun isOverlayServiceRunning(): Boolean {
+        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        @Suppress("DEPRECATION")
+        return am.getRunningServices(Integer.MAX_VALUE).any {
+            it.service.className == OverlayService::class.java.name
         }
     }
 }
