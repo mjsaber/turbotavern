@@ -42,19 +42,23 @@ class ForegroundDetector(
         ): ForegroundDetector = ForegroundDetector(
             sampleNow = {
                 val now = System.currentTimeMillis()
-                val events = usm.queryEvents(now - 10_000L, now)
+                // Walk events across all packages over the past hour to track
+                // the currently-foreground package. A short lookback (e.g. 10s)
+                // would lose the initial RESUMED event once the user has been
+                // sitting in the foreground app without any app switches.
+                val events = usm.queryEvents(now - 60 * 60 * 1000L, now)
                 val e = UsageEvents.Event()
-                var lastType = -1
+                var foreground: String? = null
                 while (events.getNextEvent(e)) {
-                    if (e.packageName == targetPackage) {
-                        when (e.eventType) {
-                            UsageEvents.Event.ACTIVITY_RESUMED,
-                            UsageEvents.Event.ACTIVITY_PAUSED,
-                            UsageEvents.Event.ACTIVITY_STOPPED -> lastType = e.eventType
+                    when (e.eventType) {
+                        UsageEvents.Event.ACTIVITY_RESUMED -> foreground = e.packageName
+                        UsageEvents.Event.ACTIVITY_PAUSED,
+                        UsageEvents.Event.ACTIVITY_STOPPED -> {
+                            if (e.packageName == foreground) foreground = null
                         }
                     }
                 }
-                lastType == UsageEvents.Event.ACTIVITY_RESUMED
+                foreground == targetPackage
             },
         )
     }
