@@ -21,25 +21,38 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class OverlayService : Service() {
 
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private lateinit var prefs: Prefs
     private lateinit var detector: ForegroundDetector
+    private lateinit var window: OverlayWindow
     private var pollingJob: Job? = null
+    private var observerJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
         prefs = Prefs.from(this)
         val usm = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         detector = ForegroundDetector.fromUsageStats(usm)
+        window = OverlayWindow(this).apply {
+            val (x, y) = prefs.buttonPosition
+            if (x >= 0 && y >= 0) setPosition(x, y)
+            onPositionChanged = { newX, newY -> prefs.buttonPosition = newX to newY }
+            onClick = { /* T22 will wire to controller */ }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForegroundWithNotification()
         pollingJob = detector.startPolling(scope)
-        // T19 will wire detector.isForeground → window show/hide
+        observerJob = scope.launch {
+            detector.isForeground.collect { foreground ->
+                if (foreground) window.show() else window.hide()
+            }
+        }
         // T21 will instantiate DisconnectController
         return START_STICKY
     }
@@ -47,6 +60,8 @@ class OverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         pollingJob?.cancel()
+        observerJob?.cancel()
+        if (window.isShown()) window.hide()
         scope.cancel()
     }
 
