@@ -37,10 +37,17 @@ class OverlayService : Service() {
 
     private val launcher = object : VpnLauncher {
         override fun start(durationMs: Long) {
-            com.hsdisconnect.app.vpn.DropVpnService.start(this@OverlayService, durationMs)
+            try {
+                com.hsdisconnect.app.vpn.DropVpnService.start(this@OverlayService, durationMs)
+            } catch (e: Exception) {
+                // Android 12+ ForegroundServiceStartNotAllowedException, or others
+                controller.onVpnFailed(e.message ?: e.javaClass.simpleName)
+            }
         }
         override fun stop() {
-            com.hsdisconnect.app.vpn.DropVpnService.stop(this@OverlayService)
+            try {
+                com.hsdisconnect.app.vpn.DropVpnService.stop(this@OverlayService)
+            } catch (_: Exception) { /* idempotent */ }
         }
     }
 
