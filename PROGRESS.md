@@ -197,33 +197,20 @@ curl -s http://127.0.0.1:9091/connections \
 
 ## 当前 repo 结构
 
-```
-bob-assist/
-├── PROGRESS.md                          ← 此文件
-├── docs/superpowers/
-│   ├── specs/2026-05-16-hearthstone-disconnect-design.md
-│   └── plans/2026-05-17-hs-disconnect-implementation.md
-├── mac/                                  ← Mac 上的实验代码
-│   ├── hs-drop.sh                        (scapy RST 方案，已废弃但留作参考)
-│   ├── hs-drop-monitor.sh                (诊断脚本，看 TCP 状态变化)
-│   ├── hs-rst.py                         (scapy RST + pf 隔离方案，已废弃)
-│   ├── setup-sudoers.sh                  (装 /etc/sudoers.d/hs-drop)
-│   └── (待加) z2z63 source fork + 3 个 patch
-└── android/  (已经在 git 历史里，working tree 已清掉)
-```
+见 [`README.md`](README.md) 仓库结构段。
 
 ## TODO
 
 ### Mac
 - [x] 把修补后的 z2z63 source fork 到 `github.com/mjsaber/hearthstone_skipper`，3 个 patch 已合 main
-- [ ] Mihomo 配置文件 snapshot 入 repo（`mac/mihomo-config/`）
-- [ ] 写 README.md 介绍如何在新机器上 setup 整套
-- [ ] git commit bob-assist 当前工作
+- [x] Mihomo 配置文件 snapshot 入 repo（`mac/mihomo/`）
+- [x] 写 README.md 介绍如何在新机器上 setup 整套（[`mac/README.md`](mac/README.md)）
+- [x] git commit bob-assist 当前工作（commit `6994b7a`，cross-platform 重构）
 - [ ] 可选：写 Hammerspoon 脚本绑定全局热键，避开点菜单栏
 - [ ] 可选：调浮动按钮的位置/字号（z2z63 默认是 30px 红字，可能太显眼）
 
-### Android（新）
-- [ ] Android 端 setup snapshot 入 repo（`android/cmfa-setup/`: hs-skipper.yaml + skip.sh + README）
-- [ ] 写 Android Overlay App（一键拔线浮窗，直接调本机 mihomo HTTP API）
+### Android
+- [x] Android 端 setup snapshot 入 repo（[`android/cmfa/`](android/cmfa/): `hs-skipper.yaml` + `skip.sh` + `setup.md`）
+- [x] 之前的 Stage 0-7 老 Kotlin VpnService 实现从 working tree 删除（git 历史保留）
+- [ ] 写 Android Overlay App（一键拔线浮窗，直接调本机 mihomo HTTP API）— TODO 详见 [`android/overlay-app/README.md`](android/overlay-app/README.md)
 - [ ] 调研：能否内嵌 mihomo core .so，让用户只装一个 App
-- [ ] 之前的 Stage 0-7 老 Android 实现（VpnService 整个流量断网那套）确认无用，从 working tree 完全删除（git 历史保留）
