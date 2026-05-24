@@ -48,6 +48,7 @@ $GOMOBILE bind \
     -target=android/arm64 \
     -androidapi 29 \
     -javapkg com.bobassist.gomobile \
+    -tags="cmfa with_gvisor" \
     -ldflags="-s -w" \
     -trimpath \
     -o "$OUT_DIR/bobcore.aar" \
