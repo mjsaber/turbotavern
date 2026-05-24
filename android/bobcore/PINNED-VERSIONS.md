@@ -2,9 +2,14 @@
 
 Records build toolchain decisions during Spike A.
 
-**Status**: **provisional** — gomobile bind succeeds with compile-probe imports
-covering mihomo TUN / dialer / statistic; AAR call from Android Studio
-`assembleDebug` + on-device `Bobcore.version()` smoke test still pending.
+**Status**: **PASS** (2026-05-24)
+- gomobile bind succeeds with compile-probe imports covering mihomo
+  TUN / dialer / statistic (libgojni.so 28.4 MB uncompressed → linker pulled
+  real mihomo code in, not just `mihomo/log`)
+- `./gradlew :app:assembleDebug` produces a 29 MB APK with `lib/arm64-v8a/libgojni.so` bundled
+- **On-device smoke test (OnePlus 10T, Android 15)**: APK installed,
+  MainActivity launched, logcat shows
+  `I BobPhase0: Bobcore.version() = 0.0.1-prototype` → Java→JNI→Go round-trip works end-to-end
 
 ## Versions
 
