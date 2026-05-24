@@ -23,13 +23,23 @@ echo "Using NDK: $ANDROID_NDK_HOME"
 
 # Use the pinned tools from go.mod (`tool` directive); avoid PATH gomobile drift.
 GOMOBILE="go tool golang.org/x/mobile/cmd/gomobile"
-# gomobile bind shells out to `gobind`. Put go/bin on PATH so it can find
-# the pinned gobind installed by `go install` / `go tool`.
-export PATH="$(go env GOPATH)/bin:$PATH"
-if ! command -v gobind >/dev/null; then
-    # First-time: materialize gobind so gomobile bind can exec it
-    go install golang.org/x/mobile/cmd/gobind
+
+# gomobile bind itself shells out to `gobind` (exec.LookPath). To avoid using
+# a stale gobind already on PATH, materialize the pinned one every run and
+# prepend its install dir. Then verify the resolved binary really points at
+# the pinned x/mobile module version.
+GOBIN_DIR="${GOBIN:-$(go env GOPATH)/bin}"
+export PATH="$GOBIN_DIR:$PATH"
+go install golang.org/x/mobile/cmd/gobind
+
+PINNED_XMOBILE=$(grep -E '^[[:space:]]*golang\.org/x/mobile' go.mod | awk '{print $2}' | head -1)
+GOBIND_PATH="$(command -v gobind)"
+RESOLVED=$(go version -m "$GOBIND_PATH" 2>/dev/null | awk '$1=="mod" && $2=="golang.org/x/mobile" {print $3}')
+if [[ "$RESOLVED" != "$PINNED_XMOBILE" ]]; then
+    echo "gobind version mismatch: $GOBIND_PATH -> $RESOLVED (expected $PINNED_XMOBILE)" >&2
+    exit 1
 fi
+echo "gobind: $GOBIND_PATH ($RESOLVED)"
 
 OUT_DIR="../overlay-app/app/libs"
 mkdir -p "$OUT_DIR"

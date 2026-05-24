@@ -275,15 +275,17 @@ data class CoreStatus(
 - Go 端在 `Stop()` / `Shutdown()` 时 close 该 fd
 - 注意：establish() 返回的 fd 默认 non-blocking；mihomo 的 TUN stack 接受这种 fd 需要 prototype 验证（§12）
 
-**编译命令**：
+**编译命令**（Phase 0 实际固化在 `android/bobcore/build-aar.sh`，详见 `android/bobcore/PINNED-VERSIONS.md`）：
 ```bash
 # 在 bobcore/ 目录
-gomobile bind \
-  -target=android/arm64,android/arm \
-  -androidapi 24 \
+go tool golang.org/x/mobile/cmd/gomobile bind \
+  -target=android/arm64 \
+  -androidapi 29 \
+  -javapkg com.bobassist.gomobile \
   -ldflags="-s -w" -trimpath \
-  -o ../app/libs/bobcore.aar \
+  -o ../overlay-app/app/libs/bobcore.aar \
   .
+# Phase 1 再加 `,android/arm` (armv7-a) 进 target 列表
 ```
 
 **Gradle 引入**：`implementation files('libs/bobcore.aar')`
