@@ -1,0 +1,8 @@
+proxies: []
+proxy-groups: []
+# Default: everything goes DIRECT (no real proxying). Mihomo's role here is
+# purely to (a) tag each connection with its source process via TUN +
+# find-process-mode, and (b) expose the external-controller HTTP API so
+# our disconnect tool can kill specific connections on demand.
+rules:
+  - MATCH,DIRECT

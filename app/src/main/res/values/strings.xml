@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">炉石拔线</string>
-    <string name="notif_channel_overlay">悬浮按钮服务</string>
-    <string name="notif_overlay_title">炉石拔线运行中</string>
-    <string name="notif_overlay_text">炉石前台时显示悬浮按钮</string>
-    <string name="notif_channel_vpn">拔线执行</string>
-    <string name="notif_vpn_text">拔线中…</string>
-</resources>

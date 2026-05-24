@@ -1,16 +1,22 @@
-# Gradle
-.gradle/
-build/
-local.properties
-
-# IntelliJ / Android Studio
-.idea/
-*.iml
-captures/
-
 # macOS
 .DS_Store
 
-# Keystores
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Build outputs
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.kotlin/
+.gradle/
+
+# Local secrets / overrides
+local.properties
 *.jks
 *.keystore
