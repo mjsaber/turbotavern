@@ -6,9 +6,15 @@
 package bobcore
 
 import (
-	// Force mihomo into the dependency graph so `go mod tidy` keeps it.
-	// We pick `log` because it has minimal transitive deps and is stable.
-	_ "github.com/metacubex/mihomo/log"
+	// Compile-only probe imports. Phase 0 does not call into mihomo yet,
+	// but these blank imports force gomobile bind to actually compile and
+	// link the high-risk packages we will need in Spike B/C/D. If gomobile
+	// bind fails here, we know to bail to the CMFA-cgo fallback before
+	// we sink time into Spike B.
+	_ "github.com/metacubex/mihomo/component/dialer"   // Protector hook target (Spike B.7)
+	_ "github.com/metacubex/mihomo/listener/sing_tun"  // TUN external-fd entrypoint (Spike B)
+	_ "github.com/metacubex/mihomo/log"                // basic logging
+	_ "github.com/metacubex/mihomo/tunnel/statistic"   // connection table API (Spike C)
 )
 
 // Version returns the bobcore build version. Phase 0 sentinel string used
