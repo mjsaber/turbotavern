@@ -1,0 +1,5 @@
+*.aar
+*.so
+*.dylib
+build/
+.gradle/
