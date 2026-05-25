@@ -297,7 +297,16 @@ func CloseConnection(id string) int {
 		return 1
 	}
 	if err := tracker.Close(); err != nil {
-		log.Warnln("[bobcore] CloseConnection(%s) err: %s", id, err.Error())
+		// A connection mihomo just removed (natural close mid-call) can
+		// surface as "use of closed network connection" or net.ErrClosed.
+		// Target state ("connection ends") is already achieved; report
+		// AlreadyClosed so the caller doesn't treat this as a hard error.
+		msg := err.Error()
+		if strings.Contains(msg, "use of closed network connection") ||
+			strings.Contains(msg, "already closed") {
+			return 2
+		}
+		log.Warnln("[bobcore] CloseConnection(%s) err: %s", id, msg)
 		return 4
 	}
 	return 0

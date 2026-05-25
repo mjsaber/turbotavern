@@ -33,6 +33,10 @@ class TestReceiver : BroadcastReceiver() {
                 Log.i(TAG, "kill id=$id result=${MihomoCore.closeConnection(id)}")
             }
             "version" -> Log.i(TAG, "version=${MihomoCore.version()}")
+            "stop_core" -> {
+                val r = MihomoCore.stopTun()
+                Log.i(TAG, "stop_core result=$r")
+            }
             else -> Log.w(TAG, "unknown cmd=$cmd")
         }
     }

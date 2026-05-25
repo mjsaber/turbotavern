@@ -143,6 +143,26 @@ SYN re-enters the TUN → self-loop → HS sees ECONNREFUSED.
   allowed list, which is why Bob's MainActivity / Service control traffic
   bypasses the TUN via system default network.
 
+## mihomo `statistic` API names used by Spike C
+
+These are the exact mihomo v1.19.25 API surfaces we depend on. Re-verify
+if/when we bump mihomo.
+
+- `tunnel/statistic.DefaultManager *Manager` (package-level singleton)
+- `Manager.Snapshot() *Snapshot` — returns `{Connections []*TrackerInfo, ...}`
+- `Manager.Get(id string) Tracker` — nil if not found
+- `Tracker` interface — `ID() string`, `Close() error`, `Info() *TrackerInfo`
+- `TrackerInfo` — `UUID uuid.UUID` (id used by Get), `Metadata *C.Metadata`, `Start time.Time`
+- `constant.Metadata` — `Process string`, `Host string`, `DstIP netip.Addr`,
+  `DstPort uint16`, `NetWork NetWork` (with `.String()` → "tcp"/"udp")
+
+Notes:
+- Under build tag `cmfa` + `find-process-mode: off`, `Metadata.Process` is `""`.
+- `Metadata.Host` is filled when DNS hijack resolves the destination via
+  redir-host mapping — present for hostname-based connects (battle.net, etc.).
+  For pure-IP direct connects (the HS BG battle socket we'll be looking for in
+  Spike D) `Host` is expected to be empty.
+
 ## Known Phase 0 debts (must address before Phase 1 / shipping)
 
 1. **DNS upstream is `8.8.8.8 + 1.1.1.1`**, contradicts the spec privacy
@@ -171,6 +191,15 @@ SYN re-enters the TUN → self-loop → HS sees ECONNREFUSED.
    subtype property. Production must add a clearer human-readable subtype
    description for Play Store / OEM review (Play Store is anyway off the
    table — but Samsung Galaxy Store etc. still inspect this).
+
+6. **Debug-only IPC** — `src/debug/.../TestReceiver.kt` registers a
+   BroadcastReceiver with `android:exported="true"` listening for
+   `com.bobassist.phase0.TEST` (`--es cmd snapshot|kill|stop_core|version`).
+   It is physically excluded from release builds (lives under `src/debug/`),
+   but on debug builds any installed app can drive it. Production debug
+   builds shipped to testers must either (a) move to `signaturePermission`,
+   or (b) be gated by a unique debug tester key. Spike C/D test scripts
+   rely on the current open form.
 
 ## CMFA NDK comparison
 
