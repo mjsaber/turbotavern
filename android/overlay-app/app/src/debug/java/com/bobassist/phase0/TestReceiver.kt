@@ -3,8 +3,11 @@ package com.bobassist.phase0
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.HandlerThread
 import android.util.Log
 import com.bobassist.phase0.core.MihomoCore
+import java.io.File
 
 /**
  * Debug-only IPC for the e2e test scripts. Lives under `src/debug/` so it is
@@ -37,12 +40,76 @@ class TestReceiver : BroadcastReceiver() {
                 val r = MihomoCore.stopTun()
                 Log.i(TAG, "stop_core result=$r")
             }
+            "record_start" -> startRecording(context)
+            "record_stop" -> stopRecording(context)
+            "record_mark" -> {
+                val label = intent.getStringExtra("label") ?: "mark"
+                recordMark(context, label)
+            }
             else -> Log.w(TAG, "unknown cmd=$cmd")
         }
     }
 
+    private fun startRecording(context: Context) {
+        synchronized(lock) {
+            if (recorder != null) {
+                Log.w(TAG, "record_start: already recording")
+                return
+            }
+            val dir = File(context.filesDir, "spike-d").apply { mkdirs() }
+            // Wipe previous run so we don't mix runs.
+            dir.listFiles()?.forEach { it.delete() }
+            val ht = HandlerThread("SpikeD-record").apply { start() }
+            val handler = Handler(ht.looper)
+            val r = object : Runnable {
+                override fun run() {
+                    val ts = System.currentTimeMillis()
+                    runCatching {
+                        File(dir, "$ts.json").writeText(MihomoCore.connectionsJson())
+                    }
+                    handler.postDelayed(this, INTERVAL_MS)
+                }
+            }
+            handler.post(r)
+            recorder = Recorder(ht, handler, r, dir)
+            Log.i(TAG, "record_start dir=${dir.absolutePath} interval_ms=$INTERVAL_MS")
+        }
+    }
+
+    private fun stopRecording(context: Context) {
+        synchronized(lock) {
+            val rec = recorder ?: run {
+                Log.w(TAG, "record_stop: not recording")
+                return
+            }
+            rec.handler.removeCallbacks(rec.task)
+            rec.thread.quitSafely()
+            recorder = null
+            val count = rec.dir.listFiles()?.size ?: 0
+            Log.i(TAG, "record_stop snapshots=$count dir=${rec.dir.absolutePath}")
+        }
+    }
+
+    private fun recordMark(context: Context, label: String) {
+        val dir = File(context.filesDir, "spike-d").apply { mkdirs() }
+        val ts = System.currentTimeMillis()
+        File(dir, "MARK-$ts-$label.txt").writeText("$ts: $label\n")
+        Log.i(TAG, "record_mark label=$label ts=$ts")
+    }
+
+    private data class Recorder(
+        val thread: HandlerThread,
+        val handler: Handler,
+        val task: Runnable,
+        val dir: File,
+    )
+
     companion object {
         private const val TAG = "SpikeC"
+        private const val INTERVAL_MS = 500L
         const val ACTION = "com.bobassist.phase0.TEST"
+
+        private val lock = Any()
+        @Volatile private var recorder: Recorder? = null
     }
 }

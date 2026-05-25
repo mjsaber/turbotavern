@@ -143,6 +143,55 @@ SYN re-enters the TUN → self-loop → HS sees ECONNREFUSED.
   allowed list, which is why Bob's MainActivity / Service control traffic
   bypasses the TUN via system default network.
 
+## Spike D: HS battle socket fingerprint (Android, OnePlus 10T verified)
+
+Captured 2026-05-24 via `test-spike-d.sh` with ~1.7k seconds of in-game
+recording covering 1 BG match.
+
+**Fingerprint**: `metadata.host == "" && metadata.network == "tcp" && metadata.destinationPort == 3724`
+
+- Server IPs observed: `66.40.188.113`, `66.40.189.110` (both in Blizzard
+  AS57976 — 66.40.188.0/22)
+- `metadata.process` is `""` (under cmfa build tag — see §3 of debts)
+
+**Lifecycle (different from the macOS spec):**
+
+On macOS, z2z63 spec describes the battle socket as appearing only when a
+combat round starts. On Android, our captures show:
+
+- Exactly ONE socket matching the fingerprint exists at any given time
+  during a BG match.
+- It is created when entering the BG lobby/match flow (not when a
+  combat round begins) and persists for several minutes through multiple
+  combat rounds.
+- The server periodically rotates it: socket A (66.40.188.113) lived for
+  9m04s, was closed, and replaced 56s later by socket B (66.40.189.110).
+- During a combat round both `host==""` and the rotation are unchanged.
+
+**Implication for the kill protocol (Spike E):**
+
+`firstOrNull { host=="" && tcp && port==3724 }` reliably picks the live
+battle socket regardless of whether we're mid-animation or between rounds.
+The user-perceived "skip animation" effect requires that the kill happens
+*while* HS is rendering the animation and the server has already settled
+the round — which the user-driven button press naturally satisfies.
+
+**No IPv6.** Across all snapshots, zero connections had `:` in
+`destinationIp`. Spec §12 Q3 is answered: HS on Android uses IPv4 only,
+no IPv6 path adjustment needed in v1.
+
+**OEM background-kill caveat (newly observed):**
+
+Our first recording attempt at this Spike left Bob's VPN running idle for
+~5 hours on the OnePlus 10T (Android 15 / OxygenOS). When the user later
+played BG, `tun0` no longer existed and mihomo's connection table was
+permanently empty. The Bob process itself was still alive but the
+foreground VpnService had been silently torn down. **Phase 0 ↔ Phase 1
+mitigation**: instruct users to restart the App if HS hasn't been launched
+within a few minutes of the VPN going green; Phase 1 must add an
+auto-restart watchdog and a status pill that shows "TUN dead, tap to
+restart".
+
 ## mihomo `statistic` API names used by Spike C
 
 These are the exact mihomo v1.19.25 API surfaces we depend on. Re-verify
