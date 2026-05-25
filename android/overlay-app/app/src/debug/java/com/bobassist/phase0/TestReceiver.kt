@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
+import com.bobassist.phase0.core.BattleConnection
 import com.bobassist.phase0.core.MihomoCore
 import java.io.File
 
@@ -40,6 +41,7 @@ class TestReceiver : BroadcastReceiver() {
                 val r = MihomoCore.stopTun()
                 Log.i(TAG, "stop_core result=$r")
             }
+            "kill_battle" -> killBattle()
             "record_start" -> startRecording(context)
             "record_stop" -> stopRecording(context)
             "record_mark" -> {
@@ -48,6 +50,16 @@ class TestReceiver : BroadcastReceiver() {
             }
             else -> Log.w(TAG, "unknown cmd=$cmd")
         }
+    }
+
+    private fun killBattle() {
+        val cand = BattleConnection.pick(MihomoCore.connectionsJson())
+        if (cand == null) {
+            Log.i(TAG, "kill_battle no_candidate")
+            return
+        }
+        val result = MihomoCore.closeConnection(cand.id)
+        Log.i(TAG, "kill_battle id=${cand.id} dst=${cand.destinationIp}:${cand.destinationPort} result=$result")
     }
 
     private fun startRecording(context: Context) {
