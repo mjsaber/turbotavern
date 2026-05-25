@@ -7,6 +7,10 @@ android {
     namespace = "com.bobassist.phase0"
     compileSdk = 35
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.bobassist.phase0"
         minSdk = 29

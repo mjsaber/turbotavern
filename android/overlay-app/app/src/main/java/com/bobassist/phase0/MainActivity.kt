@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.bobassist.phase0.BuildConfig
 import com.bobassist.phase0.core.MihomoCore
 
 /**
@@ -24,16 +25,14 @@ class MainActivity : Activity() {
         Log.i(TAG, "Bobcore.version() = ${MihomoCore.version()}")
         setContentView(buildLayout())
 
-        // Auto-start VPN if already authorized. Lets `adb am start MainActivity`
-        // drive the whole flow without manual taps.
-        if (intent?.getBooleanExtra(EXTRA_AUTO_START, false) == true
-            || (VpnService.prepare(this) == null && shouldAutoStart())) {
+        // Debug-only: --ez auto_start true lets `adb am start MainActivity`
+        // drive the e2e test script without manual taps. Production must
+        // remove this branch (it's protected by BuildConfig.DEBUG but the
+        // Activity itself is exported so any app could try this intent).
+        if (BuildConfig.DEBUG && intent?.getBooleanExtra(EXTRA_AUTO_START, false) == true) {
             onStartClicked()
         }
     }
-
-    private fun shouldAutoStart(): Boolean =
-        intent?.getBooleanExtra(EXTRA_AUTO_START, false) == true
 
     private fun buildLayout(): View {
         statusView = TextView(this).apply {

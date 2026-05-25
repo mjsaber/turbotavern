@@ -85,6 +85,13 @@ func Setup(homeDir string) string {
 	if homeDir == "" {
 		return "homeDir is empty"
 	}
+	if currentProtector() == nil {
+		// fail-fast: mihomo's executor.ApplyConfig may dial immediately for
+		// DNS bootstrap. Without a protector, that dial would self-loop into
+		// our own TUN and hang. Better to surface the misuse here than have
+		// the host wonder why DNS hangs ten seconds later.
+		return "SetProtector must be called before Setup"
+	}
 	C.SetHomeDir(homeDir)
 	logForwarder = startLogForwarder()
 
@@ -168,7 +175,10 @@ func StartTun(fd int, stack, gateway, dns string) string {
 
 	tunStack, ok := C.StackTypeMapping[strings.ToLower(stack)]
 	if !ok {
-		tunStack = C.TunSystem
+		// Fail loudly: silent fallback to TunSystem made the mixed-stack
+		// TCP regression on Android hard to track. Force the caller to be
+		// explicit. Valid: "system", "gvisor", "mixed".
+		return fmt.Sprintf("unknown TUN stack %q", stack)
 	}
 
 	var prefix4 []netip.Prefix

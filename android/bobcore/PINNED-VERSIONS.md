@@ -102,14 +102,75 @@ code paths were actually linked in. This is the main signal that gomobile
 bind handles mihomo's complexity — and the main reason Spike A is considered
 provisionally successful before on-device smoke test.
 
-## Phase 0 simplifications
+## Spike B findings — overrides earlier assumptions
 
-Per codex review of plan v2, Phase 0 deliberately:
-- Does **not** add Bob's own package to `addAllowedApplication` → no self-loop
-  → no Protector callback needed (plan §Spike B.7)
-- Does **not** specify a DNS server in VpnService.Builder; profile has
-  `dns.enable: false` → system DNS used
-- Targets **arm64-v8a only** (armv7 left for Phase 1)
+The Phase 0 plan's "no Protector needed because Bob isn't in allowed list"
+turned out to be **wrong**. Even though `addAllowedApplication` only enrolls
+HS, mihomo's DIRECT outbound dial is initiated from Bob's process — those
+sockets are NOT in the VPN's allowed list, but they ARE routed through the
+TUN that mihomo itself owns (because routing matches by destination, not by
+source uid in this case). Without `VpnService.protect(fd)`, every DIRECT
+SYN re-enters the TUN → self-loop → HS sees ECONNREFUSED.
+
+**Current implementation (Spike B verified):**
+- **Protector REQUIRED**: bobcore installs `dialer.DefaultSocketHook` that
+  forwards every outbound socket fd to a Kotlin Protector implementation,
+  which calls `VpnService.protect(fd)`. Mirrors CMFA's
+  `delegate/init.go:50-58`.
+- **TUN driven via `sing_tun.New` directly**, NOT `executor.ApplyConfig`
+  with a `tun:` block. Mirrors CMFA's `core/src/main/golang/native/tun/tun.go`.
+  - Reason: mihomo's `parseTun` ignores `tun.inet4-address` from YAML and
+    derives it from `dns.fake-ip-range` (default 198.18.0.1/16). On Android
+    with VpnService owning the actual TUN address (10.99.0.1), the
+    auto-derived 198.18.0.1 bind fails with "cannot assign requested address".
+- **VpnService.Builder DOES specify `addDnsServer(10.99.0.2)`**. mihomo
+  internal DNS resolver answers, forwarding to upstream `8.8.8.8 / 1.1.1.1`.
+  Phase 0 only; see "Known Phase 0 debts" below.
+- **TUN stack = `gvisor`**, hard-coded in BobVpnService and validated in
+  bobcore (StartTun rejects unknown stacks). `mixed` / `system` stacks
+  silently drop TCP packets through an external fd on Android VpnService.
+  DNS UDP worked under `mixed` because UDP goes through gvisor even in mixed
+  mode; the TCP-via-system-stack path is broken.
+- **Build tag `cmfa`** (gomobile bind invocation):
+  - Excludes mihomo's `server_android.go` (which reads /data/system/packages.xml,
+    permission-denied for non-root apps).
+  - Also disables mihomo's internal Android process resolver. With
+    `find-process-mode: off` the connection metadata will have empty `process`
+    and empty `Uid` (no UID resolution either). For Spike C/D filtering: since
+    only HS is in `addAllowedApplication`, every connection mihomo dispatches
+    can be treated as HS — no need for per-connection UID lookup at Phase 0.
+- **VpnService allowed apps**: only HS package. Bob itself is NOT in the
+  allowed list, which is why Bob's MainActivity / Service control traffic
+  bypasses the TUN via system default network.
+
+## Known Phase 0 debts (must address before Phase 1 / shipping)
+
+1. **DNS upstream is `8.8.8.8 + 1.1.1.1`**, contradicts the spec privacy
+   line "we don't ship any data to third-party servers". Phase 1 must move
+   to `nameserver: [system]` driven by Kotlin reading
+   `ConnectivityManager.getActiveNetwork().LinkProperties.dnsServers` and
+   passing into mihomo via a small Go API addition. Without that, every
+   HS DNS query leaks to Google/Cloudflare.
+
+2. **MainActivity `auto_start` intent extra** is debug-only and currently
+   gated by `BuildConfig.DEBUG`. The Activity itself is exported, so the
+   gate is the only protection. Production build must drop this branch
+   entirely or move it behind a signature-permission-protected receiver.
+
+3. **`metadata.UID` and `metadata.Process` are NOT populated** under the
+   `cmfa` build tag + `find-process-mode: off`. Spike C/D filtering must
+   NOT rely on these fields. The valid Phase 0 filter is "any TCP
+   connection from mihomo's connection table is HS" because only HS is
+   in `addAllowedApplication`. If Phase 1 wants to support multiple apps
+   per tunnel, a JNI process resolver (mirroring CMFA's
+   `delegate.findPackageName`) becomes required.
+
+4. **Targets arm64-v8a only**; armv7-a left for Phase 1.
+
+5. **Single foreground service type** declared as `specialUse` with the
+   subtype property. Production must add a clearer human-readable subtype
+   description for Play Store / OEM review (Play Store is anyway off the
+   table — but Samsung Galaxy Store etc. still inspect this).
 
 ## CMFA NDK comparison
 

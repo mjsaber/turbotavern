@@ -87,16 +87,28 @@ class BobVpnService : VpnService() {
             .addRoute("0.0.0.0", 0)
             .addDnsServer(TUN_PORTAL)
             .setMtu(TUN_MTU)
-            .addAllowedApplication("com.blizzard.wtcg.hearthstone")
             .setBlocking(false)
-            .setConfigureIntent(
-                PendingIntent.getActivity(
-                    this, 0,
-                    Intent(this, MainActivity::class.java)
-                        .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
-                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-                )
+        // addAllowedApplication throws PackageManager.NameNotFoundException
+        // when HS isn't installed. Spike B test device always has it; future
+        // builds must handle gracefully.
+        val allowedOk = runCatching { builder.addAllowedApplication(HS_PACKAGE) }
+            .onFailure {
+                breadcrumb("addAllowedApplication($HS_PACKAGE) failed: ${it.message}")
+                Log.e(TAG, "addAllowedApplication($HS_PACKAGE) failed", it)
+            }
+            .isSuccess
+        if (!allowedOk) {
+            stopSelf()
+            return
+        }
+        builder.setConfigureIntent(
+            PendingIntent.getActivity(
+                this, 0,
+                Intent(this, MainActivity::class.java)
+                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
+        )
 
         val newPfd = runCatching { builder.establish() }
             .onFailure {
@@ -184,7 +196,12 @@ class BobVpnService : VpnService() {
         private const val TUN_PREFIX = 30
         private const val TUN_PORTAL = "10.99.0.2"
         private const val TUN_MTU = 9000
+        // gvisor pinned for Phase 0: on Android, sing-tun's `mixed`/`system`
+        // stack silently drops TCP packets through an external fd. See
+        // android/bobcore/PINNED-VERSIONS.md.
         private const val TUN_STACK = "gvisor"
+
+        private const val HS_PACKAGE = "com.blizzard.wtcg.hearthstone"
 
         const val ACTION_START = "com.bobassist.phase0.START"
         const val ACTION_STOP = "com.bobassist.phase0.STOP"
