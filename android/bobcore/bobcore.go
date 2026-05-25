@@ -16,6 +16,7 @@
 package bobcore
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -32,8 +33,7 @@ import (
 	"github.com/metacubex/mihomo/listener/sing_tun"
 	"github.com/metacubex/mihomo/log"
 	"github.com/metacubex/mihomo/tunnel"
-
-	_ "github.com/metacubex/mihomo/tunnel/statistic"
+	"github.com/metacubex/mihomo/tunnel/statistic"
 )
 
 // Protector is implemented by the Kotlin side: passes the fd to
@@ -227,6 +227,80 @@ func StartTun(fd int, stack, gateway, dns string) string {
 	tunListener = listener
 	log.Infoln("[bobcore] TUN listener started fd=%d gateway=%s stack=%s", fd, gateway, stack)
 	return ""
+}
+
+// ConnectionDTO is the JSON shape returned by Connections().
+type ConnectionDTO struct {
+	ID              string `json:"id"`
+	Process         string `json:"process"`
+	Host            string `json:"host"`
+	DestinationIP   string `json:"destinationIp"`
+	DestinationPort int    `json:"destinationPort"`
+	Network         string `json:"network"`
+	CreatedAt       int64  `json:"createdAt"`
+}
+
+// Connections returns a JSON-encoded array of the current mihomo
+// connection table. Always returns a valid JSON array (may be "[]").
+//
+// Under Phase 0 build tag `cmfa` + find-process-mode=off, the Process
+// field is always "" and Uid is 0. The caller's filtering must not depend
+// on those fields — see PINNED-VERSIONS.md "Known Phase 0 debts" §3.
+func Connections() []byte {
+	if !inited {
+		return []byte("[]")
+	}
+	snap := statistic.DefaultManager.Snapshot()
+	out := make([]ConnectionDTO, 0, len(snap.Connections))
+	for _, info := range snap.Connections {
+		if info == nil || info.Metadata == nil {
+			continue
+		}
+		m := info.Metadata
+		out = append(out, ConnectionDTO{
+			ID:              info.UUID.String(),
+			Process:         m.Process,
+			Host:            m.Host,
+			DestinationIP:   m.DstIP.String(),
+			DestinationPort: int(m.DstPort),
+			Network:         m.NetWork.String(),
+			CreatedAt:       info.Start.UnixMilli(),
+		})
+	}
+	b, err := json.Marshal(out)
+	if err != nil {
+		log.Warnln("[bobcore] Connections marshal failed: %s", err.Error())
+		return []byte("[]")
+	}
+	return b
+}
+
+// CloseConnection close a specific connection by id (UUID string from
+// ConnectionDTO.ID). Returns:
+//   0 = Success
+//   1 = NotFound
+//   2 = AlreadyClosed   (reserved; mihomo returns nil from Close() on already-closed)
+//   3 = CoreStopped     (TUN listener not running)
+//   4 = InternalError
+func CloseConnection(id string) int {
+	mu.Lock()
+	running := tunListener != nil
+	mu.Unlock()
+	if !running {
+		return 3
+	}
+	if id == "" {
+		return 1
+	}
+	tracker := statistic.DefaultManager.Get(id)
+	if tracker == nil {
+		return 1
+	}
+	if err := tracker.Close(); err != nil {
+		log.Warnln("[bobcore] CloseConnection(%s) err: %s", id, err.Error())
+		return 4
+	}
+	return 0
 }
 
 // StopTun closes the TUN listener. Idempotent.

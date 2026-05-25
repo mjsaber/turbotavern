@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!--
+          Debug-only IPC for test-spike-c.sh. NOT in src/main/ so it never
+          compiles into release builds. exported=true is intentional but
+          guarded by android:enabled=true and only in debug variant.
+        -->
+        <receiver
+            android:name=".TestReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="com.bobassist.phase0.TEST" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
