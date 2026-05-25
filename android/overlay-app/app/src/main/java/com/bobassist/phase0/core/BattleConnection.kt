@@ -28,20 +28,30 @@ object BattleConnection {
         val createdAt: Long,
     )
 
-    fun pick(connectionsJson: String): Candidate? {
-        val arr = runCatching { JSONArray(connectionsJson) }.getOrElse { return null }
+    fun pick(connectionsJson: String): Candidate? = pickWithCount(connectionsJson).first
+
+    /**
+     * Returns the chosen Candidate and the total number of candidates matched.
+     * Phase 0 data showed only one matching socket at a time, but during the
+     * brief windows where the server rotates the socket two candidates could
+     * coexist. We prefer the newest-by-createdAt because the newer one is
+     * what the HS client is actually transmitting battle data over.
+     */
+    fun pickWithCount(connectionsJson: String): Pair<Candidate?, Int> {
+        val arr = runCatching { JSONArray(connectionsJson) }.getOrElse { return null to 0 }
+        val candidates = mutableListOf<Candidate>()
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: continue
             if (o.optString("host") != "") continue
             if (o.optString("network") != "tcp") continue
             if (o.optInt("destinationPort") != 3724) continue
-            return Candidate(
+            candidates += Candidate(
                 id = o.optString("id"),
                 destinationIp = o.optString("destinationIp"),
                 destinationPort = o.optInt("destinationPort"),
                 createdAt = o.optLong("createdAt"),
             )
         }
-        return null
+        return candidates.maxByOrNull { it.createdAt } to candidates.size
     }
 }

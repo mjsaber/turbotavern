@@ -53,13 +53,13 @@ class TestReceiver : BroadcastReceiver() {
     }
 
     private fun killBattle() {
-        val cand = BattleConnection.pick(MihomoCore.connectionsJson())
+        val (cand, count) = BattleConnection.pickWithCount(MihomoCore.connectionsJson())
         if (cand == null) {
-            Log.i(TAG, "kill_battle no_candidate")
+            Log.i(TAG, "kill_battle no_candidate (n=0)")
             return
         }
         val result = MihomoCore.closeConnection(cand.id)
-        Log.i(TAG, "kill_battle id=${cand.id} dst=${cand.destinationIp}:${cand.destinationPort} result=$result")
+        Log.i(TAG, "kill_battle n=$count id=${cand.id} dst=${cand.destinationIp}:${cand.destinationPort} result=$result")
     }
 
     private fun startRecording(context: Context) {

@@ -250,6 +250,28 @@ Notes:
    or (b) be gated by a unique debug tester key. Spike C/D test scripts
    rely on the current open form.
 
+7. **VpnService silently killed after extended idle (OEM behavior)** —
+   Observed on OnePlus 10T (OxygenOS / Android 15). A 5-hour idle window
+   between starting Bob's VPN and launching HS left `tun0` destroyed and
+   mihomo's connection table permanently empty, while the Bob process
+   itself was still alive. No watchdog logic; the failure is silent. Phase 1
+   requirement (do NOT bind threshold to "5h" — that is just our single
+   observation): periodic TUN health check (e.g. `tun0` exists + recent
+   mihomo packet activity) that reports "TUN dead, tap to restart" within
+   60 seconds of detected failure. Watchdog should run any time the VPN
+   toggle is in "on" state.
+
+8. **Scenario 5 (Wi-Fi / cellular network change) NOT tested in Phase 0** —
+   Plan explicitly excludes this from Spike B/E and pushes to Phase 1
+   §4.6 `NetworkChangeWatcher`. Phase 1 must implement and verify.
+
+9. **Spike E Scenario 4 criteria (b) and (f), (g) not automated** —
+   user-confirmed core skip-animation behavior is verified, but post-kill
+   snapshot diff, next-round playability, and screen-recording capture
+   are missing. Phase 1 should produce `test-spike-e.sh` that drives a
+   complete recorder + broadcast + assert flow with screen recording
+   via `adb shell screenrecord`.
+
 ## CMFA NDK comparison
 
 CMFA `core/build.gradle.kts` targets NDK 29.x with `golang-android` Gradle

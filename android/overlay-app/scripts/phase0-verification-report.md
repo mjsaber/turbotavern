@@ -56,15 +56,15 @@ Build toolchain: **gomobile bind** (`go tool golang.org/x/mobile/cmd/gomobile bi
 - Steps:
   1. Battle animation playing
   2. Broadcast `cmd=kill_battle`
-- Codex objective pass criteria (all 7 must hold):
+- Codex objective pass criteria (all 7 must hold for unqualified PASS):
   - (a) `closeConnection(id)` returns code 0 (Success) within 200ms — **PASS** (Success returned synchronously)
-  - (b) Same id NOT present in next snapshot — **inferred PASS** (socket closes; Spike C verified the underlying semantic; Spike D shows new UUIDs replace old after kill)
-  - (c) Exactly 1 connection killed — **PASS** (selector matched 1 unique candidate, `BattleConnection.pick` returns first match only)
+  - (b) Same id NOT present in next snapshot — **NOT measured this session** (Spike C automated test verifies the underlying semantic — id is removed after Tracker.Close — but the Spike E session did not record a post-kill snapshot)
+  - (c) Exactly 1 connection killed — **PASS** (selector matched 1 unique candidate; `BattleConnection.pick` returned the only matching socket)
   - (d) Within 10s, HS displays post-battle / next-tavern UI — **PASS** (user confirmed "全过")
   - (e) HS does NOT return to login screen / main menu — **PASS** (user confirmed)
-  - (f) Next BG round playable without restart — **inferred PASS** (HS reconnect path engaged; not separately tested but no client error surfaced)
-  - (g) Screen recording + logcat with timestamps captured — **partial**: logcat captured, no screen recording for this session
-- **Status: PASS (user-confirmed mid-animation skip works)**
+  - (f) Next BG round playable without restart — **NOT separately tested** (user did not retry; no client error surfaced)
+  - (g) Screen recording + logcat with timestamps captured — **PARTIAL**: logcat captured, no screen recording for this session
+- **Status: CONDITIONAL PASS** — core mechanism (kill → skip → result screen, no re-login) verified by user; b/f/g require automated coverage to claim unqualified PASS. Phase 1 must add `test-spike-e.sh` that asserts (b)+(c)+(g) automatically.
 - Evidence: `05-24 22:43:23.324 I SpikeC: kill_battle id=7d674f0c-ac0b-4ca9-b0d5-f61ba33b5e87 dst=66.40.189.110:3724 result=Success` + user confirmation
 
 ### Scenario 5: Network change resilience
@@ -99,7 +99,7 @@ Build toolchain: **gomobile bind** (`go tool golang.org/x/mobile/cmd/gomobile bi
 
 ## Known debts carried into Phase 1
 
-(Same as PINNED-VERSIONS.md "Known Phase 0 debts" — duplicated here for the report's standalone value.)
+(Canonical list in `android/bobcore/PINNED-VERSIONS.md` §"Known Phase 0 debts"; mirrored here for report standalone value.)
 
 1. DNS upstream is `8.8.8.8 / 1.1.1.1` — Phase 1 must switch to system DNS forwarded from `ConnectivityManager.LinkProperties.dnsServers`
 2. `MainActivity --ez auto_start true` is debug-only and gated by `BuildConfig.DEBUG`
@@ -107,5 +107,7 @@ Build toolchain: **gomobile bind** (`go tool golang.org/x/mobile/cmd/gomobile bi
 4. arm64-v8a only; armv7-a deferred
 5. specialUse subtype string is placeholder
 6. Debug-only IPC (TestReceiver) is open to any app on debug builds — production must gate via signature permission or remove
-7. OEM-kill of VpnService observed after ~5h idle — Phase 1 needs watchdog/auto-restart
+7. VpnService silently killed after extended idle (OEM behavior, observed on OxygenOS). Phase 1 must add a TUN-health watchdog that reports "TUN dead, tap to restart" within 60s of detected failure. Threshold is observation, not contract — do not hard-code 5h.
 8. Scenario 5 (Wi-Fi/cellular switching) untested
+9. Spike E Scenario 4 criteria (b) post-kill snapshot diff, (f) next-round playability, (g) screen recording — not automated. Phase 1 should add `test-spike-e.sh` with `adb shell screenrecord` integration.
+10. `BattleConnection.pick` returns first match; should prefer newest-by-createdAt during server-rotate overlap windows (current Phase 0 data showed only 1 candidate at a time, but the path exists).
