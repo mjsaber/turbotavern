@@ -1,9 +1,12 @@
 package com.bobassist.phase0
 
+import android.app.AppOpsManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.VpnService
@@ -17,6 +20,7 @@ import android.util.Log
 import com.bobassist.phase0.core.BattleConnection
 import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.MihomoCore
+import com.bobassist.phase0.foreground.ForegroundDetector
 import com.bobassist.phase0.overlay.OverlayPoller
 import com.bobassist.phase0.overlay.OverlayState
 import com.bobassist.phase0.overlay.OverlayWindow
@@ -41,6 +45,7 @@ class BobVpnService : VpnService() {
 
     private var overlay: OverlayWindow? = null
     private var poller: OverlayPoller? = null
+    private var detector: ForegroundDetector? = null
     private var pollThread: HandlerThread? = null
     private var pollHandler: Handler? = null
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -226,9 +231,95 @@ class BobVpnService : VpnService() {
             p.start()
             handler.postDelayed(tick, OverlayPoller.POLL_INTERVAL_MS)
         }
+
+        val det = ForegroundDetector(
+            queryForegroundPackage = { queryForegroundPackage() },
+            targetPackage = HS_PACKAGE,
+            onChange = { isForeground ->
+                handleForegroundChange(isForeground)
+            },
+        )
+        detector = det
+
+        val detectorTick = object : Runnable {
+            override fun run() {
+                // Codex P1 #2 — permission-revoked degraded mode.
+                // If the user revokes Usage Access AFTER the detector has already
+                // transitioned to "HS=false", we MUST force the detector back to
+                // optimistic "true" so the overlay reappears (spec D6 degraded
+                // mode). reset() is a no-op when already true.
+                if (hasUsageAccessPermission()) {
+                    det.tick()
+                } else {
+                    det.reset()
+                }
+                handler.postDelayed(this, ForegroundDetector.POLL_INTERVAL_MS)
+            }
+        }
+        handler.postDelayed(detectorTick, ForegroundDetector.POLL_INTERVAL_MS)
+
         overlayRunning = true
         liveTapTrigger = { handleOverlayTap() }
         breadcrumb("overlay + poller started")
+    }
+
+    /**
+     * Reacts to ForegroundDetector state changes. Codex P2 #3: poller
+     * mutations are posted onto pollHandler so confinement holds regardless
+     * of which thread invoked us. Codex round-2 P2 #1: the mainHandler
+     * runnable captures the overlay reference and guards on `overlayRunning`
+     * and reference identity so a setVisible queued before tearDown cannot
+     * re-attach the window after the service has stopped.
+     */
+    private fun handleForegroundChange(isHsForeground: Boolean) {
+        breadcrumb("foreground change: HS=$isHsForeground")
+        pollHandler?.post {
+            if (isHsForeground) poller?.resume() else poller?.pause()
+        }
+        val capturedOverlay = overlay
+        if (capturedOverlay != null) {
+            mainHandler.post {
+                if (!overlayRunning || overlay !== capturedOverlay) return@post
+                runCatching { capturedOverlay.setVisible(isHsForeground) }
+            }
+        }
+    }
+
+    private fun hasUsageAccessPermission(): Boolean {
+        val appOps = getSystemService(AppOpsManager::class.java) ?: return false
+        val mode = appOps.unsafeCheckOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            applicationInfo.uid,
+            packageName,
+        )
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    /**
+     * Queries UsageStatsManager for the latest ACTIVITY_RESUMED event in the
+     * last 60 s. Returns the foreground package name, or null if the query
+     * returned an empty/null events stream — interpreted by the detector as
+     * "no recent events, keep previous state". Does NOT inspect permission
+     * state; the caller (detectorTick) decides between tick() vs reset()
+     * based on hasUsageAccessPermission(). See codex P1 #2 and round-1 P2 #5.
+     */
+    private fun queryForegroundPackage(): String? {
+        val usm = getSystemService(UsageStatsManager::class.java) ?: return null
+        val now = System.currentTimeMillis()
+        // queryEvents can return null when the user is locked (R+) — handle it.
+        val events = runCatching { usm.queryEvents(now - 60_000L, now) }
+            .getOrNull() ?: return null
+        var latestTs = 0L
+        var latestPkg: String? = null
+        val ev = UsageEvents.Event()
+        while (events.hasNextEvent()) {
+            events.getNextEvent(ev)
+            if (ev.eventType == UsageEvents.Event.ACTIVITY_RESUMED && ev.timeStamp >= latestTs) {
+                latestTs = ev.timeStamp
+                latestPkg = ev.packageName
+            }
+        }
+        return latestPkg
     }
 
     /**
@@ -280,6 +371,7 @@ class BobVpnService : VpnService() {
         pollThread = null
         pollHandler = null
         poller = null
+        detector = null
 
         overlay?.let { ow ->
             mainHandler.post { runCatching { ow.hide() } }
