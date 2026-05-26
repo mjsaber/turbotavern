@@ -40,8 +40,14 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
     implementation(files("libs/bobcore.aar"))
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013")
 }
