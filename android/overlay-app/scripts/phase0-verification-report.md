@@ -198,3 +198,47 @@ Findings:
 22 unit tests across `OverlayStateTest` (7), `OverlayPollerTest` (9), `BattleConnectionControllerTest` (6) all green. `./gradlew :app:assembleDebug` green.
 
 No P0/P1 findings remain. Phase 1.1 code is ready for user smoke test (steps 5-9 above).
+
+## Phase 1.2 — ForegroundDetector (2026-05-25)
+
+**Goal:** Overlay only visible when Hearthstone is foreground (user feedback after Phase 1.1: "浮窗应该只在开炉石的时候才显现").
+
+**Build commit chain:**
+```
+e74c51f  Task 1: PACKAGE_USAGE_STATS manifest permission
+6dbaa74  Task 2: ForegroundDetector class + 7 unit tests
+b880346  Task 3: OverlayPoller pause/resume + 2 unit tests
+704abb2  Task 4: OverlayWindow.setVisible + lastState (codex P1 #1)
+526149e  Task 5: BobVpnService wires ForegroundDetector (codex P1 #2, P2 #3, round-2 P2 #1)
+4f5b5f8  Task 6: MainActivity Usage Access (optional) button
+a5cadae  Task 7: test scripts auto-grant android:get_usage_stats
+```
+
+**Tests:** 31 total (Phase 1.1 had 22, +7 ForegroundDetector + 2 OverlayPoller pause/resume). All pass.
+
+**Codex review chain:**
+- Plan round 1: 2 P1 + 4 P2 + 3 P3 — all addressed inline before code was written.
+- Plan round 2: 0 P0/P1, 1 P2 + 3 P3 — all addressed.
+- **Code review (against da75220): 0 findings.** All issues caught at plan level.
+
+**Automated smoke (executed by agent on OnePlus 10T):**
+
+| Step | Outcome | Evidence |
+|---|---|---|
+| Build + install (`gradlew assembleDebug` + `adb install -r`) | PASS | APK 77 MB; `Performing Streamed Install → Success` |
+| `adb shell appops set ... android:get_usage_stats allow` | **FAIL (OEM)** | OxygenOS rejects with same `MANAGE_APP_OPS_MODES` SecurityException as in 1.1 — user manually granted via Settings → Usage Access |
+| Auto-start VPN | PASS | breadcrumb: `overlay + poller started` at t+0 |
+| Detector first tick | PASS | breadcrumb: `foreground change: HS=false` at t+2s (Settings was foreground, not HS) — overlay correctly hides on startup |
+| Open HS via `adb shell monkey ...LAUNCHER` | PASS | breadcrumb: `foreground change: HS=true` at t+~32s — overlay correctly reappears |
+
+**Remaining manual user steps (PENDING):**
+
+| Plan ref | Step | Status |
+|---|---|---|
+| Task 8 Step 5 | Background HS → overlay hides within 2-4s | **PENDING USER** |
+| Task 8 Step 6 | Return to HS → overlay reappears | **PENDING USER** |
+| Task 8 Step 7 | Degraded mode (revoke Usage Access at startup) → overlay stays always-visible | **PENDING USER** |
+| Task 8 Step 7a | Revoke Usage Access MID-SESSION while overlay hidden → overlay reappears (codex P1 #2 regression) | **PENDING USER** |
+| Task 8 Step 7b | Green state preserved across hide/show during combat (codex P1 #1 regression) | **PENDING USER** |
+
+Detector + overlay show/hide are fully wired and the first transition pair was confirmed live. The remaining steps are app-switching scenarios I can't drive without HS gameplay.
