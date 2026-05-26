@@ -111,3 +111,75 @@ Build toolchain: **gomobile bind** (`go tool golang.org/x/mobile/cmd/gomobile bi
 8. Scenario 5 (Wi-Fi/cellular switching) untested
 9. Spike E Scenario 4 criteria (b) post-kill snapshot diff, (f) next-round playability, (g) screen recording — not automated. Phase 1 should add `test-spike-e.sh` with `adb shell screenrecord` integration.
 10. `BattleConnection.pick` returns first match; should prefer newest-by-createdAt during server-rotate overlap windows (current Phase 0 data showed only 1 candidate at a time, but the path exists).
+
+## Phase 1.1 — Overlay Button (2026-05-25)
+
+**Build commit:** `b50e892 phase1.1(overlay): auto-grant SYSTEM_ALERT_WINDOW in test scripts (P2 #10)`
+**Device:** OnePlus 10T (serial `e85c3473`, OxygenOS / Android 14)
+**APK:** `android/overlay-app/app/build/outputs/apk/debug/app-debug.apk` (77 MB, installed via `adb install -r`)
+
+### Automated steps (executed by agent)
+
+| Plan ref | Step | Result | Evidence |
+|---|---|---|---|
+| Step 1 | Build APK (`./gradlew :app:assembleDebug`) | PASS | `BUILD SUCCESSFUL in 920ms` (incremental, all tasks UP-TO-DATE) |
+| Step 1 | Install APK (`adb install -r`) | PASS | `Performing Streamed Install → Success` |
+| Step 1a | Edit test-spike-{b,c,d,e}.sh to auto-grant SYSTEM_ALERT_WINDOW | PASS | All four scripts pass `bash -n`; committed in `b50e892` |
+| Step 2 | Programmatic `adb shell appops set SYSTEM_ALERT_WINDOW allow` | **FAIL (OEM)** | OxygenOS rejects with `SecurityException: uid 2000 does not have android.permission.MANAGE_APP_OPS_MODES`. Same restriction blocks `pm grant`. → User must grant via Settings UI (Settings page already opened on device via `am start -a android.settings.action.MANAGE_OVERLAY_PERMISSION`). |
+| Step 3 | Auto-start VPN via `am start --ez auto_start true` | BLOCKED | `MainActivity.onStartClicked()` permission gate (introduced in `ddaf70c`) correctly refuses to launch the service while `Settings.canDrawOverlays()==false`; no breadcrumb file written. Expected behavior — confirms gate works. |
+| Step 4 | Sanity broadcast `overlay_state` | PASS (plumbing) | Broadcast returns `result=0`; logcat shows `SpikeC: overlay_state state=no_poller service_alive=false`. Reports correct "service down" state because overlay perm gate blocked the service start. Once user grants the perm and re-runs auto-start, this should report `state=Waiting service_alive=true`. |
+
+### Anomaly: OxygenOS blocks shell-side appops grant
+
+The Task 10 Step 1a script edit and the agent's Step 2-3 helper both rely on `adb shell appops set $BOB_PKG SYSTEM_ALERT_WINDOW allow`. On OxygenOS (and ColorOS in general) this command fails with `MANAGE_APP_OPS_MODES` SecurityException at shell uid. `pm grant` and `cmd appops set` are blocked by the same restriction. This is an OEM-specific debt: on stock AOSP / Pixel the appops grant works. **Carrying this as Phase 1.2 debt: document the OxygenOS limitation in `scripts/test-spike-*.sh` headers, or detect failure and prompt for manual grant.**
+
+### PENDING USER — manual gameplay steps (plan Task 10 Steps 5–9)
+
+Before continuing: grant the overlay permission via Settings → Apps → Bob Phase 0 → Display over other apps → ON. (The Settings page is already open on the device.) Then auto-start the VPN:
+
+```bash
+adb shell am force-stop com.bobassist.phase0
+adb shell run-as com.bobassist.phase0 rm -f files/bob-breadcrumbs.log
+adb shell am start -n com.bobassist.phase0/.MainActivity --ez auto_start true
+# Accept the VpnService consent dialog on first run.
+sleep 5
+adb shell run-as com.bobassist.phase0 cat files/bob-breadcrumbs.log | tail -20
+# Expect: "overlay + poller started"
+
+adb logcat -c
+adb shell am broadcast -a com.bobassist.phase0.TEST -p com.bobassist.phase0 --es cmd overlay_state
+sleep 1
+adb logcat -d -s SpikeC:I | grep overlay_state
+# Expect: state=Waiting service_alive=true
+```
+
+**Step 4 (plan) — Launch HS, wait for login:**
+```bash
+adb shell monkey -p com.blizzard.wtcg.hearthstone -c android.intent.category.LAUNCHER 1
+```
+Wait until HS reaches the main menu. Overlay should stay gray.
+
+**Step 5 (plan) — Enter BG combat, observe gray → green:** Enter Battlegrounds, pick a hero, wait for combat round 1. Within ~1 s of the battle socket appearing, overlay should turn green. Verify:
+```bash
+adb shell am broadcast -a com.bobassist.phase0.TEST -p com.bobassist.phase0 --es cmd snapshot
+adb logcat -d -s SpikeC:I | grep snapshot | tail -1
+# Confirm a host="" tcp port=3724 entry is present.
+```
+
+**Step 6 (plan) — Tap green overlay during combat:** Tap the green BG circle. Expected: (a) flashes red 2 s, (b) HS combat animation cuts to result screen ("全过"), (c) returns to gray after 2 s.
+
+**Step 7 (plan) — Drag-to-reposition + persistence:** Drag the circle to a new position. Then:
+```bash
+adb shell am force-stop com.bobassist.phase0
+adb shell am start -n com.bobassist.phase0/.MainActivity --ez auto_start true
+```
+Overlay should reappear at the dragged position (read from SharedPreferences).
+
+**Step 8 (plan) — No-battle tap is a no-op:** Stop the BG game; wait for green → gray. Tap the gray circle. Expected: stays gray, no red flash. Verify:
+```bash
+adb shell am broadcast -a com.bobassist.phase0.TEST -p com.bobassist.phase0 --es cmd overlay_state
+adb logcat -d -s SpikeC:I | tail -1
+# Expect: state=Waiting (unchanged)
+```
+
+**Step 9 (plan) — Fill in PASS/FAIL above for Steps 4–8.** Edit this section to record outcomes per device. Then commit per Task 10 Step 10.
