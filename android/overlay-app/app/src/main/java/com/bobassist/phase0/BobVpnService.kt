@@ -8,10 +8,18 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.VpnService
 import android.os.Build
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.IBinder
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import com.bobassist.phase0.core.BattleConnection
+import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.MihomoCore
+import com.bobassist.phase0.overlay.OverlayPoller
+import com.bobassist.phase0.overlay.OverlayState
+import com.bobassist.phase0.overlay.OverlayWindow
 import java.io.File
 
 /**
@@ -30,6 +38,19 @@ class BobVpnService : VpnService() {
 
     private var pfd: ParcelFileDescriptor? = null
     @Volatile private var coreRunning = false
+
+    private var overlay: OverlayWindow? = null
+    private var poller: OverlayPoller? = null
+    private var pollThread: HandlerThread? = null
+    private var pollHandler: Handler? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    @Volatile private var overlayRunning = false   // idempotency guard (P1 #4)
+    private val controller: BattleConnectionController by lazy {
+        BattleConnectionController(
+            snapshot = { MihomoCore.connectionsJson() },
+            close = { id -> MihomoCore.closeConnection(id) },
+        )
+    }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
 
@@ -57,7 +78,18 @@ class BobVpnService : VpnService() {
         super.onDestroy()
     }
 
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        overlay?.let { ow ->
+            mainHandler.post { runCatching { ow.onConfigurationChanged() } }
+        }
+    }
+
     private fun bringUp() {
+        if (coreRunning) {
+            breadcrumb("bringUp called while already running; ignoring")
+            return
+        }
         breadcrumb("bringUp begin")
 
         // Install protect callback BEFORE Setup so the very first dial
@@ -137,10 +169,121 @@ class BobVpnService : VpnService() {
             coreRunning = true
             breadcrumb("MihomoCore.startTun OK; HS traffic routed through TUN")
             Log.i(TAG, "TUN listener up, fd=$fd")
+            liveController = controller
+            startOverlayAndPolling()
+        }
+    }
+
+    private fun startOverlayAndPolling() {
+        if (overlayRunning) {
+            breadcrumb("startOverlayAndPolling called while already running; ignoring")
+            return
+        }
+
+        val ow = OverlayWindow(this, onTap = { handleOverlayTap() })
+        overlay = ow
+        mainHandler.post {
+            runCatching { ow.show() }
+                .onFailure {
+                    Log.e(TAG, "overlay show failed", it)
+                    breadcrumb("overlay show failed: ${it.message}")
+                }
+        }
+
+        val ht = HandlerThread("BobOverlayPoll").apply { start() }
+        val handler = Handler(ht.looper)
+        pollThread = ht
+        pollHandler = handler
+
+        val p = OverlayPoller(
+            snapshot = {
+                // Guarded against teardown races (P1 #5): if mihomo has stopped,
+                // count as 0 candidates so the next tick safely emits Waiting.
+                runCatching {
+                    BattleConnection.pickWithCount(MihomoCore.connectionsJson()).second
+                }.getOrElse { err ->
+                    breadcrumb("poll snapshot failed: ${err.message}")
+                    0
+                }
+            },
+            onStateChange = { state ->
+                mainHandler.post { ow.applyState(state) }
+            },
+            scheduleAfter = { delayMs, cb ->
+                handler.postDelayed(cb, delayMs)
+            },
+        )
+        poller = p
+        livePoller = p
+
+        val tick = object : Runnable {
+            override fun run() {
+                p.tick()
+                handler.postDelayed(this, OverlayPoller.POLL_INTERVAL_MS)
+            }
+        }
+        handler.post {
+            p.start()
+            handler.postDelayed(tick, OverlayPoller.POLL_INTERVAL_MS)
+        }
+        overlayRunning = true
+        breadcrumb("overlay + poller started")
+    }
+
+    /**
+     * User tapped the overlay. Confined to pollHandler so all state reads/writes
+     * happen on a single thread (P1 #2). Performs the kill if Ready, ignores
+     * tap otherwise. Enters Cooldown ONLY on Success — failures stay Ready so
+     * the user can try again.
+     */
+    private fun handleOverlayTap() {
+        val handler = pollHandler ?: return
+        val p = poller ?: return
+        val ctrl = controller
+        handler.post {
+            when (p.currentState()) {
+                OverlayState.Ready -> {
+                    val result = runCatching { ctrl.killBattleSocket() }
+                        .getOrElse {
+                            breadcrumb("overlay tap kill threw: ${it.message}")
+                            return@post
+                        }
+                    breadcrumb("overlay tap result=$result")
+                    if (result is BattleConnectionController.KillResult.Success) {
+                        Log.i(TAG, "overlay kill success: id=${result.closedId} dst=${result.destinationIp}:${result.destinationPort}")
+                        p.enterCooldown()
+                    } else {
+                        // NoCandidate / AlreadyClosed / Failure — stay Ready,
+                        // user can try again. No cooldown.
+                        Log.i(TAG, "overlay kill non-success: $result")
+                    }
+                }
+                OverlayState.WaitingForBattle -> {
+                    breadcrumb("overlay tap ignored (no candidate)")
+                }
+                OverlayState.Cooldown -> {
+                    breadcrumb("overlay tap ignored (cooldown)")
+                }
+            }
         }
     }
 
     private fun tearDown() {
+        overlayRunning = false
+        liveController = null
+        livePoller = null
+
+        pollHandler?.removeCallbacksAndMessages(null)
+        pollThread?.quitSafely()
+        pollThread = null
+        pollHandler = null
+        poller = null
+
+        overlay?.let { ow ->
+            mainHandler.post { runCatching { ow.hide() } }
+        }
+        overlay = null
+
         if (coreRunning) {
             runCatching { MihomoCore.stopTun() }
                 .onFailure { Log.e(TAG, "MihomoCore.stopTun failed", it) }
@@ -205,5 +348,11 @@ class BobVpnService : VpnService() {
 
         const val ACTION_START = "com.bobassist.phase0.START"
         const val ACTION_STOP = "com.bobassist.phase0.STOP"
+
+        @Volatile var liveController: BattleConnectionController? = null
+            internal set
+
+        @Volatile var livePoller: OverlayPoller? = null
+            internal set
     }
 }
