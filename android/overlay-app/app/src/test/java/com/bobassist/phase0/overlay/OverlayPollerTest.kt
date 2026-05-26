@@ -137,4 +137,45 @@ class OverlayPollerTest {
     fun `companion exposes pollIntervalMs constant`() {
         assertEquals(800L, OverlayPoller.POLL_INTERVAL_MS)
     }
+
+    @Test
+    fun `tick during pause does NOT call snapshot or re-emit`() {
+        var snapshotCalls = 0
+        val emitted = mutableListOf<OverlayState>()
+        val poller = OverlayPoller(
+            snapshot = { snapshotCalls++; 1 },
+            onStateChange = { emitted += it },
+            scheduleAfter = { _, _ -> },
+        )
+        poller.start()                  // emit Waiting
+        poller.tick()                   // emit Ready (snapshotCalls=1)
+        poller.pause()
+        val callsAfterPause = snapshotCalls
+        val emittedAfterPause = emitted.size
+        poller.tick()
+        poller.tick()
+        assertEquals(callsAfterPause, snapshotCalls)
+        assertEquals(emittedAfterPause, emitted.size)
+    }
+
+    @Test
+    fun `resume after pause allows tick to run again`() {
+        var count = 0
+        val emitted = mutableListOf<OverlayState>()
+        val poller = OverlayPoller(
+            snapshot = { count },
+            onStateChange = { emitted += it },
+            scheduleAfter = { _, _ -> },
+        )
+        poller.start()
+        count = 1
+        poller.tick()                   // → Ready
+        poller.pause()
+        count = 0
+        poller.tick()                   // suppressed
+        assertEquals(OverlayState.Ready, poller.currentState())
+        poller.resume()
+        poller.tick()                   // now runs; count=0 → Waiting
+        assertEquals(OverlayState.WaitingForBattle, poller.currentState())
+    }
 }

@@ -24,6 +24,7 @@ class OverlayPoller(
     @Volatile
     private var state: OverlayState = OverlayState.WaitingForBattle
     private var started = false
+    private var paused: Boolean = false
 
     fun start() {
         if (started) return
@@ -37,8 +38,17 @@ class OverlayPoller(
      */
     fun tick() {
         if (!started) return
+        if (paused) return
         if (state == OverlayState.Cooldown) return
         emit(state.onPoll(snapshot()))
+    }
+
+    fun pause() {
+        paused = true
+    }
+
+    fun resume() {
+        paused = false
     }
 
     /**
