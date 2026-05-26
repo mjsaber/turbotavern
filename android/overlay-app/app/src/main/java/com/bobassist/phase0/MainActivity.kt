@@ -1,6 +1,7 @@
 package com.bobassist.phase0
 
 import android.app.Activity
+import android.app.AppOpsManager
 import android.content.Intent
 import android.net.Uri
 import android.net.VpnService
@@ -23,6 +24,7 @@ class MainActivity : Activity() {
     private lateinit var statusView: TextView
     private lateinit var startBtn: Button
     private lateinit var grantOverlayBtn: Button
+    private lateinit var grantUsageBtn: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,6 +65,13 @@ class MainActivity : Activity() {
                 startActivity(intent)
             }
         }
+        grantUsageBtn = Button(this).apply {
+            text = "Grant Usage Access (optional)"
+            setOnClickListener {
+                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                startActivity(intent)
+            }
+        }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 80, 40, 40)
@@ -70,6 +79,7 @@ class MainActivity : Activity() {
             addView(startBtn)
             addView(stopBtn)
             addView(grantOverlayBtn)
+            addView(grantUsageBtn)
         }
     }
 
@@ -80,14 +90,27 @@ class MainActivity : Activity() {
 
     private fun refreshPermissionUi() {
         val canOverlay = hasOverlayPermission()
+        val canUsage = hasUsageAccessPermission()
         grantOverlayBtn.visibility = if (canOverlay) View.GONE else View.VISIBLE
-        startBtn.isEnabled = canOverlay
-        if (!canOverlay) {
-            statusView.text = "bobcore ${MihomoCore.version()}\nOverlay permission required to start."
-        }
+        grantUsageBtn.visibility = if (canUsage) View.GONE else View.VISIBLE
+        startBtn.isEnabled = canOverlay  // usage-access is OPTIONAL — does not gate Start
+        val statusLines = mutableListOf("bobcore ${MihomoCore.version()}")
+        if (!canOverlay) statusLines += "Overlay permission required to start."
+        if (!canUsage) statusLines += "Usage access NOT granted — overlay will stay visible even when HS is closed."
+        statusView.text = statusLines.joinToString("\n")
     }
 
     private fun hasOverlayPermission(): Boolean = Settings.canDrawOverlays(this)
+
+    private fun hasUsageAccessPermission(): Boolean {
+        val appOps = getSystemService(AppOpsManager::class.java) ?: return false
+        val mode = appOps.unsafeCheckOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            applicationInfo.uid,
+            packageName,
+        )
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
 
     private fun onStartClicked() {
         if (!hasOverlayPermission()) {
