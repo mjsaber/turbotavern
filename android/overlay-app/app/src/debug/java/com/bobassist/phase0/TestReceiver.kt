@@ -6,7 +6,7 @@ import android.content.Intent
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
-import com.bobassist.phase0.core.BattleConnection
+import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.MihomoCore
 import java.io.File
 
@@ -42,6 +42,24 @@ class TestReceiver : BroadcastReceiver() {
                 Log.i(TAG, "stop_core result=$r")
             }
             "kill_battle" -> killBattle()
+            "overlay_state" -> {
+                val poller = BobVpnService.livePoller
+                val state = poller?.currentState()?.let { stateLabel(it) } ?: "no_poller"
+                val live = BobVpnService.liveController != null
+                Log.i(TAG, "overlay_state state=$state service_alive=$live")
+            }
+            "overlay_tap" -> {
+                // Routes through the SAME service.handleOverlayTap() the real overlay
+                // tap uses — same state-gating, same cooldown semantics, same kill
+                // controller. Headless equivalent of a finger on glass.
+                val trigger = BobVpnService.liveTapTrigger
+                if (trigger == null) {
+                    Log.i(TAG, "overlay_tap service_down")
+                } else {
+                    trigger()
+                    Log.i(TAG, "overlay_tap dispatched")
+                }
+            }
             "record_start" -> startRecording(context)
             "record_stop" -> stopRecording(context)
             "record_mark" -> {
@@ -53,14 +71,32 @@ class TestReceiver : BroadcastReceiver() {
     }
 
     private fun killBattle() {
-        val (cand, count) = BattleConnection.pickWithCount(MihomoCore.connectionsJson())
-        if (cand == null) {
-            Log.i(TAG, "kill_battle no_candidate (n=0)")
+        val ctrl = BobVpnService.liveController ?: run {
+            Log.i(TAG, "kill_battle service_down")
             return
         }
-        val result = MihomoCore.closeConnection(cand.id)
-        Log.i(TAG, "kill_battle n=$count id=${cand.id} dst=${cand.destinationIp}:${cand.destinationPort} result=$result")
+        when (val r = ctrl.killBattleSocket()) {
+            is BattleConnectionController.KillResult.Success ->
+                Log.i(
+                    TAG,
+                    "kill_battle n=${r.candidatesAtKill} id=${r.closedId} " +
+                        "dst=${r.destinationIp}:${r.destinationPort} result=Success",
+                )
+            BattleConnectionController.KillResult.NoCandidate ->
+                Log.i(TAG, "kill_battle no_candidate (n=0)")
+            BattleConnectionController.KillResult.AlreadyClosed ->
+                Log.i(TAG, "kill_battle result=AlreadyClosed")
+            is BattleConnectionController.KillResult.Failure ->
+                Log.i(TAG, "kill_battle result=Failure reason=${r.reason}")
+        }
     }
+
+    private fun stateLabel(s: com.bobassist.phase0.overlay.OverlayState): String =
+        when (s) {
+            com.bobassist.phase0.overlay.OverlayState.WaitingForBattle -> "Waiting"
+            com.bobassist.phase0.overlay.OverlayState.Ready -> "Ready"
+            com.bobassist.phase0.overlay.OverlayState.Cooldown -> "Cooldown"
+        }
 
     private fun startRecording(context: Context) {
         synchronized(lock) {

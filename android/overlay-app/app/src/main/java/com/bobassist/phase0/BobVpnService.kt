@@ -227,6 +227,7 @@ class BobVpnService : VpnService() {
             handler.postDelayed(tick, OverlayPoller.POLL_INTERVAL_MS)
         }
         overlayRunning = true
+        liveTapTrigger = { handleOverlayTap() }
         breadcrumb("overlay + poller started")
     }
 
@@ -272,6 +273,7 @@ class BobVpnService : VpnService() {
         overlayRunning = false
         liveController = null
         livePoller = null
+        liveTapTrigger = null
 
         pollHandler?.removeCallbacksAndMessages(null)
         pollThread?.quitSafely()
@@ -353,6 +355,9 @@ class BobVpnService : VpnService() {
             internal set
 
         @Volatile var livePoller: OverlayPoller? = null
+            internal set
+
+        @Volatile var liveTapTrigger: (() -> Unit)? = null
             internal set
     }
 }
