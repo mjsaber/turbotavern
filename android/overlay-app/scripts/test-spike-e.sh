@@ -53,6 +53,7 @@ fi
 echo "[2] Force-stop both apps, clear logcat"
 adb shell am force-stop "$BOB_PKG"
 adb shell am force-stop "$HS_PKG"
+adb shell appops set "$BOB_PKG" SYSTEM_ALERT_WINDOW allow >/dev/null
 adb shell rm -f "$DEVICE_RECORDING"
 adb logcat -c
 
