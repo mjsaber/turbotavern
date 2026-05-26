@@ -183,3 +183,18 @@ adb logcat -d -s SpikeC:I | tail -1
 ```
 
 **Step 9 (plan) — Fill in PASS/FAIL above for Steps 4–8.** Edit this section to record outcomes per device. Then commit per Task 10 Step 10.
+
+### Codex code review (Task 11)
+
+Final code-level review run via `codex exec review --base 0c545de --title "Phase 1.1 — Overlay Button"`.
+
+Findings:
+
+| # | Sev | Topic | Disposition |
+|---|---|---|---|
+| 1 | P0 (false alarm) | "Wrap cooldown callback before posting — Handler.postDelayed(cb, …) doesn't compile because Kotlin doesn't SAM-convert function-typed variables." | Verified false: `./gradlew :app:assembleDebug` BUILDS clean and `:app:testDebugUnitTest` shows all 22 tests passing. Kotlin 1.4+ DOES SAM-convert `() -> Unit` to a Java SAM (`Runnable`) parameter even for variables, not only literals. No change needed. |
+| 2 | P2 | "Tolerate denied overlay appops grants — `adb shell appops set ... SYSTEM_ALERT_WINDOW allow` aborts test-spike-b.sh under `set -e` when the device denies the grant (e.g. OxygenOS)." | Fixed in commit `fb37fe3`: appops grant wrapped in `|| echo "[warn] could not appops-set SAW ..."` across all four spike scripts. Scripts no longer abort; they print a one-line warning and continue. |
+
+22 unit tests across `OverlayStateTest` (7), `OverlayPollerTest` (9), `BattleConnectionControllerTest` (6) all green. `./gradlew :app:assembleDebug` green.
+
+No P0/P1 findings remain. Phase 1.1 code is ready for user smoke test (steps 5-9 above).
