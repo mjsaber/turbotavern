@@ -39,6 +39,7 @@ class OverlayWindow(
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
 
     private var view: TextView? = null
+    private var lastState: OverlayState = OverlayState.WaitingForBattle
     private val layoutParams = WindowManager.LayoutParams(
         SIZE_DP.dp(context), SIZE_DP.dp(context),
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -72,7 +73,8 @@ class OverlayWindow(
         }
         wm.addView(v, layoutParams)
         view = v
-        Log.i(TAG, "show at x=${layoutParams.x} y=${layoutParams.y}")
+        applyState(lastState)  // re-apply remembered state after re-attach
+        Log.i(TAG, "show at x=${layoutParams.x} y=${layoutParams.y} state=$lastState")
     }
 
     fun hide() {
@@ -81,6 +83,7 @@ class OverlayWindow(
     }
 
     fun applyState(state: OverlayState) {
+        lastState = state
         val v = view ?: return
         val drawableRes = when (state.visual) {
             OverlayState.Visual.WAITING -> R.drawable.overlay_circle_waiting
@@ -88,6 +91,21 @@ class OverlayWindow(
             OverlayState.Visual.COOLDOWN -> R.drawable.overlay_circle_cooldown
         }
         v.background = context.getDrawable(drawableRes)
+    }
+
+    /**
+     * Show or hide the window without destroying the OverlayWindow instance.
+     * Calling setVisible(true) when not yet shown calls [show] internally
+     * (NOT a no-op — corrects the host's intent if they push state before
+     * the first show). The remembered `lastState` is preserved across hide/show
+     * cycles so transitions like Ready → hide → show stay Ready.
+     */
+    fun setVisible(visible: Boolean) {
+        if (visible) {
+            if (view == null) show()
+        } else {
+            hide()
+        }
     }
 
     /**
