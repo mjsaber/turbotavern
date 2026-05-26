@@ -2,8 +2,10 @@ package com.bobassist.phase0
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -19,6 +21,8 @@ import com.bobassist.phase0.core.MihomoCore
 class MainActivity : Activity() {
 
     private lateinit var statusView: TextView
+    private lateinit var startBtn: Button
+    private lateinit var grantOverlayBtn: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +44,7 @@ class MainActivity : Activity() {
             textSize = 16f
             setPadding(40, 20, 40, 20)
         }
-        val startBtn = Button(this).apply {
+        startBtn = Button(this).apply {
             text = "Start VPN"
             setOnClickListener { onStartClicked() }
         }
@@ -48,16 +52,48 @@ class MainActivity : Activity() {
             text = "Stop VPN"
             setOnClickListener { onStopClicked() }
         }
+        grantOverlayBtn = Button(this).apply {
+            text = "Grant Overlay Permission"
+            setOnClickListener {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName"),
+                )
+                // No result needed; onResume() re-checks when Settings closes.
+                startActivity(intent)
+            }
+        }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 80, 40, 40)
             addView(statusView)
             addView(startBtn)
             addView(stopBtn)
+            addView(grantOverlayBtn)
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        refreshPermissionUi()
+    }
+
+    private fun refreshPermissionUi() {
+        val canOverlay = hasOverlayPermission()
+        grantOverlayBtn.visibility = if (canOverlay) View.GONE else View.VISIBLE
+        startBtn.isEnabled = canOverlay
+        if (!canOverlay) {
+            statusView.text = "bobcore ${MihomoCore.version()}\nOverlay permission required to start."
+        }
+    }
+
+    private fun hasOverlayPermission(): Boolean = Settings.canDrawOverlays(this)
+
     private fun onStartClicked() {
+        if (!hasOverlayPermission()) {
+            statusView.text = "${statusView.text}\nOverlay permission required."
+            return
+        }
         val prepare = VpnService.prepare(this)
         if (prepare != null) {
             startActivityForResult(prepare, REQ_VPN_AUTHORIZE)
