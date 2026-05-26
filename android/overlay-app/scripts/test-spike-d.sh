@@ -41,7 +41,7 @@ cmd_start() {
     echo "[start] Force-stop both apps"
     adb shell am force-stop "$BOB_PKG"
     adb shell am force-stop "$HS_PKG"
-    adb shell appops set "$BOB_PKG" SYSTEM_ALERT_WINDOW allow >/dev/null
+    adb shell appops set "$BOB_PKG" SYSTEM_ALERT_WINDOW allow >/dev/null 2>/dev/null || echo "[warn] could not appops-set SAW (OEM restriction?); requires manual grant once via Settings"
     adb logcat -c
     echo "[start] Launch MainActivity with auto-start"
     adb shell am start -n "$BOB_PKG/.MainActivity" --ez auto_start true >/dev/null

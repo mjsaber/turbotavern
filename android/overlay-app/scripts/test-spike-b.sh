@@ -40,7 +40,7 @@ fi
 echo "[4/8] Force-stop both apps + reset breadcrumb"
 adb shell am force-stop "$BOB_PKG"
 adb shell am force-stop "$HS_PKG"
-adb shell appops set "$BOB_PKG" SYSTEM_ALERT_WINDOW allow >/dev/null
+adb shell appops set "$BOB_PKG" SYSTEM_ALERT_WINDOW allow >/dev/null 2>/dev/null || echo "[warn] could not appops-set SAW (OEM restriction?); requires manual grant once via Settings"
 adb shell run-as "$BOB_PKG" rm -f files/bob-breadcrumbs.log 2>/dev/null || true
 adb logcat -c
 
