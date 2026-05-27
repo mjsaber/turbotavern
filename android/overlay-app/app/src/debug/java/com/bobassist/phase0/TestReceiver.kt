@@ -44,22 +44,19 @@ class TestReceiver : BroadcastReceiver() {
             }
             "kill_battle" -> killBattle()
             "overlay_state" -> {
-                val poller = BobVpnService.livePoller
-                val state = poller?.currentState()?.let { stateLabel(it) } ?: "no_poller"
-                val live = BobVpnService.liveController != null
-                Log.i(TAG, "overlay_state state=$state service_alive=$live")
+                val session = BobVpnService.liveSession
+                val state = session?.poller?.currentState()?.let { stateLabel(it) } ?: "no_session"
+                Log.i(TAG, "overlay_state state=$state service_alive=${session != null}")
             }
             "overlay_tap" -> {
-                // Routes through the SAME service.handleOverlayTap() the real overlay
+                // Routes through the SAME OverlaySession.handleTap() the real overlay
                 // tap uses — same state-gating, same cooldown semantics, same kill
                 // controller. Headless equivalent of a finger on glass.
-                val trigger = BobVpnService.liveTapTrigger
-                if (trigger == null) {
-                    Log.i(TAG, "overlay_tap service_down")
-                } else {
-                    trigger()
-                    Log.i(TAG, "overlay_tap dispatched")
+                val session = BobVpnService.liveSession ?: run {
+                    Log.i(TAG, "overlay_tap service_down"); return
                 }
+                session.handleTap()
+                Log.i(TAG, "overlay_tap dispatched")
             }
             "record_start" -> startRecording(context)
             "record_stop" -> stopRecording(context)
@@ -108,22 +105,14 @@ class TestReceiver : BroadcastReceiver() {
                     else -> null
                 }
                 DebugConnectionCoreOverride.setForeground(parsed)
-                // codex round-5 P1: during transitional Tasks 7-8 (before Task 9),
-                // liveSession doesn't exist yet — rely on detectorTick (every 2s) to
-                // observe the override. Task 9 rewrites this branch to call
-                // liveSession?.handleForegroundChange(parsed) for immediate drive.
+                if (parsed != null) BobVpnService.liveSession?.handleForegroundChange(parsed)
                 Log.i(TAG, "sim_set_foreground value=$parsed")
             }
             "sim_force_tick" -> {                                           // codex P1 #6 + round-4 P1 #35
-                // Until Task 9 introduces liveSession, dispatch through the transitional
-                // BobVpnService.livePoller + livePollHandler companion fields.
-                val poller = BobVpnService.livePoller ?: run {
+                val session = BobVpnService.liveSession ?: run {
                     Log.i(TAG, "sim_force_tick service_down"); return
                 }
-                val handler = BobVpnService.livePollHandler ?: run {
-                    Log.i(TAG, "sim_force_tick no_handler"); return
-                }
-                handler.post { runCatching { poller.tick() } }
+                session.forceTickNow()
                 Log.i(TAG, "sim_force_tick dispatched")
             }
             "sim_clear_all" -> {
@@ -135,11 +124,11 @@ class TestReceiver : BroadcastReceiver() {
     }
 
     private fun killBattle() {
-        val ctrl = BobVpnService.liveController ?: run {
+        val session = BobVpnService.liveSession ?: run {
             Log.i(TAG, "kill_battle service_down")
             return
         }
-        when (val r = ctrl.killBattleSocket()) {
+        when (val r = session.killBattleSocketDirect()) {
             is BattleConnectionController.KillResult.Success ->
                 Log.i(
                     TAG,

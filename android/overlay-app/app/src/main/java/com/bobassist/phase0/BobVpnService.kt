@@ -227,14 +227,7 @@ class BobVpnService : VpnService() {
             breadcrumb = { msg -> breadcrumb(msg) },
         )
         this.session = newSession
-
-        // codex round-5 P1: transitional live* assignments — TestReceiver and Task 7
-        // sim_force_tick read these. Task 9 collapses them into liveSession.
-        // codex round-3 P1 #25: keep liveController = controller until Task 9.
-        liveController = controller
-        livePoller = poller
-        liveTapTrigger = { newSession.handleTap() }
-        livePollHandler = handler          // for sim_force_tick (Task 7)
+        liveSession = newSession
 
         newSession.start()       // OverlaySession now owns tick scheduling internally
         overlayRunning = true
@@ -286,13 +279,8 @@ class BobVpnService : VpnService() {
     }
 
     private fun tearDown() {
+        liveSession = null
         overlayRunning = false
-        // codex round-3 P1 #24: liveSession is introduced in Task 9, NOT here.
-        // Until then, keep existing liveController/livePoller/liveTapTrigger clears.
-        liveController = null
-        livePoller = null
-        liveTapTrigger = null
-        livePollHandler = null
         session?.stop()
         session = null
 
@@ -366,18 +354,7 @@ class BobVpnService : VpnService() {
         const val ACTION_START = "com.bobassist.phase0.START"
         const val ACTION_STOP = "com.bobassist.phase0.STOP"
 
-        @Volatile var liveController: BattleConnectionController? = null
-            internal set
-
-        @Volatile var livePoller: OverlayPoller? = null
-            internal set
-
-        @Volatile var liveTapTrigger: (() -> Unit)? = null
-            internal set
-
-        // codex round-6 P1: transitional handle for sim_force_tick (Task 7).
-        // Task 9 collapses this into liveSession.forceTickNow().
-        @Volatile var livePollHandler: android.os.Handler? = null
+        @Volatile var liveSession: OverlaySession? = null
             internal set
     }
 }
