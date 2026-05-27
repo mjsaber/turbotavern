@@ -19,6 +19,7 @@ class OverlayPoller(
     private val snapshot: () -> Int,
     private val onStateChange: (OverlayState) -> Unit,
     private val scheduleAfter: (delayMs: Long, callback: () -> Unit) -> Unit,
+    private val clock: com.bobassist.phase0.util.Clock = com.bobassist.phase0.util.AndroidElapsedRealtimeClock,
 ) {
 
     @Volatile
