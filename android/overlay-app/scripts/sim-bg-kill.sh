@@ -409,7 +409,12 @@ run_tap_at_poll_offsets() {
         # not "WaitingForBattle" — match the emitted label so the cooldown
         # exit is actually observed (instead of always timing out via || true).
         wait_for_state Waiting 5 || true
-        sim_clear_all
+        # codex code-review round-5 P2: sim_clear_all also nulls the foreground
+        # override; on the next iteration the detector tick can pause the
+        # poller (Usage Access granted + HS not actually foreground). Clear
+        # only snapshot/close overrides, leave foreground=true active.
+        sim_clear_snapshot
+        sim_set_close_delay 0
         sleep 0.5
     done
     note "results (offset:dt_ms): $results"
