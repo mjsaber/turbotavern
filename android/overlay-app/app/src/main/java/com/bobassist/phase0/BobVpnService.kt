@@ -22,8 +22,9 @@ import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.MihomoCore
 import com.bobassist.phase0.foreground.ForegroundDetector
 import com.bobassist.phase0.overlay.OverlayPoller
-import com.bobassist.phase0.overlay.OverlayState
 import com.bobassist.phase0.overlay.OverlayWindow
+import com.bobassist.phase0.session.OverlaySession
+import com.bobassist.phase0.util.AndroidElapsedRealtimeClock
 import java.io.File
 
 /**
@@ -43,9 +44,7 @@ class BobVpnService : VpnService() {
     private var pfd: ParcelFileDescriptor? = null
     @Volatile private var coreRunning = false
 
-    private var overlay: OverlayWindow? = null
-    private var poller: OverlayPoller? = null
-    private var detector: ForegroundDetector? = null
+    private var session: OverlaySession? = null
     private var pollThread: HandlerThread? = null
     private var pollHandler: Handler? = null
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -85,9 +84,7 @@ class BobVpnService : VpnService() {
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
-        overlay?.let { ow ->
-            mainHandler.post { runCatching { ow.onConfigurationChanged() } }
-        }
+        session?.handleConfigurationChanged()
     }
 
     private fun bringUp() {
@@ -185,22 +182,13 @@ class BobVpnService : VpnService() {
             return
         }
 
-        val ow = OverlayWindow(this, onTap = { handleOverlayTap() })
-        overlay = ow
-        mainHandler.post {
-            runCatching { ow.show() }
-                .onFailure {
-                    Log.e(TAG, "overlay show failed", it)
-                    breadcrumb("overlay show failed: ${it.message}")
-                }
-        }
-
+        val ow = OverlayWindow(this, onTap = { session?.handleTap() })
         val ht = HandlerThread("BobOverlayPoll").apply { start() }
         val handler = Handler(ht.looper)
         pollThread = ht
         pollHandler = handler
 
-        val p = OverlayPoller(
+        val poller = OverlayPoller(
             snapshot = {
                 // Guarded against teardown races (P1 #5): if mihomo has stopped,
                 // count as 0 candidates so the next tick safely emits Waiting.
@@ -211,78 +199,39 @@ class BobVpnService : VpnService() {
                     0
                 }
             },
-            onStateChange = { state ->
-                mainHandler.post { ow.applyState(state) }
-            },
-            scheduleAfter = { delayMs, cb ->
-                handler.postDelayed(cb, delayMs)
-            },
+            onStateChange = { state -> mainHandler.post { ow.applyState(state) } },
+            scheduleAfter = { delayMs, cb -> handler.postDelayed(cb, delayMs) },
+            clock = AndroidElapsedRealtimeClock,
         )
-        poller = p
-        livePoller = p
-
-        val tick = object : Runnable {
-            override fun run() {
-                p.tick()
-                handler.postDelayed(this, OverlayPoller.POLL_INTERVAL_MS)
-            }
-        }
-        handler.post {
-            p.start()
-            handler.postDelayed(tick, OverlayPoller.POLL_INTERVAL_MS)
-        }
-
-        val det = ForegroundDetector(
+        val detector = ForegroundDetector(
             queryForegroundPackage = { queryForegroundPackage() },
             targetPackage = HS_PACKAGE,
-            onChange = { isForeground ->
-                handleForegroundChange(isForeground)
-            },
+            onChange = { isFg -> session?.handleForegroundChange(isFg) },
         )
-        detector = det
+        val newSession = OverlaySession(
+            controller = controller,
+            poller = poller,
+            detector = detector,
+            overlay = ow,
+            pollHandler = handler,
+            mainHandler = mainHandler,
+            clock = AndroidElapsedRealtimeClock,
+            hasUsageAccessPermission = { hasUsageAccessPermission() },
+            breadcrumb = { msg -> breadcrumb(msg) },
+        )
+        this.session = newSession
 
-        val detectorTick = object : Runnable {
-            override fun run() {
-                // Codex P1 #2 — permission-revoked degraded mode.
-                // If the user revokes Usage Access AFTER the detector has already
-                // transitioned to "HS=false", we MUST force the detector back to
-                // optimistic "true" so the overlay reappears (spec D6 degraded
-                // mode). reset() is a no-op when already true.
-                if (hasUsageAccessPermission()) {
-                    det.tick()
-                } else {
-                    det.reset()
-                }
-                handler.postDelayed(this, ForegroundDetector.POLL_INTERVAL_MS)
-            }
-        }
-        handler.postDelayed(detectorTick, ForegroundDetector.POLL_INTERVAL_MS)
+        // codex round-5 P1: transitional live* assignments — TestReceiver and Task 7
+        // sim_force_tick read these. Task 9 collapses them into liveSession.
+        liveController = controller
+        livePoller = poller
+        liveTapTrigger = { newSession.handleTap() }
+        livePollHandler = handler          // for sim_force_tick (Task 7)
 
+        newSession.start()       // OverlaySession now owns tick scheduling internally
         overlayRunning = true
-        liveTapTrigger = { handleOverlayTap() }
-        breadcrumb("overlay + poller started")
-    }
-
-    /**
-     * Reacts to ForegroundDetector state changes. Codex P2 #3: poller
-     * mutations are posted onto pollHandler so confinement holds regardless
-     * of which thread invoked us. Codex round-2 P2 #1: the mainHandler
-     * runnable captures the overlay reference and guards on `overlayRunning`
-     * and reference identity so a setVisible queued before tearDown cannot
-     * re-attach the window after the service has stopped.
-     */
-    private fun handleForegroundChange(isHsForeground: Boolean) {
-        breadcrumb("foreground change: HS=$isHsForeground")
-        pollHandler?.post {
-            if (isHsForeground) poller?.resume() else poller?.pause()
-        }
-        val capturedOverlay = overlay
-        if (capturedOverlay != null) {
-            mainHandler.post {
-                if (!overlayRunning || overlay !== capturedOverlay) return@post
-                runCatching { capturedOverlay.setVisible(isHsForeground) }
-            }
-        }
+        breadcrumb("overlay + poller started")    // KEEP old wording for sim script backward compat (codex P2 #10)
+        breadcrumb("session started")             // ALSO emit new wording
     }
 
     private fun hasUsageAccessPermission(): Boolean {
@@ -322,61 +271,21 @@ class BobVpnService : VpnService() {
         return latestPkg
     }
 
-    /**
-     * User tapped the overlay. Confined to pollHandler so all state reads/writes
-     * happen on a single thread (P1 #2). Performs the kill if Ready, ignores
-     * tap otherwise. Enters Cooldown ONLY on Success — failures stay Ready so
-     * the user can try again.
-     */
-    private fun handleOverlayTap() {
-        val handler = pollHandler ?: return
-        val p = poller ?: return
-        val ctrl = controller
-        handler.post {
-            when (p.currentState()) {
-                OverlayState.Ready -> {
-                    val result = runCatching { ctrl.killBattleSocket() }
-                        .getOrElse {
-                            breadcrumb("overlay tap kill threw: ${it.message}")
-                            return@post
-                        }
-                    breadcrumb("overlay tap result=$result")
-                    if (result is BattleConnectionController.KillResult.Success) {
-                        Log.i(TAG, "overlay kill success: id=${result.closedId} dst=${result.destinationIp}:${result.destinationPort}")
-                        p.enterCooldown()
-                    } else {
-                        // NoCandidate / AlreadyClosed / Failure — stay Ready,
-                        // user can try again. No cooldown.
-                        Log.i(TAG, "overlay kill non-success: $result")
-                    }
-                }
-                OverlayState.WaitingForBattle -> {
-                    breadcrumb("overlay tap ignored (no candidate)")
-                }
-                OverlayState.Cooldown -> {
-                    breadcrumb("overlay tap ignored (cooldown)")
-                }
-            }
-        }
-    }
-
     private fun tearDown() {
         overlayRunning = false
+        // codex round-3 P1 #24: liveSession is introduced in Task 9, NOT here.
+        // Until then, keep existing liveController/livePoller/liveTapTrigger clears.
         liveController = null
         livePoller = null
         liveTapTrigger = null
+        livePollHandler = null
+        session?.stop()
+        session = null
 
         pollHandler?.removeCallbacksAndMessages(null)
         pollThread?.quitSafely()
         pollThread = null
         pollHandler = null
-        poller = null
-        detector = null
-
-        overlay?.let { ow ->
-            mainHandler.post { runCatching { ow.hide() } }
-        }
-        overlay = null
 
         if (coreRunning) {
             runCatching { MihomoCore.stopTun() }
@@ -450,6 +359,11 @@ class BobVpnService : VpnService() {
             internal set
 
         @Volatile var liveTapTrigger: (() -> Unit)? = null
+            internal set
+
+        // codex round-6 P1: transitional handle for sim_force_tick (Task 7).
+        // Task 9 collapses this into liveSession.forceTickNow().
+        @Volatile var livePollHandler: android.os.Handler? = null
             internal set
     }
 }
