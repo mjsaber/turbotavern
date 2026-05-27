@@ -33,7 +33,7 @@ import com.bobassist.phase0.R
 class OverlayWindow(
     private val context: Context,
     private val onTap: () -> Unit,
-) {
+) : OverlayUi {
 
     private val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
@@ -57,7 +57,7 @@ class OverlayWindow(
         // x/y deferred to show() so we have current WindowMetrics.
     }
 
-    fun show() {
+    override fun show() {
         if (view != null) return
         val initial = currentSafeBounds()
         layoutParams.x = clamp(prefs.getInt(KEY_X, defaultX(initial)), initial.left, initial.right - SIZE_DP.dp(context))
@@ -77,12 +77,12 @@ class OverlayWindow(
         Log.i(TAG, "show at x=${layoutParams.x} y=${layoutParams.y} state=$lastState")
     }
 
-    fun hide() {
+    override fun hide() {
         view?.let { runCatching { wm.removeView(it) } }
         view = null
     }
 
-    fun applyState(state: OverlayState) {
+    override fun applyState(state: OverlayState) {
         lastState = state
         val v = view ?: return
         val drawableRes = when (state.visual) {
@@ -100,7 +100,7 @@ class OverlayWindow(
      * the first show). The remembered `lastState` is preserved across hide/show
      * cycles so transitions like Ready → hide → show stay Ready.
      */
-    fun setVisible(visible: Boolean) {
+    override fun setVisible(visible: Boolean) {
         if (visible) {
             if (view == null) show()
         } else {
@@ -213,7 +213,7 @@ class OverlayWindow(
      * button doesn't end up under the new system bars / outside the new
      * screen rect.
      */
-    fun onConfigurationChanged() {
+    override fun onConfigurationChanged() {
         view?.let { finalizeDrag(it) }
     }
 
