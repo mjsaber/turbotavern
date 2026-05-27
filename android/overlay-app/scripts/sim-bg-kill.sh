@@ -474,6 +474,14 @@ case "$SCENARIO" in
     preexisting_candidate)  run_preexisting_candidate ;;
     *) echo "unknown scenario: $SCENARIO" >&2; exit 2 ;;
 esac
+# codex code-review round-3 P2: capture runner exit so an early return
+# (bootstrap_service failure on --rebuild, etc.) is recorded as a fail
+# rather than reported as success because no `bad`/FAIL was emitted.
+RUNNER_STATUS=$?
+if [ "$RUNNER_STATUS" -ne 0 ] && [ "$FAIL" -eq 0 ]; then
+    FAIL=$((FAIL + 1))
+    echo "FAIL: scenario runner returned status=$RUNNER_STATUS (no explicit bad/FAIL emitted)"
+fi
 
 echo
 echo "=== $SCENARIO summary: pass=$PASS fail=$FAIL ==="

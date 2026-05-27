@@ -75,9 +75,10 @@ overlay_tap() {
 # SpikeC:I logcat line and prints just the `state=<X>` field (e.g. "Ready").
 # Returns 0 with state on stdout if found within ~1s, else 1.
 overlay_state() {
+    # codex code-review round-3 P2: clear logcat first so we wait for the
+    # FRESH line emitted by THIS broadcast, not a stale prior overlay_state.
+    adb logcat -c >/dev/null 2>&1 || true
     _bob_broadcast overlay_state
-    # The broadcast is async; allow ~1s for the line to flush. Don't clear
-    # logcat — we want the most recent line, even if buffered.
     local deadline=$(( $(date +%s) + 2 ))
     local line=""
     while [ "$(date +%s)" -lt "$deadline" ]; do
