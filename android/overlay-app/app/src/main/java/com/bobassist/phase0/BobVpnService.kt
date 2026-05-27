@@ -19,7 +19,8 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.bobassist.phase0.core.BattleConnection
 import com.bobassist.phase0.core.BattleConnectionController
-import com.bobassist.phase0.core.MihomoCore
+import com.bobassist.phase0.core.RealConnectionCore
+import com.bobassist.phase0.core.RealLifecycleCore
 import com.bobassist.phase0.foreground.ForegroundDetector
 import com.bobassist.phase0.overlay.OverlayPoller
 import com.bobassist.phase0.overlay.OverlayWindow
@@ -91,7 +92,7 @@ class BobVpnService : VpnService() {
 
         // Install protect callback BEFORE Setup so the very first dial
         // (mihomo internal init) is also protected.
-        runCatching { MihomoCore.setProtector(this) }
+        runCatching { RealLifecycleCore.setProtector(this) }
             .onFailure {
                 breadcrumb("setProtector failed: ${it.message}")
                 Log.e(TAG, "setProtector failed", it)
@@ -101,7 +102,7 @@ class BobVpnService : VpnService() {
         breadcrumb("setProtector OK")
 
         runCatching {
-            MihomoCore.setup(cacheDir.absolutePath).getOrThrow()
+            RealLifecycleCore.setup(cacheDir.absolutePath).getOrThrow()
         }.onFailure {
             breadcrumb("MihomoCore.setup failed: ${it.message}")
             Log.e(TAG, "MihomoCore.setup failed", it)
@@ -157,7 +158,7 @@ class BobVpnService : VpnService() {
         breadcrumb("starting TUN with fd=$fd")
 
         val gateway = "$TUN_GATEWAY/$TUN_PREFIX"
-        MihomoCore.startTun(fd, TUN_STACK, gateway, TUN_PORTAL).onFailure { err ->
+        RealLifecycleCore.startTun(fd, TUN_STACK, gateway, TUN_PORTAL).onFailure { err ->
             breadcrumb("MihomoCore.startTun failed: ${err.message}")
             Log.e(TAG, "MihomoCore.startTun failed; reclaiming fd $fd", err)
             runCatching { ParcelFileDescriptor.adoptFd(fd).close() }
@@ -179,8 +180,8 @@ class BobVpnService : VpnService() {
         // codex round-4 P1 #34: Task 6 swaps these two lambdas to RealConnectionCore;
         // Task 7 swaps again to ConnectionCoreProvider.get(). Task 5 calls MihomoCore directly.
         val controller = BattleConnectionController(
-            snapshot = { MihomoCore.connectionsJson() },
-            close = { id -> MihomoCore.closeConnection(id) },
+            snapshot = { RealConnectionCore.connectionsJson() },
+            close = { id -> RealConnectionCore.closeConnection(id) },
         )
         val trace = TraceSink(enabled = BuildConfig.DEBUG, clock = AndroidElapsedRealtimeClock)
 
@@ -195,7 +196,7 @@ class BobVpnService : VpnService() {
                 // Guarded against teardown races (P1 #5): if mihomo has stopped,
                 // count as 0 candidates so the next tick safely emits Waiting.
                 runCatching {
-                    BattleConnection.pickWithCount(MihomoCore.connectionsJson()).second
+                    BattleConnection.pickWithCount(RealConnectionCore.connectionsJson()).second
                 }.getOrElse { err ->
                     breadcrumb("poll snapshot failed: ${err.message}")
                     0
@@ -292,7 +293,7 @@ class BobVpnService : VpnService() {
         pollHandler = null
 
         if (coreRunning) {
-            runCatching { MihomoCore.stopTun() }
+            runCatching { RealLifecycleCore.stopTun() }
                 .onFailure { Log.e(TAG, "MihomoCore.stopTun failed", it) }
             coreRunning = false
         }

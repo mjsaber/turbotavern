@@ -13,7 +13,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.bobassist.phase0.BuildConfig
-import com.bobassist.phase0.core.MihomoCore
+import com.bobassist.phase0.core.RealLifecycleCore
 
 /**
  * Phase 0 verifier UI: two buttons (Start/Stop VPN). Spike B verifies HS
@@ -28,7 +28,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i(TAG, "Bobcore.version() = ${MihomoCore.version()}")
+        Log.i(TAG, "Bobcore.version() = ${RealLifecycleCore.version()}")
         setContentView(buildLayout())
 
         // Debug-only: --ez auto_start true lets `adb am start MainActivity`
@@ -42,7 +42,7 @@ class MainActivity : Activity() {
 
     private fun buildLayout(): View {
         statusView = TextView(this).apply {
-            text = "bobcore ${MihomoCore.version()}\nstatus: idle"
+            text = "bobcore ${RealLifecycleCore.version()}\nstatus: idle"
             textSize = 16f
             setPadding(40, 20, 40, 20)
         }
@@ -94,7 +94,7 @@ class MainActivity : Activity() {
         grantOverlayBtn.visibility = if (canOverlay) View.GONE else View.VISIBLE
         grantUsageBtn.visibility = if (canUsage) View.GONE else View.VISIBLE
         startBtn.isEnabled = canOverlay  // usage-access is OPTIONAL — does not gate Start
-        val statusLines = mutableListOf("bobcore ${MihomoCore.version()}")
+        val statusLines = mutableListOf("bobcore ${RealLifecycleCore.version()}")
         if (!canOverlay) statusLines += "Overlay permission required to start."
         if (!canUsage) statusLines += "Usage access NOT granted — overlay will stay visible even when HS is closed."
         statusView.text = statusLines.joinToString("\n")
@@ -128,7 +128,7 @@ class MainActivity : Activity() {
 
     private fun onStopClicked() {
         startService(Intent(this, BobVpnService::class.java).apply { action = BobVpnService.ACTION_STOP })
-        statusView.text = "bobcore ${MihomoCore.version()}\nstatus: stop requested"
+        statusView.text = "bobcore ${RealLifecycleCore.version()}\nstatus: stop requested"
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
@@ -142,7 +142,7 @@ class MainActivity : Activity() {
 
     private fun launchService() {
         startForegroundService(Intent(this, BobVpnService::class.java).apply { action = BobVpnService.ACTION_START })
-        statusView.text = "bobcore ${MihomoCore.version()}\nstatus: service started"
+        statusView.text = "bobcore ${RealLifecycleCore.version()}\nstatus: service started"
     }
 
     companion object {
