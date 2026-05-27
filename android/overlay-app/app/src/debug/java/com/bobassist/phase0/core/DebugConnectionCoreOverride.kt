@@ -47,6 +47,14 @@ object DebugConnectionCoreOverride : ConnectionCoreFacade, ForegroundOverridePro
     override fun closeConnection(id: String): MihomoCore.CloseResult {
         val delay = closeDelayMs.get()
         if (delay > 0) Thread.sleep(delay)
-        return closeOverrides.get()[id] ?: RealConnectionCore.closeConnection(id)
+        val explicit = closeOverrides.get()[id]
+        if (explicit != null) return explicit
+        // codex code-review P2: when a snapshot override is active, the fake
+        // connection table is the only source of truth — falling through to
+        // RealConnectionCore would always return NotFound for fake ids,
+        // which breaks cooldown semantics in sim scenarios. Default to
+        // Success for ids that came from the fake snapshot.
+        if (snapshotOverride.get() != null) return MihomoCore.CloseResult.Success
+        return RealConnectionCore.closeConnection(id)
     }
 }

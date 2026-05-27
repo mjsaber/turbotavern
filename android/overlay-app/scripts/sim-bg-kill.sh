@@ -434,7 +434,9 @@ run_preexisting_candidate() {
     sim_set_foreground true
     sleep 3
     note "injecting snapshot + force_tick (measuring time-to-Ready)"
-    local t_start; t_start=$(date +%s%N)
+    # codex code-review P2: macOS `date +%s%N` produces non-numeric output
+    # ("…N" suffix); use python for portable millisecond timestamps.
+    local t_start; t_start=$(python3 -c 'import time; print(int(time.time()*1000))')
     sim_set_snapshot "$ONE_CAND_JSON"
     sim_force_tick
     if ! wait_for_state Ready 5; then
@@ -442,8 +444,8 @@ run_preexisting_candidate() {
         local f; f=$(capture_trace); emit_phase_table "$f"
         return 1
     fi
-    local t_end; t_end=$(date +%s%N)
-    local dt_ms=$(( (t_end - t_start) / 1000000 ))
+    local t_end; t_end=$(python3 -c 'import time; print(int(time.time()*1000))')
+    local dt_ms=$(( t_end - t_start ))
     note "set_snapshot → state=Ready dt_ms = $dt_ms"
     if [ "$dt_ms" -lt 800 ]; then
         ok "Ready within 1 poll tick (~800ms): ${dt_ms}ms"
