@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import com.bobassist.phase0.core.BattleConnectionController
+import com.bobassist.phase0.core.DebugConnectionCoreOverride
 import com.bobassist.phase0.core.MihomoCore
 import java.io.File
 
@@ -65,6 +66,69 @@ class TestReceiver : BroadcastReceiver() {
             "record_mark" -> {
                 val label = intent.getStringExtra("label") ?: "mark"
                 recordMark(context, label)
+            }
+            "sim_set_snapshot" -> {
+                val json = intent.getStringExtra("json")
+                DebugConnectionCoreOverride.setSnapshot(json)
+                Log.i(TAG, "sim_set_snapshot len=${json?.length ?: 0}")
+            }
+            "sim_clear_snapshot" -> {
+                DebugConnectionCoreOverride.setSnapshot(null)
+                Log.i(TAG, "sim_clear_snapshot")
+            }
+            "sim_set_snapshot_delay" -> {                                   // codex P1 #5
+                val ms = intent.getStringExtra("ms")?.toLongOrNull() ?: return
+                DebugConnectionCoreOverride.setSnapshotDelay(ms)
+                Log.i(TAG, "sim_set_snapshot_delay ms=$ms")
+            }
+            "sim_set_close" -> {
+                val id = intent.getStringExtra("id") ?: return
+                val resultStr = intent.getStringExtra("result") ?: "Success"
+                val r = when (resultStr) {
+                    "Success" -> MihomoCore.CloseResult.Success
+                    "NotFound" -> MihomoCore.CloseResult.NotFound
+                    "AlreadyClosed" -> MihomoCore.CloseResult.AlreadyClosed
+                    "CoreStopped" -> MihomoCore.CloseResult.CoreStopped
+                    else -> MihomoCore.CloseResult.InternalError(-1)
+                }
+                DebugConnectionCoreOverride.setCloseResult(id, r)
+                Log.i(TAG, "sim_set_close id=$id result=$r")
+            }
+            "sim_set_close_delay" -> {
+                val ms = intent.getStringExtra("ms")?.toLongOrNull() ?: return
+                DebugConnectionCoreOverride.setCloseDelay(ms)
+                Log.i(TAG, "sim_set_close_delay ms=$ms")
+            }
+            "sim_set_foreground" -> {                                       // codex P1 #7 + round-2 P1 #16
+                val v = intent.getStringExtra("value")
+                val parsed: Boolean? = when (v?.lowercase()) {
+                    "true" -> true
+                    "false" -> false
+                    "null", "clear" -> null
+                    else -> null
+                }
+                DebugConnectionCoreOverride.setForeground(parsed)
+                // codex round-5 P1: during transitional Tasks 7-8 (before Task 9),
+                // liveSession doesn't exist yet — rely on detectorTick (every 2s) to
+                // observe the override. Task 9 rewrites this branch to call
+                // liveSession?.handleForegroundChange(parsed) for immediate drive.
+                Log.i(TAG, "sim_set_foreground value=$parsed")
+            }
+            "sim_force_tick" -> {                                           // codex P1 #6 + round-4 P1 #35
+                // Until Task 9 introduces liveSession, dispatch through the transitional
+                // BobVpnService.livePoller + livePollHandler companion fields.
+                val poller = BobVpnService.livePoller ?: run {
+                    Log.i(TAG, "sim_force_tick service_down"); return
+                }
+                val handler = BobVpnService.livePollHandler ?: run {
+                    Log.i(TAG, "sim_force_tick no_handler"); return
+                }
+                handler.post { runCatching { poller.tick() } }
+                Log.i(TAG, "sim_force_tick dispatched")
+            }
+            "sim_clear_all" -> {
+                DebugConnectionCoreOverride.clearAll()
+                Log.i(TAG, "sim_clear_all")
             }
             else -> Log.w(TAG, "unknown cmd=$cmd")
         }

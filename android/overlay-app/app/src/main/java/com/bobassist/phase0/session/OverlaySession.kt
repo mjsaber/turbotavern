@@ -148,6 +148,14 @@ class OverlaySession(
         return controller.killBattleSocket()
     }
 
+    /** Debug: trigger an immediate poller.tick() on pollHandler. */
+    fun forceTickNow() {
+        pollHandler.post {
+            if (!started) return@post
+            poller.tick()
+        }
+    }
+
     fun handleForegroundChange(isHsForeground: Boolean) {
         breadcrumb("foreground change: HS=$isHsForeground")
         pollHandler.post {

@@ -19,7 +19,8 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.bobassist.phase0.core.BattleConnection
 import com.bobassist.phase0.core.BattleConnectionController
-import com.bobassist.phase0.core.RealConnectionCore
+import com.bobassist.phase0.core.ConnectionCoreProvider
+import com.bobassist.phase0.core.ForegroundOverrideHolder
 import com.bobassist.phase0.core.RealLifecycleCore
 import com.bobassist.phase0.foreground.ForegroundDetector
 import com.bobassist.phase0.overlay.OverlayPoller
@@ -180,8 +181,8 @@ class BobVpnService : VpnService() {
         // codex round-4 P1 #34: Task 6 swaps these two lambdas to RealConnectionCore;
         // Task 7 swaps again to ConnectionCoreProvider.get(). Task 5 calls MihomoCore directly.
         val controller = BattleConnectionController(
-            snapshot = { RealConnectionCore.connectionsJson() },
-            close = { id -> RealConnectionCore.closeConnection(id) },
+            snapshot = { ConnectionCoreProvider.get().connectionsJson() },
+            close = { id -> ConnectionCoreProvider.get().closeConnection(id) },
         )
         val trace = TraceSink(enabled = BuildConfig.DEBUG, clock = AndroidElapsedRealtimeClock)
 
@@ -196,7 +197,7 @@ class BobVpnService : VpnService() {
                 // Guarded against teardown races (P1 #5): if mihomo has stopped,
                 // count as 0 candidates so the next tick safely emits Waiting.
                 runCatching {
-                    BattleConnection.pickWithCount(RealConnectionCore.connectionsJson()).second
+                    BattleConnection.pickWithCount(ConnectionCoreProvider.get().connectionsJson()).second
                 }.getOrElse { err ->
                     breadcrumb("poll snapshot failed: ${err.message}")
                     0
@@ -258,6 +259,12 @@ class BobVpnService : VpnService() {
      * based on hasUsageAccessPermission(). See codex P1 #2 and round-1 P2 #5.
      */
     private fun queryForegroundPackage(): String? {
+        // Variant-routed override (debug builds may inject a fake foreground state).
+        // Release builds resolve to NoOpForegroundOverride which always returns null.
+        // No BuildConfig.DEBUG gate needed — the holder is selected per variant.
+        val fakeFg = ForegroundOverrideHolder.get().foregroundOverride()
+        if (fakeFg != null) return if (fakeFg) HS_PACKAGE else "com.example.notbob"
+
         val usm = getSystemService(UsageStatsManager::class.java) ?: return null
         val now = System.currentTimeMillis()
         // queryEvents can return null when the user is locked (R+) — handle it.
