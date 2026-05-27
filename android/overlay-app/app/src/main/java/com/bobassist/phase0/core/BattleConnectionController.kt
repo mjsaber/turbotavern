@@ -1,5 +1,7 @@
 package com.bobassist.phase0.core
 
+import com.bobassist.phase0.util.TraceCycle
+
 /**
  * Wraps "find current HS battle socket and close it" into a single typed call.
  *
@@ -32,10 +34,21 @@ class BattleConnectionController(
         data class Failure(val reason: String) : KillResult()
     }
 
-    fun killBattleSocket(): KillResult {
-        val (cand, count) = BattleConnection.pickWithCount(snapshot())
+    fun killBattleSocket(cycle: TraceCycle? = null): KillResult {
+        cycle?.emit("snapshot", "entry")
+        val snapshotJson = snapshot()
+        cycle?.emit("snapshot", "exit")
+
+        cycle?.emit("pick", "entry")
+        val (cand, count) = BattleConnection.pickWithCount(snapshotJson)
+        cycle?.emit("pick", "exit", "candidate_count" to count, "picked_id" to cand?.id)
         if (cand == null) return KillResult.NoCandidate
-        return when (val r = close(cand.id)) {
+
+        cycle?.emit("close", "entry", "conn_id" to cand.id)
+        val r = close(cand.id)
+        cycle?.emit("close", "exit", "result" to r.toString())
+
+        return when (r) {
             MihomoCore.CloseResult.Success ->
                 KillResult.Success(
                     closedId = cand.id,

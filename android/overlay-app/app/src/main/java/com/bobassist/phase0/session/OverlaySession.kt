@@ -8,6 +8,7 @@ import com.bobassist.phase0.overlay.OverlayPoller
 import com.bobassist.phase0.overlay.OverlayState
 import com.bobassist.phase0.overlay.OverlayUi
 import com.bobassist.phase0.util.Clock
+import com.bobassist.phase0.util.TraceSink
 
 /**
  * Coordinates the runtime collaboration between OverlayPoller, ForegroundDetector,
@@ -40,6 +41,7 @@ class OverlaySession(
     private val pollHandler: Handler,
     private val mainHandler: Handler,
     private val clock: Clock,
+    private val trace: TraceSink,
     private val hasUsageAccessPermission: () -> Boolean,
     private val breadcrumb: (String) -> Unit = { },
 ) {
@@ -98,15 +100,26 @@ class OverlaySession(
      * happen on a single thread. Enters Cooldown ONLY on Success.
      */
     fun handleTap() {
+        val cycle = trace.beginCycle()
+        cycle.emit("tap", "entry", "state" to poller.currentState())
+        val tapEntryNs = clock.nowNanos()
         pollHandler.post {
-            if (!started) return@post
-            when (poller.currentState()) {
+            cycle.emit("tap_post", "entry", "delay_ms" to (clock.nowNanos() - tapEntryNs) / 1_000_000L)
+            if (!started) {
+                cycle.emit("tap_post", "exit", "result" to "session_stopped")
+                return@post
+            }
+            val state = poller.currentState()
+            cycle.emit("state_check", "exit", "state" to state)
+            when (state) {
                 OverlayState.Ready -> {
-                    val result = runCatching { controller.killBattleSocket() }
+                    val result = runCatching { controller.killBattleSocket(cycle) }
                         .getOrElse {
                             breadcrumb("overlay tap kill threw: ${it.message}")
+                            cycle.emit("kill", "exit", "result" to "exception", "msg" to it.message)
                             return@post
                         }
+                    cycle.emit("tap_post", "exit", "result" to result::class.simpleName)
                     breadcrumb("overlay tap result=$result")
                     if (result is BattleConnectionController.KillResult.Success) {
                         Log.i(TAG, "overlay kill success: id=${result.closedId}")
@@ -115,8 +128,14 @@ class OverlaySession(
                         Log.i(TAG, "overlay kill non-success: $result")
                     }
                 }
-                OverlayState.WaitingForBattle -> breadcrumb("overlay tap ignored (no candidate)")
-                OverlayState.Cooldown -> breadcrumb("overlay tap ignored (cooldown)")
+                OverlayState.WaitingForBattle -> {
+                    cycle.emit("tap_post", "exit", "result" to "no_candidate")
+                    breadcrumb("overlay tap ignored (no candidate)")
+                }
+                OverlayState.Cooldown -> {
+                    cycle.emit("tap_post", "exit", "result" to "cooldown")
+                    breadcrumb("overlay tap ignored (cooldown)")
+                }
             }
         }
     }

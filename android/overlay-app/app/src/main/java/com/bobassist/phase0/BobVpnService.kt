@@ -25,6 +25,7 @@ import com.bobassist.phase0.overlay.OverlayPoller
 import com.bobassist.phase0.overlay.OverlayWindow
 import com.bobassist.phase0.session.OverlaySession
 import com.bobassist.phase0.util.AndroidElapsedRealtimeClock
+import com.bobassist.phase0.util.TraceSink
 import java.io.File
 
 /**
@@ -49,12 +50,6 @@ class BobVpnService : VpnService() {
     private var pollHandler: Handler? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     @Volatile private var overlayRunning = false   // idempotency guard (P1 #4)
-    private val controller: BattleConnectionController by lazy {
-        BattleConnectionController(
-            snapshot = { MihomoCore.connectionsJson() },
-            close = { id -> MihomoCore.closeConnection(id) },
-        )
-    }
 
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
 
@@ -171,7 +166,6 @@ class BobVpnService : VpnService() {
             coreRunning = true
             breadcrumb("MihomoCore.startTun OK; HS traffic routed through TUN")
             Log.i(TAG, "TUN listener up, fd=$fd")
-            liveController = controller
             startOverlayAndPolling()
         }
     }
@@ -181,6 +175,14 @@ class BobVpnService : VpnService() {
             breadcrumb("startOverlayAndPolling called while already running; ignoring")
             return
         }
+
+        // codex round-4 P1 #34: Task 6 swaps these two lambdas to RealConnectionCore;
+        // Task 7 swaps again to ConnectionCoreProvider.get(). Task 5 calls MihomoCore directly.
+        val controller = BattleConnectionController(
+            snapshot = { MihomoCore.connectionsJson() },
+            close = { id -> MihomoCore.closeConnection(id) },
+        )
+        val trace = TraceSink(enabled = BuildConfig.DEBUG, clock = AndroidElapsedRealtimeClock)
 
         val ow = OverlayWindow(this, onTap = { session?.handleTap() })
         val ht = HandlerThread("BobOverlayPoll").apply { start() }
@@ -216,6 +218,7 @@ class BobVpnService : VpnService() {
             pollHandler = handler,
             mainHandler = mainHandler,
             clock = AndroidElapsedRealtimeClock,
+            trace = trace,
             hasUsageAccessPermission = { hasUsageAccessPermission() },
             breadcrumb = { msg -> breadcrumb(msg) },
         )
@@ -223,6 +226,7 @@ class BobVpnService : VpnService() {
 
         // codex round-5 P1: transitional live* assignments — TestReceiver and Task 7
         // sim_force_tick read these. Task 9 collapses them into liveSession.
+        // codex round-3 P1 #25: keep liveController = controller until Task 9.
         liveController = controller
         livePoller = poller
         liveTapTrigger = { newSession.handleTap() }
