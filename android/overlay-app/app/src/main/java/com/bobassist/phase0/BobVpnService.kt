@@ -206,11 +206,13 @@ class BobVpnService : VpnService() {
             onStateChange = { state -> mainHandler.post { ow.applyState(state) } },
             scheduleAfter = { delayMs, cb -> handler.postDelayed(cb, delayMs) },
             clock = AndroidElapsedRealtimeClock,
+            trace = trace,
         )
         val detector = ForegroundDetector(
             queryForegroundPackage = { queryForegroundPackage() },
             targetPackage = HS_PACKAGE,
             onChange = { isFg -> session?.handleForegroundChange(isFg) },
+            trace = trace,
         )
         val newSession = OverlaySession(
             controller = controller,

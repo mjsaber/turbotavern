@@ -157,6 +157,8 @@ class OverlaySession(
     }
 
     fun handleForegroundChange(isHsForeground: Boolean) {
+        val cycle = trace.beginCycle()
+        cycle.emit("fg_change", "entry", "is_fg" to isHsForeground)
         breadcrumb("foreground change: HS=$isHsForeground")
         pollHandler.post {
             if (!started) return@post
@@ -165,7 +167,9 @@ class OverlaySession(
         val capturedOverlay = overlay
         mainHandler.post {
             if (!started) return@post
+            cycle.emit("setVisible", "entry", "visible" to isHsForeground)
             runCatching { capturedOverlay.setVisible(isHsForeground) }
+            cycle.emit("setVisible", "exit")
         }
     }
 

@@ -22,6 +22,7 @@ class ForegroundDetector(
     private val queryForegroundPackage: () -> String?,
     private val targetPackage: String,
     private val onChange: (Boolean) -> Unit,
+    private val trace: com.bobassist.phase0.util.TraceSink? = null,
 ) {
 
     @Volatile var isTargetForeground: Boolean = true
@@ -31,8 +32,11 @@ class ForegroundDetector(
         val current = queryForegroundPackage() ?: return  // unknown → keep state
         val next = (current == targetPackage)
         if (next == isTargetForeground) return
+        val cycle = trace?.beginCycle()
+        cycle?.emit("fg_change", "entry", "from" to isTargetForeground, "to" to next)
         isTargetForeground = next
         onChange(next)
+        cycle?.emit("fg_change", "exit")
     }
 
     /**
@@ -41,8 +45,11 @@ class ForegroundDetector(
      */
     fun reset() {
         if (isTargetForeground) return
+        val cycle = trace?.beginCycle()
+        cycle?.emit("fg_reset", "entry")
         isTargetForeground = true
         onChange(true)
+        cycle?.emit("fg_reset", "exit")
     }
 
     companion object {

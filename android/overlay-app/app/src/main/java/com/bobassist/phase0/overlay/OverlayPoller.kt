@@ -20,6 +20,7 @@ class OverlayPoller(
     private val onStateChange: (OverlayState) -> Unit,
     private val scheduleAfter: (delayMs: Long, callback: () -> Unit) -> Unit,
     private val clock: com.bobassist.phase0.util.Clock = com.bobassist.phase0.util.AndroidElapsedRealtimeClock,
+    private val trace: com.bobassist.phase0.util.TraceSink? = null,
 ) {
 
     @Volatile
@@ -41,7 +42,10 @@ class OverlayPoller(
         if (!started) return
         if (paused) return
         if (state == OverlayState.Cooldown) return
+        val cycle = trace?.beginCycle()
+        cycle?.emit("poll_tick", "entry")
         emit(state.onPoll(snapshot()))
+        cycle?.emit("poll_tick", "exit", "state" to state)
     }
 
     fun pause() {
@@ -59,12 +63,16 @@ class OverlayPoller(
     fun enterCooldown() {
         if (!started) return
         if (state == OverlayState.Cooldown) return
+        val cycle = trace?.beginCycle()
+        cycle?.emit("cooldown_enter", "entry")
         emit(OverlayState.Cooldown)
         scheduleAfter(OverlayState.COOLDOWN_MS) { exitCooldown() }
     }
 
     private fun exitCooldown() {
         if (state != OverlayState.Cooldown) return  // stale callback after teardown/restart
+        val cycle = trace?.beginCycle()
+        cycle?.emit("cooldown_exit", "entry")
         emit(OverlayState.WaitingForBattle)
     }
 
