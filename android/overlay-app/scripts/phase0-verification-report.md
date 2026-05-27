@@ -242,3 +242,84 @@ a5cadae  Task 7: test scripts auto-grant android:get_usage_stats
 | Task 8 Step 7b | Green state preserved across hide/show during combat (codex P1 #1 regression) | **PENDING USER** |
 
 Detector + overlay show/hide are fully wired and the first transition pair was confirmed live. The remaining steps are app-switching scenarios I can't drive without HS gameplay.
+
+## Phase 1.3 — Test Infrastructure (2026-05-27)
+
+**Goal:** Make Phase 1.x iterable without "play a BG round". User feedback after Phase 1.2: "拔线要等待很久，大概5，6秒钟才会生效，这是怎么回事，这种问题怎么debug?" + "有没有不需要链接实体android机就能测试的方式?". Plan + design covered the 4-tier testing pyramid; this phase implements Tier 0/1 (pure JVM + Robolectric) + Tier 2 (emulator/device sim) infrastructure and adds trace instrumentation for diagnosing latency.
+
+**Commit chain (15 commits + 7 plan-review fix rounds + 6 code-review fix rounds):**
+```
+bc61631  Task 1: Robolectric 4.13 toolchain + hello-world smoke
+c657f61  Task 2: OverlayUi interface
+a2d4d95  Task 3: Clock interface
+02e36ae  Task 4: OverlaySession coordinator (behavior-preserving refactor)
+54652ab  Task 5: TraceSink + TraceCycle (10s window, scoped per tap)
+080bdf1  Task 6: LifecycleCoreFacade + ConnectionCoreFacade + Real* impls
+8951ddf  Task 7: debug-only sim_* commands; release variant excludes debug paths
+1b3eb66  Task 8: trace points for poll_tick/cooldown/fg_change/setVisible
+5fd5abb  Task 9: replace liveController/livePoller/liveTapTrigger with single liveSession
+5d1150c  Task 10: 4 Robolectric integration tests (14 cases)
+0d53f68  Task 11: sim-bg-kill.sh with 8 scenarios
+121628c  fix: codex code-review P2 (snapshot-override close fallthrough; macOS date)
+4cd0a31  fix: codex round-2 P2/P3 (bootstrap fail propagation; drop unused jq)
+f6e37a1  fix: codex round-3 P2 (overlay_state log freshness; runner status capture)
+e5df85f  fix: codex round-4 P2 (state label Waiting vs WaitingForBattle)
+9526d55  fix: codex round-5 P2 (preserve fg override between poll-offset samples)
+```
+
+**Plan review chain:** 7 rounds, total 1 P0 + 26 P1 + 9 P2 dispositioned inline.
+**Code review chain:** 6 rounds. Final round: "No discrete correctness issues."
+**Total commits since Phase 1.2:** 16.
+
+**Tests:** 53 total (was 39 after Phase 1.2; +14 new Robolectric integration tests). All green.
+- OverlayStateTest 7
+- OverlayPollerTest 11
+- BattleConnectionControllerTest 6
+- ForegroundDetectorTest 7
+- TraceSinkTest 6
+- RobolectricSmokeTest 2
+- OverlaySessionTapTest 4 (NEW Robolectric)
+- OverlaySessionCooldownTest 3 (NEW)
+- OverlaySessionForegroundTest 3 (NEW)
+- OverlaySessionTeardownRaceTest 4 (NEW codex P1 #3 required)
+
+**Architecture changes:**
+- `OverlaySession` coordinator extracted from BobVpnService (no Android-Service deps; Robolectric-testable).
+- `OverlayUi` interface (allows FakeOverlayUi in tests).
+- `Clock` interface (AndroidElapsedRealtimeClock + ManualClock for tests).
+- `LifecycleCoreFacade` + `ConnectionCoreFacade` + Real* implementations.
+- `DebugConnectionCoreOverride` (debug variant only; implements both ConnectionCoreFacade + ForegroundOverrideProvider).
+- Variant providers: `ConnectionCoreProvider` + `ForegroundOverrideHolder` in src/debug/ + src/release/.
+- `TraceSink` + `TraceCycle` scoped per tap (10s window), 12 trace emission points.
+- `liveSession` replaces 4 transitional companion fields.
+
+**Sim infrastructure ready (NOT YET RUN on device):**
+- `scripts/sim-lib.sh` — 9 helper functions wrapping ADB broadcasts + state parsing + phase-table extraction.
+- `scripts/sim-bg-kill.sh <scenario> [--rebuild]` — 8 scenarios: `cold_start`, `rapid_tap`, `server_rotate`, `permission_revoke`, `slow_snapshot`, `tap_while_snapshot`, `tap_at_poll_offsets`, `preexisting_candidate`.
+
+**Release-dex audit:** clean. `unzip -p app-release-unsigned.apk classes*.dex | strings | grep -E 'DebugConnectionCoreOverride|sim_set|sim_force|sim_clear_all'` produces no matches. `ForegroundOverrideProvider` + `NoOpForegroundOverride` are in release (intentionally — non-debug names).
+
+### Task 12 (5-6s diagnosis) — PENDING: requires device
+
+The diagnostic scenarios need a device (or emulator). When connected, run:
+```bash
+cd /Users/jun/code/bob-assist/android/overlay-app
+./scripts/sim-bg-kill.sh cold_start --rebuild
+./scripts/sim-bg-kill.sh slow_snapshot
+./scripts/sim-bg-kill.sh tap_while_snapshot
+./scripts/sim-bg-kill.sh tap_at_poll_offsets
+./scripts/sim-bg-kill.sh preexisting_candidate
+```
+
+Each scenario outputs:
+- PASS/FAIL per assertion
+- Phase table (per-cycle dt_ms) parsed from `BobTrace` logcat entries
+- Artifacts under `/tmp/sim/<scenario>/<timestamp>/`
+
+Expected diagnostic axes (per the hypothesis tree in spec §1):
+- If `cold_start` shows `tap→close exit` < 50ms but real-world tap is 5-6s → state-gate / gray-tap-being-eaten is the cause (UX issue, not latency)
+- If `slow_snapshot` shows `tap_post entry delay_ms ≈ snapshot_delay_ms` → pollHandler queue serialization (mihomo snapshot blocking tap)
+- If `tap_at_poll_offsets` shows variance > 500ms → poll-rate aliasing
+- If `preexisting_candidate` Ready latency > 800ms → service startup detector race
+
+Diagnosis writeup will append to this section after the scenarios run.
