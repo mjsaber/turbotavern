@@ -405,7 +405,10 @@ run_tap_at_poll_offsets() {
         results="$results $off:$dt"
         note "offset=$off tap→close dt_ms=$dt"
         # Wait for cooldown to expire so next iteration starts clean.
-        wait_for_state WaitingForBattle 5 || true
+        # codex code-review round-4 P2: TestReceiver.stateLabel emits "Waiting",
+        # not "WaitingForBattle" — match the emitted label so the cooldown
+        # exit is actually observed (instead of always timing out via || true).
+        wait_for_state Waiting 5 || true
         sim_clear_all
         sleep 0.5
     done
