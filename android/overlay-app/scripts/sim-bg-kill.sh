@@ -66,10 +66,7 @@ require_device() {
 
 require_device
 
-if ! command -v jq >/dev/null 2>&1; then
-    echo "FATAL: jq not on PATH (brew install jq)" >&2
-    exit 1
-fi
+# codex code-review round-2 P3: jq prerequisite removed (no jq usage in either script).
 
 # --- bootstrap (shared by all scenarios except preexisting_candidate) -----
 
@@ -78,8 +75,17 @@ bootstrap_service() {
     adb shell am force-stop "$BOB_PKG" >/dev/null
     if [ "$REBUILD" -eq 1 ]; then
         note "rebuild + reinstall debug APK"
-        ( cd "$APP_DIR" && ./gradlew :app:assembleDebug -q ) >/dev/null
-        adb install -r "$APP_DIR/app/build/outputs/apk/debug/app-debug.apk" >/dev/null
+        # codex code-review round-2 P2: explicitly guard rebuild + install
+        # so a build failure or device error aborts the scenario instead of
+        # silently validating the previously-installed (stale) APK.
+        if ! ( cd "$APP_DIR" && ./gradlew :app:assembleDebug -q ) >/dev/null; then
+            echo "FATAL: assembleDebug failed" >&2
+            return 1
+        fi
+        if ! adb install -r "$APP_DIR/app/build/outputs/apk/debug/app-debug.apk" >/dev/null; then
+            echo "FATAL: adb install failed" >&2
+            return 1
+        fi
     fi
     adb logcat -c >/dev/null 2>&1 || true
     note "launch MainActivity with auto_start=true"
