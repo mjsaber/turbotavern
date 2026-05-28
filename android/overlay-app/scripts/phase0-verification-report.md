@@ -322,4 +322,34 @@ Expected diagnostic axes (per the hypothesis tree in spec §1):
 - If `tap_at_poll_offsets` shows variance > 500ms → poll-rate aliasing
 - If `preexisting_candidate` Ready latency > 800ms → service startup detector race
 
-Diagnosis writeup will append to this section after the scenarios run.
+### Task 12 — 5-6s diagnosis RESULTS (2026-05-27, OnePlus 10T)
+
+All 8 sim scenarios run on device. Two harness bugs found + fixed first (commit `00fbf13`): adb-shell JSON quote mangling, and overlay_state clearing logcat too aggressively. After fixes, cold_start stable 3/3.
+
+| Scenario | Result | Conclusion |
+|---|---|---|
+| `cold_start` | tap→close = **1ms** (3/3 runs) | The app's own tap→snapshot→pick→close path is essentially instant. |
+| `slow_snapshot` (connectionsJson +1000ms) | tap→close = **1075ms**; snapshot phase = 1001ms | A slow snapshot directly inflates the tap critical path 1:1. |
+| **`tap_while_snapshot`** (2000ms snapshot in flight, tap fired mid-flight) | tap_post delayed **3662ms** | **SMOKING GUN: a tap that lands while a snapshot is running waits behind it on pollHandler.** |
+| `tap_at_poll_offsets` | spread **1-4ms** across 4 offsets | No poll-rate aliasing when the snapshot is fast. |
+| `preexisting_candidate` | Ready in **435ms** | Detection latency is within one poll tick. Fine. |
+| `rapid_tap` | exactly **1** close (9 dropped) | Cooldown gating correct. |
+| `server_rotate` | picked **sim-B** (newer) | Newest-by-createdAt selector correct. |
+
+**ROOT CAUSE (high confidence):**
+
+The overlay tap handler and the 800 ms poll loop **share a single `pollHandler` (HandlerThread)**. Every poll tick calls `MihomoCore.connectionsJson()` — a JNI round-trip into the Go mihomo core that serializes the entire live connection table to JSON. When that call is slow (which it will be under real HS load: many concurrent battle.net / blizzard / CDN connections being serialized every 800 ms), a user tap that arrives while a snapshot is in flight is **queued behind it** on the single handler thread.
+
+`tap_while_snapshot` reproduces this deterministically: a tap fired during a 2 s snapshot waits 3.66 s before its kill runs. The observed real-world 5-6 s ≈ the real `connectionsJson()` serialization time (under live connection count) plus queuing — NOT any app-logic slowness (which is ~1 ms).
+
+**What the sim does NOT measure:** the REAL `connectionsJson()` duration on a live HS BG session. That requires HS running and is the one remaining real-device confirmation. But the architecture vulnerability is proven independent of that number.
+
+**Proposed fix paths (Phase 1.4 — separate plan):**
+1. **Cache the candidate id from the last poll; kill it directly on tap without a fresh snapshot.** The poller already computes `candidate_count` + the picked id each tick — stash it. On tap, call `closeConnection(cachedId)` immediately, skipping `connectionsJson()` from the tap critical path. Removes the snapshot from the tap entirely. (Recommended — smallest, most direct.)
+2. **Run the kill on a separate handler/thread from the poll**, so a tap never queues behind a snapshot.
+3. **Reduce poll pressure**: back off the 800 ms cadence, or only poll `connectionsJson()` when the overlay is visible AND not in cooldown.
+4. **Speed up `connectionsJson()`** (mihomo-side: lighter serialization, or a dedicated "is there a battle socket" query instead of dumping the whole table) — larger, crosses the Go boundary.
+
+Recommend #1 for Phase 1.4: it directly removes the snapshot from the tap path with minimal surface, and the cached-id staleness window is bounded by the 800 ms poll (acceptable — the battle socket is long-lived per Spike D).
+
+**Phase 1.3 exit status:** infrastructure DONE; diagnosis DONE. The 5-6s fix itself is Phase 1.4.
