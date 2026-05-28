@@ -17,15 +17,31 @@
 BOB_PKG=com.bobassist.phase0
 BOB_TEST_ACTION="${BOB_PKG}.TEST"
 
-# Internal: emit one am broadcast command. All args after the cmd name are
-# forwarded raw to adb (must be paired `--es key value` etc.).
+# Single-quote a string for the DEVICE shell (Android sh). Wraps in single
+# quotes and escapes any embedded single quote as '\''.
+_shq() {
+    printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
+}
+
+# Internal: emit one am broadcast command.
+#
+# IMPORTANT (device-shell quoting): `adb shell am broadcast --es json <JSON>`
+# with the JSON passed as a separate arg gets MANGLED — the device sh eats
+# the `{ } "` characters, so a JSON value arrives as ~1 char. We instead build
+# the ENTIRE device command as one string, single-quoting every dynamic value
+# for the device sh, and hand that single string to `adb shell`. The host
+# double-quotes preserve the embedded device single-quotes verbatim.
+#
+# Args after cmd_name must be `--es key value` (or `--ez key value`) triples.
 _bob_broadcast() {
     local cmd_name="$1"; shift
-    adb shell am broadcast \
-        -a "$BOB_TEST_ACTION" \
-        -p "$BOB_PKG" \
-        --es cmd "$cmd_name" \
-        "$@" >/dev/null
+    local devcmd="am broadcast -a $(_shq "$BOB_TEST_ACTION") -p $(_shq "$BOB_PKG") --es cmd $(_shq "$cmd_name")"
+    while [ "$#" -gt 0 ]; do
+        local flag="$1" key="$2" val="$3"
+        shift 3
+        devcmd="$devcmd $flag $(_shq "$key") $(_shq "$val")"
+    done
+    adb shell "$devcmd" >/dev/null
 }
 
 # --- sim_* commands -------------------------------------------------------
@@ -75,18 +91,21 @@ overlay_tap() {
 # SpikeC:I logcat line and prints just the `state=<X>` field (e.g. "Ready").
 # Returns 0 with state on stdout if found within ~1s, else 1.
 overlay_state() {
-    # codex code-review round-3 P2: clear logcat first so we wait for the
-    # FRESH line emitted by THIS broadcast, not a stale prior overlay_state.
-    adb logcat -c >/dev/null 2>&1 || true
+    # NOTE: deliberately does NOT `adb logcat -c` — clearing the global buffer
+    # here would also wipe the BobTrace tap-cycle lines that capture_trace
+    # needs (caused flaky "no close exit seen" failures). To avoid reading a
+    # STALE overlay_state line (codex round-3 P2 concern), we snapshot the
+    # pre-broadcast line count and wait for a NEWER line to appear.
+    local before
+    before=$(adb logcat -d -s SpikeC:I 2>/dev/null | grep -c 'overlay_state state=')
     _bob_broadcast overlay_state
     local deadline=$(( $(date +%s) + 2 ))
-    local line=""
     while [ "$(date +%s)" -lt "$deadline" ]; do
-        line=$(adb logcat -d -s SpikeC:I 2>/dev/null \
-            | grep -E 'overlay_state state=' \
-            | tail -1)
-        if [ -n "$line" ]; then
-            # extract the field after "state=" up to the next space
+        local all after line
+        all=$(adb logcat -d -s SpikeC:I 2>/dev/null | grep 'overlay_state state=')
+        after=$(printf '%s\n' "$all" | grep -c 'overlay_state state=')
+        if [ "$after" -gt "$before" ]; then
+            line=$(printf '%s\n' "$all" | tail -1)
             echo "$line" | sed -E 's/.*overlay_state state=([^ ]+).*/\1/'
             return 0
         fi
