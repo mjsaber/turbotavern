@@ -74,6 +74,62 @@ class BattleConnectionControllerTest {
         assertTrue(ctrl.killBattleSocket() is BattleConnectionController.KillResult.NoCandidate)
     }
 
+    // --- Phase 1.4: killCachedCandidate (closes an already-picked candidate, no snapshot) ---
+
+    private val cand = BattleConnection.Candidate(
+        id = "cached-1", destinationIp = "66.40.189.5", destinationPort = 3724, createdAt = 1000L,
+    )
+
+    @Test
+    fun `killCachedCandidate success maps to Success with candidate fields`() {
+        var closedId: String? = null
+        val ctrl = BattleConnectionController(
+            snapshot = { error("snapshot must not be called on cached path") },
+            close = { id -> closedId = id; MihomoCore.CloseResult.Success },
+        )
+        val r = ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
+            as BattleConnectionController.KillResult.Success
+        assertEquals("cached-1", closedId)
+        assertEquals("cached-1", r.closedId)
+        assertEquals("66.40.189.5", r.destinationIp)
+        assertEquals(3724, r.destinationPort)
+        assertEquals(1, r.candidatesAtKill)
+    }
+
+    @Test
+    fun `killCachedCandidate does NOT call snapshot`() {
+        var snapshotCalls = 0
+        val ctrl = BattleConnectionController(
+            snapshot = { snapshotCalls++; "[]" },
+            close = { MihomoCore.CloseResult.Success },
+        )
+        ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
+        assertEquals(0, snapshotCalls)
+    }
+
+    @Test
+    fun `killCachedCandidate NotFound maps to Failure (stale cache)`() {
+        val ctrl = BattleConnectionController(
+            snapshot = { error("should not be called") },
+            close = { MihomoCore.CloseResult.NotFound },
+        )
+        val r = ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
+        assertTrue(r is BattleConnectionController.KillResult.Failure)
+        assertEquals("NotFound", (r as BattleConnectionController.KillResult.Failure).reason)
+    }
+
+    @Test
+    fun `killCachedCandidate AlreadyClosed maps to AlreadyClosed`() {
+        val ctrl = BattleConnectionController(
+            snapshot = { error("should not be called") },
+            close = { MihomoCore.CloseResult.AlreadyClosed },
+        )
+        assertTrue(
+            ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
+                is BattleConnectionController.KillResult.AlreadyClosed,
+        )
+    }
+
     companion object {
         private val ONE_CANDIDATE_JSON = """
             [{"id":"abc-1","host":"","network":"tcp","destinationIp":"66.40.189.110",

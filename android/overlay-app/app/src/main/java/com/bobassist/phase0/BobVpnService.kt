@@ -17,7 +17,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import com.bobassist.phase0.core.BattleConnection
+import com.bobassist.phase0.core.BattleCandidateCache
 import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.ConnectionCoreProvider
 import com.bobassist.phase0.core.ForegroundOverrideHolder
@@ -186,6 +186,15 @@ class BobVpnService : VpnService() {
         )
         val trace = TraceSink(enabled = BuildConfig.DEBUG, clock = AndroidElapsedRealtimeClock)
 
+        // Phase 1.4: the poll loop refreshes this cache each tick; the tap path reads the
+        // cached candidate and closes it directly, so connectionsJson() is off the tap
+        // critical path. trace lets refresh() emit `poll_snapshot` snapshot_ms (Step 0).
+        val candidateCache = BattleCandidateCache(
+            snapshot = { ConnectionCoreProvider.get().connectionsJson() },
+            clock = AndroidElapsedRealtimeClock,
+            trace = trace,
+        )
+
         val ow = OverlayWindow(this, onTap = { session?.handleTap() })
         val ht = HandlerThread("BobOverlayPoll").apply { start() }
         val handler = Handler(ht.looper)
@@ -197,7 +206,7 @@ class BobVpnService : VpnService() {
                 // Guarded against teardown races (P1 #5): if mihomo has stopped,
                 // count as 0 candidates so the next tick safely emits Waiting.
                 runCatching {
-                    BattleConnection.pickWithCount(ConnectionCoreProvider.get().connectionsJson()).second
+                    candidateCache.refresh()
                 }.getOrElse { err ->
                     breadcrumb("poll snapshot failed: ${err.message}")
                     0
@@ -216,6 +225,7 @@ class BobVpnService : VpnService() {
         )
         val newSession = OverlaySession(
             controller = controller,
+            candidateCache = candidateCache,
             poller = poller,
             detector = detector,
             overlay = ow,

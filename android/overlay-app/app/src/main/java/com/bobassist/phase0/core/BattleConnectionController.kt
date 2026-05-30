@@ -60,4 +60,35 @@ class BattleConnectionController(
             else -> KillResult.Failure(r.toString())
         }
     }
+
+    /**
+     * Close an already-picked candidate WITHOUT taking a fresh snapshot. This is the
+     * Phase 1.4 tap path: the poll loop cached the candidate, so the tap critical path
+     * never calls connectionsJson().
+     *
+     * A stale cached id (socket rotated by the server since the last poll) closes
+     * nothing and surfaces as NotFound → [KillResult.Failure]; the connection id is a
+     * non-recycled UUID, so a stale id can never hit a different connection.
+     */
+    fun killCachedCandidate(
+        cand: BattleConnection.Candidate,
+        candidatesAtKill: Int,
+        cycle: TraceCycle? = null,
+    ): KillResult {
+        cycle?.emit("close", "entry", "conn_id" to cand.id, "cached" to true)
+        val r = close(cand.id)
+        cycle?.emit("close", "exit", "result" to r.toString())
+
+        return when (r) {
+            MihomoCore.CloseResult.Success ->
+                KillResult.Success(
+                    closedId = cand.id,
+                    destinationIp = cand.destinationIp,
+                    destinationPort = cand.destinationPort,
+                    candidatesAtKill = candidatesAtKill,
+                )
+            MihomoCore.CloseResult.AlreadyClosed -> KillResult.AlreadyClosed
+            else -> KillResult.Failure(r.toString())
+        }
+    }
 }

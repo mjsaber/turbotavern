@@ -2,6 +2,7 @@ package com.bobassist.phase0.session
 
 import android.os.Handler
 import android.util.Log
+import com.bobassist.phase0.core.BattleCandidateCache
 import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.foreground.ForegroundDetector
 import com.bobassist.phase0.overlay.OverlayPoller
@@ -35,6 +36,7 @@ import com.bobassist.phase0.util.TraceSink
  */
 class OverlaySession(
     val controller: BattleConnectionController,
+    private val candidateCache: BattleCandidateCache,
     val poller: OverlayPoller,
     val detector: ForegroundDetector,
     private val overlay: OverlayUi,
@@ -103,21 +105,40 @@ class OverlaySession(
         val cycle = trace.beginCycle()
         cycle.emit("tap", "entry", "state" to poller.currentState())
         val tapEntryNs = clock.nowNanos()
-        pollHandler.post {
+        // Phase 1.4: kill the CACHED candidate directly — no connectionsJson() on this
+        // path. We deliberately use plain post() (NOT postAtFrontOfQueue): front-posting
+        // could reorder a tap ahead of a queued foreground pause/cache-clear, letting it
+        // close a stale socket after HS already left foreground (codex gate-3 P2). It also
+        // cannot preempt an in-flight snapshot anyway, so the residual in-flight wait (S#1)
+        // is unchanged — that is P2's concern, not the tap path's.
+        val tapRunnable = Runnable {
             cycle.emit("tap_post", "entry", "delay_ms" to (clock.nowNanos() - tapEntryNs) / 1_000_000L)
             if (!started) {
                 cycle.emit("tap_post", "exit", "result" to "session_stopped")
-                return@post
+                return@Runnable
             }
             val state = poller.currentState()
-            cycle.emit("state_check", "exit", "state" to state)
+            val readiness = candidateCache.current()
+            cycle.emit(
+                "state_check", "exit",
+                "state" to state,
+                "cache_age_ms" to (clock.nowMillis() - readiness.capturedAtMs),
+            )
             when (state) {
                 OverlayState.Ready -> {
-                    val result = runCatching { controller.killBattleSocket(cycle) }
+                    val cand = readiness.candidate
+                    if (cand == null) {
+                        // INV-2 tolerance: Ready should imply a cached candidate, but if
+                        // not, treat as no-op rather than crashing.
+                        cycle.emit("tap_post", "exit", "result" to "no_candidate_cache_miss")
+                        breadcrumb("overlay tap ignored (ready but cache miss)")
+                        return@Runnable
+                    }
+                    val result = runCatching { controller.killCachedCandidate(cand, readiness.count, cycle) }
                         .getOrElse {
                             breadcrumb("overlay tap kill threw: ${it.message}")
                             cycle.emit("kill", "exit", "result" to "exception", "msg" to it.message)
-                            return@post
+                            return@Runnable
                         }
                     cycle.emit("tap_post", "exit", "result" to result::class.simpleName)
                     breadcrumb("overlay tap result=$result")
@@ -138,6 +159,7 @@ class OverlaySession(
                 }
             }
         }
+        pollHandler.post(tapRunnable)
     }
 
     /**
@@ -162,7 +184,16 @@ class OverlaySession(
         breadcrumb("foreground change: HS=$isHsForeground")
         pollHandler.post {
             if (!started) return@post
-            if (isHsForeground) poller.resume() else poller.pause()
+            if (isHsForeground) {
+                poller.resume()
+            } else {
+                poller.pause()
+                // codex gate-3 P2: while paused the cache can't refresh, so it would go
+                // stale. Clear it so a tap in the ≤1 poll window after returning to HS
+                // (state still Ready, no refresh yet) is a safe no-op instead of closing
+                // a stale socket and falsely entering cooldown.
+                candidateCache.clear()
+            }
         }
         val capturedOverlay = overlay
         mainHandler.post {

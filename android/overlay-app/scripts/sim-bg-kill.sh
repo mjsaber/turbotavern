@@ -193,6 +193,71 @@ tap_to_close_dt_ms() {
     ' "$f"
 }
 
+# Phase 1.4 helpers ---------------------------------------------------------
+
+# Count <phase>/<event> trace lines that belong to a cycle containing a `tap entry`.
+# Used to assert the tap path no longer takes a `snapshot` (it closes the cache).
+# tap_cycle_phase_count <trace_file> <phase> <event>
+tap_cycle_phase_count() {
+    awk -v wph="$2" -v wev="$3" '
+        function val(line, key,   m, re) {
+            re = "[ ]" key "=[^ ]+"
+            if (match(line, re)) { m = substr(line, RSTART, RLENGTH); sub("^[ ]" key "=", "", m); return m }
+            return ""
+        }
+        /BobTrace:[[:space:]]+trace[[:space:]]/ {
+            cyc = val($0, "cycle"); ph = val($0, "phase"); ev = val($0, "event")
+            if (cyc == "") next
+            rec[NR] = cyc SUBSEP ph SUBSEP ev
+            if (ph == "tap" && ev == "entry") tapcyc[cyc] = 1
+        }
+        END {
+            n = 0
+            for (i in rec) {
+                split(rec[i], a, SUBSEP)
+                if ((a[1] in tapcyc) && a[2] == wph && a[3] == wev) n++
+            }
+            print n
+        }
+    ' "$1"
+}
+
+# Max snapshot_ms across ALL `poll_snapshot exit` rows (codex r2-plan #1: startup
+# polls before sim_set_snapshot_delay produce small values; take the max).
+# max_poll_snapshot_ms <trace_file>
+max_poll_snapshot_ms() {
+    awk '
+        function val(line, key,   m, re) {
+            re = "[ ]" key "=[^ ]+"
+            if (match(line, re)) { m = substr(line, RSTART, RLENGTH); sub("^[ ]" key "=", "", m); return m }
+            return ""
+        }
+        /phase=poll_snapshot event=exit/ {
+            v = val($0, "snapshot_ms"); if (v != "" && v + 0 > max) max = v + 0
+        }
+        END { print max + 0 }
+    ' "$1"
+}
+
+# conn_id from the `close entry` of a tap cycle (proves WHICH cached candidate was closed).
+# tap_cycle_close_conn_id <trace_file>
+tap_cycle_close_conn_id() {
+    awk '
+        function val(line, key,   m, re) {
+            re = "[ ]" key "=[^ ]+"
+            if (match(line, re)) { m = substr(line, RSTART, RLENGTH); sub("^[ ]" key "=", "", m); return m }
+            return ""
+        }
+        /BobTrace:[[:space:]]+trace[[:space:]]/ {
+            cyc = val($0, "cycle"); ph = val($0, "phase"); ev = val($0, "event")
+            if (cyc == "") next
+            if (ph == "tap" && ev == "entry") tapcyc[cyc] = 1
+            if (ph == "close" && ev == "entry" && (cyc in tapcyc) && cid == "") cid = val($0, "conn_id")
+        }
+        END { print cid }
+    ' "$1"
+}
+
 # --- scenario runners -----------------------------------------------------
 
 run_cold_start() {
@@ -264,17 +329,19 @@ run_server_rotate() {
     sleep 0.5
     overlay_tap
     local trace_file="$ART_DIR/bobtrace.log"
-    if ! wait_for_trace "$trace_file" pick exit 5; then
-        bad "no pick exit observed"
+    # Phase 1.4: tap no longer picks; the poll loop cached sim-B (newest-by-createdAt).
+    # Assert the tap closed the cached newest candidate via its `close entry conn_id`.
+    if ! wait_for_trace "$trace_file" close entry 5; then
+        bad "no close entry observed"
         emit_phase_table "$trace_file"
         return 1
     fi
-    local picked; picked=$(extract_field "$trace_file" pick exit picked_id)
-    note "pick picked_id = $picked"
-    if [ "$picked" = "sim-B" ]; then
-        ok "picked newer candidate (sim-B)"
+    local closed; closed=$(tap_cycle_close_conn_id "$trace_file")
+    note "tap closed conn_id = $closed"
+    if [ "$closed" = "sim-B" ]; then
+        ok "closed cached newest candidate (sim-B)"
     else
-        bad "expected picked_id=sim-B, got $picked — finding for Task 12"
+        bad "expected closed conn_id=sim-B, got $closed"
     fi
     emit_phase_table "$trace_file"
 }
@@ -290,7 +357,8 @@ run_permission_revoke() {
     sim_set_foreground false
     sleep 3   # detector tick
     local trace_file; trace_file=$(capture_trace)
-    if grep -qE 'phase=setVisible event=entry visible=false' "$trace_file"; then
+    # NB: t_ns=/thread= fields sit between event= and visible=, so allow .* between them.
+    if grep -qE 'phase=setVisible event=entry .*visible=false' "$trace_file"; then
         ok "setVisible(false) observed in trace"
     else
         bad "no setVisible(false) — finding for Task 12"
@@ -314,39 +382,24 @@ run_slow_snapshot() {
         emit_phase_table "$trace_file"
         return 1
     fi
-    # Snapshot phase dt_ms: t(snapshot exit) - t(snapshot entry) on the tap's cycle.
-    local snap_dt
-    snap_dt=$(awk '
-        function val(line, key,    m, re) {
-            re = "[ ]" key "=[^ ]+"
-            if (match(line, re)) { m = substr(line, RSTART, RLENGTH); sub("^[ ]" key "=", "", m); return m }
-            return ""
-        }
-        /BobTrace:[[:space:]]+trace[[:space:]]/ {
-            cyc = val($0, "cycle"); ph = val($0, "phase"); ev = val($0, "event"); tns = val($0, "t_ns")
-            if (cyc == "" || tns == "") next
-            # We care about cycles that contain a `tap entry` (i.e. the tap path snapshot).
-            if (ph == "tap" && ev == "entry") tap_cyc[cyc] = 1
-            if (ph == "snapshot" && ev == "entry" && (cyc in tap_cyc)) s_in[cyc] = tns
-            if (ph == "snapshot" && ev == "exit"  && (cyc in s_in) && !(cyc in s_out)) {
-                s_out[cyc] = tns
-                printf "%d\n", (tns - s_in[cyc]) / 1000000
-                exit
-            }
-        }
-    ' "$trace_file")
+    # Phase 1.4: the slow snapshot now lives on the POLL path, not the tap path.
+    # (a) the tap cycle must take NO `snapshot`; (b) the poll snapshot_ms reflects the delay.
+    local tap_snap; tap_snap=$(tap_cycle_phase_count "$trace_file" snapshot exit)
+    local poll_ms;  poll_ms=$(max_poll_snapshot_ms "$trace_file")
     local total_dt; total_dt=$(tap_to_close_dt_ms "$trace_file")
-    note "snapshot phase dt_ms = $snap_dt; tap→close dt_ms = $total_dt"
-    if [ -n "$snap_dt" ] && [ "$snap_dt" -ge 1000 ]; then
-        ok "snapshot dt_ms ≥ 1000 (got ${snap_dt}ms)"
+    note "tap-cycle snapshot phases = $tap_snap; max poll_snapshot snapshot_ms = $poll_ms; tap→close dt_ms = $total_dt"
+    if [ "$tap_snap" = "0" ]; then
+        ok "tap path took no snapshot (cached close)"
     else
-        bad "expected snapshot dt_ms ≥ 1000, got '$snap_dt' — finding for Task 12"
+        bad "tap path still took $tap_snap snapshot(s) — connectionsJson on tap path"
     fi
-    if [ -n "$total_dt" ] && [ "$total_dt" -ge 1000 ]; then
-        ok "tap→close ≥ 1000ms (got ${total_dt}ms)"
+    if [ -n "$poll_ms" ] && [ "$poll_ms" -ge 1000 ]; then
+        ok "poll snapshot_ms ≥ 1000 (got ${poll_ms}ms) — slow snapshot now on poll path"
     else
-        bad "expected tap→close ≥ 1000ms, got '$total_dt' — finding for Task 12"
+        bad "expected poll snapshot_ms ≥ 1000, got '$poll_ms'"
     fi
+    # tap→close is no longer bound to the snapshot delay; record only (may be fast or
+    # queued behind an in-flight poll snapshot — that residual S#1 is P2's concern).
     emit_phase_table "$trace_file"
 }
 
@@ -368,10 +421,23 @@ run_tap_while_snapshot() {
     fi
     local delay_ms; delay_ms=$(extract_field "$trace_file" tap_post entry delay_ms)
     note "tap_post delay_ms = $delay_ms"
+    # Residual S#1: the tap still queues behind the in-flight POLL snapshot (P2's concern).
     if [ -n "$delay_ms" ] && [ "$delay_ms" -ge 1500 ]; then
-        ok "tap_post queued ≥ 1500ms (got ${delay_ms}ms)"
+        ok "tap_post queued ≥ 1500ms (got ${delay_ms}ms) — residual in-flight poll wait (S#1)"
     else
-        bad "expected tap_post delay_ms ≥ 1500, got '$delay_ms' — finding for Task 12"
+        note "tap_post delay_ms = '$delay_ms' (in-flight poll wait; non-deterministic)"
+    fi
+    # Phase 1.4 core assertion: the tap path itself takes NO snapshot.
+    if ! wait_for_trace "$trace_file" close exit 10; then
+        bad "no close exit observed"
+        emit_phase_table "$trace_file"
+        return 1
+    fi
+    local tap_snap; tap_snap=$(tap_cycle_phase_count "$trace_file" snapshot exit)
+    if [ "$tap_snap" = "0" ]; then
+        ok "tap path took no snapshot (cached close) — connectionsJson off the tap path"
+    else
+        bad "tap path still took $tap_snap snapshot(s)"
     fi
     emit_phase_table "$trace_file"
 }
