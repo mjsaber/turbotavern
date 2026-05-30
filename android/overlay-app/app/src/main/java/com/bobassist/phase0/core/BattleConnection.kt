@@ -6,9 +6,16 @@ import org.json.JSONArray
  * Spike D-validated filter for the live HS BG battle socket.
  *
  * Fingerprint (verified on OnePlus 10T + Android 15 + international HS):
- *   - metadata.host == ""               // unresolved/direct-IP connect
+ *   - metadata.host == ""                       // unresolved/direct-IP connect
  *   - metadata.network == "tcp"
- *   - metadata.destinationPort == 3724  // Blizzard BG game server
+ *   - metadata.destinationPort in [1119, 3724]  // Blizzard game-server port
+ *
+ * Port evidence: Spike D (2026-05) saw the battle/game socket on 3724. A
+ * 2026-05-29 live recording (recordings/2026-05-29-session1) showed the same
+ * direct-IP game connection (host=="", 66.40.x block) on **1119** with NO 3724
+ * present — so the old port-3724-only fingerprint matched 0/834 frames. Both
+ * are Blizzard game ports; we accept either. host=="" (direct-IP, no DNS)
+ * uniquely separates the game-server socket from resolved CDN/service traffic.
  *
  * Under Phase 0 build tag `cmfa` + find-process-mode:off, only HS is in
  * addAllowedApplication, so the connection table contains only HS sockets.
@@ -20,6 +27,9 @@ import org.json.JSONArray
  * newest by createdAt if multiple ever co-exist.
  */
 object BattleConnection {
+
+    /** Blizzard game-server ports seen carrying the live battle session. */
+    private val BATTLE_PORTS = setOf(1119, 3724)
 
     data class Candidate(
         val id: String,
@@ -44,7 +54,7 @@ object BattleConnection {
             val o = arr.optJSONObject(i) ?: continue
             if (o.optString("host") != "") continue
             if (o.optString("network") != "tcp") continue
-            if (o.optInt("destinationPort") != 3724) continue
+            if (o.optInt("destinationPort") !in BATTLE_PORTS) continue
             candidates += Candidate(
                 id = o.optString("id"),
                 destinationIp = o.optString("destinationIp"),
