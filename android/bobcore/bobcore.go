@@ -17,6 +17,7 @@ package bobcore
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -220,7 +221,8 @@ func StartTun(fd int, stack, gateway, dns string) string {
 		FileDescriptor:      fd,
 	}
 
-	listener, err := sing_tun.New(options, tunnel.Tunnel)
+	// Phase 1.5: wrap the tunnel so CloseConnection can RST the inbound conn.
+	listener, err := sing_tun.New(options, &rstTunnel{fullTunnel: tunnel.Tunnel})
 	if err != nil {
 		return "sing_tun.New: " + err.Error()
 	}
@@ -296,20 +298,37 @@ func CloseConnection(id string) int {
 	if tracker == nil {
 		return 1
 	}
-	if err := tracker.Close(); err != nil {
-		// A connection mihomo just removed (natural close mid-call) can
-		// surface as "use of closed network connection" or net.ErrClosed.
-		// Target state ("connection ends") is already achieved; report
-		// AlreadyClosed so the caller doesn't treat this as a hard error.
-		msg := err.Error()
-		if strings.Contains(msg, "use of closed network connection") ||
-			strings.Contains(msg, "already closed") {
-			return 2
+
+	// Phase 1.5: RST the inbound (HS-facing) conn so HS notices instantly.
+	// Only when the startup self-check confirmed RST is reachable; otherwise
+	// this whole block is skipped and behavior is identical to before.
+	rstAttempted := false
+	if rstEnabled.Load() {
+		if e, ok := loadInbound(tracker.Info().Metadata); ok {
+			rstAttempted = resetInbound(e.conn)
 		}
-		log.Warnln("[bobcore] CloseConnection(%s) err: %s", id, msg)
-		return 4
+		log.Infoln("[bobcore] CloseConnection(%s) rst=%v", id, rstAttempted)
 	}
-	return 0
+
+	err := tracker.Close()
+	if err == nil {
+		return 0
+	}
+	// A connection mihomo/Relay just removed (natural close, or our RST cascading
+	// through Relay) surfaces as net.ErrClosed / "use of closed network connection".
+	msg := err.Error()
+	closedNoise := errors.Is(err, net.ErrClosed) ||
+		strings.Contains(msg, "use of closed network connection") ||
+		strings.Contains(msg, "already closed")
+	if rstAttempted && closedNoise {
+		// RST already achieved the goal; the outbound double-close is just noise.
+		return 0
+	}
+	if closedNoise {
+		return 2
+	}
+	log.Warnln("[bobcore] CloseConnection(%s) err: %s", id, msg)
+	return 4
 }
 
 // StopTun closes the TUN listener. Idempotent.
