@@ -353,3 +353,58 @@ The overlay tap handler and the 800 ms poll loop **share a single `pollHandler` 
 Recommend #1 for Phase 1.4: it directly removes the snapshot from the tap path with minimal surface, and the cached-id staleness window is bounded by the 800 ms poll (acceptable — the battle socket is long-lived per Spike D).
 
 **Phase 1.3 exit status:** infrastructure DONE; diagnosis DONE. The 5-6s fix itself is Phase 1.4.
+
+## Phase 1.4 — Tap-latency fix (candidate cache, P1-only) (2026-05-29)
+
+**Goal:** Remove `connectionsJson()` from the tap critical path (root cause of the 5-6s delay, see Phase 1.3 diagnosis). The poll loop caches the picked candidate; the tap closes the cached id directly via `BattleConnectionController.killCachedCandidate()`. Everything stays single-threaded on `pollHandler`. The dedicated kill-thread (P2, which would also remove the residual in-flight-snapshot wait) is deferred — see `docs/.../specs/2026-05-28-bob-android-phase1.4-tap-latency-design.md` §5.6.
+
+**Spec/plan:** v3 / READY — each gate passed codex review (spec r1+r2, plan r1+r2, impl r1 + 2 re-reviews).
+
+**Code (uncommitted working tree as of writing):**
+- NEW `core/BattleCandidateCache.kt` (`CachedReadiness` + atomic refresh; emits `poll_snapshot` `snapshot_ms`).
+- `core/BattleConnectionController.kt` +`killCachedCandidate()` (no snapshot; stale id → NotFound → Failure, no cooldown).
+- `session/OverlaySession.kt`: tap Ready branch closes cached candidate; plain `post` (NOT `postAtFrontOfQueue` — dropped per gate-3 P2); `handleForegroundChange(false)` clears the cache on pause.
+- `BobVpnService.kt` / `IntegrationFactory.kt`: wire `BattleCandidateCache` between poll and tap.
+
+**Tests:** 74 total (was 53; +21). New: `BattleCandidateCacheTest` (7), `BattleConnectionControllerTest` +4, `OverlaySessionCacheTest` (10: T1–T10). All green via `./gradlew :app:testDebugUnitTest`.
+
+**Build/audit:** `assembleDebug` + `assembleRelease` green. Release dex audit clean — no `sim_*` / `DebugConnectionCoreOverride` leakage; new classes are production (expected).
+
+**Sim (`sim-bg-kill.sh`) — ALL 8 RUN ON DEVICE (OnePlus 10T `e85c3473`, 2026-05-29), 8/8 PASS:**
+
+| Scenario | Result | Live evidence |
+|---|---|---|
+| `cold_start` | PASS 2/2 | tap cycle: `tap_post → state_check(cache_age_ms=311) → close conn_id=sim-1 cached=true → Success`, **no snapshot phase**, tap→close ≈ 0ms |
+| `tap_while_snapshot` | PASS 2/2 | **core proof**: tap `delay_ms=1699` (queued behind in-flight 2s poll snapshot = residual S#1), then cached close ~1ms; **tap cycle has 0 snapshot phases**. Pre-1.4 ≈ 1.7s + 2s = 3.7s |
+| `slow_snapshot` | PASS 2/2 | tap-cycle snapshot phases = 0; slow snapshot now on poll path (`poll_snapshot snapshot_ms=1001`); tap→close = 0ms |
+| `server_rotate` | PASS 1/1 | tap closed cached newest `conn_id=sim-B` |
+| `rapid_tap` | PASS 1/1 | exactly 1 close (cooldown dropped the rest) |
+| `tap_at_poll_offsets` | PASS 1/1 | tap→close spread < 200ms (0:1 200:1 400:1 600:1 ms) |
+| `preexisting_candidate` | PASS 1/1 | Ready in 523ms (< 1 poll tick) |
+| `permission_revoke` | PASS 1/1 | `setVisible(false)` observed (fixed a pre-existing harness grep bug: `t_ns`/`thread` sit between `event=` and `visible=`, needed `.*`) |
+
+P1 is **proven live**: the tap path no longer takes a snapshot. The only residual latency is one in-flight poll snapshot (`S#1`, seen as 1699ms in `tap_while_snapshot`) — exactly what the deferred P2 (kill thread) would remove.
+
+### Codex gate-3 findings disposition
+
+| Finding | Sev | Disposition |
+|---|---|---|
+| Stale cache during **paused poll** → false close after resume | P2 | **FIXED** — `candidateCache.clear()` on pause; regression test T10. |
+| `postAtFrontOfQueue` reorders tap ahead of queued pause/clear | P2 | **FIXED** — dropped `postAtFrontOfQueue`, use plain `post`. Also dissolves earlier r1#12/r2#2 ordering concerns. |
+| Stale cache during **server-rotation** ≤800ms coexistence → false Success + 2s cooldown while new socket stays open | P2 | **ACCEPTED (bounded, documented)** — user chose "clear cache on pause"; rotation window is ≤800ms, rare (Spike D: one socket at a time), self-corrects on next poll + re-tap. Full removal = OQ-4 fallback or P2 (future). |
+
+### PENDING device (Step 0 + acceptance)
+
+When a device is attached, run on a live HS BG match and record here:
+```bash
+cd android/overlay-app
+./gradlew :app:installDebug      # or adb install -r
+# play a BG round, tap the green overlay during combat, then:
+adb logcat -d -s BobTrace:I | grep poll_snapshot   # snapshot_ms p50/p95 = real S
+adb logcat -d -s BobTrace:I | grep -E 'state_check|close'  # tap→close + cache_age_ms
+./scripts/sim-bg-kill.sh tap_while_snapshot   # tap cycle takes no snapshot
+./scripts/sim-bg-kill.sh slow_snapshot
+./scripts/sim-bg-kill.sh server_rotate
+./scripts/sim-bg-kill.sh cold_start --rebuild
+```
+Decide from measured `S` whether the residual in-flight wait warrants opening the P2 phase (§5.6).
