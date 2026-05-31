@@ -31,3 +31,22 @@ def test_non_string_returns_empty():
 
 def test_punctuation_preserved():
     assert normalize_name_key("Al'Akir") == "al'akir"
+
+
+def test_combining_equivalence():
+    # NFKC unifies decomposed (E + U+0301 combining acute) vs precomposed (U+00C9)
+    decomposed = "E" + chr(0x0301) + "clair"
+    precomposed = chr(0x00C9) + "clair"
+    assert decomposed != precomposed                       # genuinely distinct inputs
+    assert normalize_name_key(decomposed) == normalize_name_key(precomposed) == "éclair"
+
+
+def test_fullwidth_punctuation_normalized():
+    # NFKC maps fullwidth comma (U+FF0C) to ASCII comma
+    assert normalize_name_key("Ｆｏｏ" + chr(0xFF0C)) == "foo,"
+
+
+def test_lone_surrogate_is_stripped():
+    # lone surrogates cannot UTF-8-encode -> stripped so name_key is always storable
+    assert normalize_name_key("a\ud800b") == "ab"
+    assert normalize_name_key("\ud800") == ""

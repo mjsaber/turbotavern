@@ -9,4 +9,7 @@ def normalize_name_key(name) -> str:
     if not isinstance(name, str):
         return ""
     text = unicodedata.normalize("NFKC", name).casefold()
+    # Drop lone surrogates: they cannot UTF-8-encode and would crash the SQLite
+    # write. "ignore" strips them while keeping valid non-BMP scalars intact.
+    text = text.encode("utf-8", "ignore").decode("utf-8")
     return " ".join(text.split())
