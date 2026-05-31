@@ -555,6 +555,28 @@ def test_validate_rejects_trinket_entry_missing_mmr_data():
         normalize.normalize_firestone(bad, entity_type="trinket", url_mmr=None)
 
 
+def test_trinket_skips_zero_sample_bracket():
+    # real feed uses dataPoints==0 + placement==0 as a no-sample sentinel for low-pop brackets
+    raw = {"trinketStats": [{"trinketCardId": "T1", "dataPoints": 50, "pickRate": 0.2,
+        "averagePlacement": 4.5,
+        "averagePlacementAtMmr": [
+            {"mmr": 100, "dataPoints": 50, "placement": 4.5},
+            {"mmr": 1, "dataPoints": 0, "placement": 0}],   # no sample -> must be skipped, not rejected
+        "pickRateAtMmr": [{"mmr": 100, "dataPoints": 50, "pickRate": 0.2},
+                          {"mmr": 1, "dataPoints": 0, "pickRate": None}]}]}
+    feeds = normalize.normalize_firestone(raw, entity_type="trinket", url_mmr=None)
+    assert set(feeds) == {"100"}                       # '1' dropped (only a 0-sample row)
+    assert feeds["100"].rows[0].avg_placement == 4.5
+
+
+def test_hero_skips_zero_sample_row():
+    raw = {"heroStats": [
+        {"heroCardId": "H1", "dataPoints": 100, "averagePosition": 4.0},
+        {"heroCardId": "H2", "dataPoints": 0, "averagePosition": 0}]}   # no sample -> skipped
+    feeds = normalize.normalize_firestone(raw, entity_type="hero", url_mmr="100")
+    assert [r.card_id for r in feeds["100"].rows] == ["H1"]
+
+
 def test_validate_rejects_out_of_range_placement():
     bad = {"heroStats": [{"heroCardId": "X", "dataPoints": 10, "averagePosition": 9.9}]}
     with pytest.raises(normalize.ValidationError):
@@ -655,6 +677,8 @@ def _normalize_hero(raw: dict, url_mmr: str) -> dict[str, NormalizedFeed]:
             raise ValidationError(f"hero row missing heroCardId: {it!r}")
         if "averagePosition" not in it or "dataPoints" not in it:
             raise ValidationError(f"hero row missing core field: {cid}")
+        if it.get("dataPoints") == 0:   # no sample -> placement is a 0 sentinel; skip
+            continue
         offered, picked = it.get("totalOffered"), it.get("totalPicked")
         pick_rate = (picked / offered) if (offered and picked is not None) else None
         extra = {k: v for k, v in it.items()
@@ -690,6 +714,8 @@ def _normalize_trinket(raw: dict) -> dict[str, NormalizedFeed]:
                 continue
             if "placement" not in ap or "dataPoints" not in ap:
                 raise ValidationError(f"trinket {cid} mmr {bracket} missing core field")
+            if ap.get("dataPoints") == 0:   # no sample -> placement is a 0 sentinel; skip
+                continue
             per_bracket[bracket].append(
                 _mk_row(cid, ap["placement"], ap["dataPoints"], pr_by_mmr.get(ap.get("mmr")),
                         None, dict(extra)))
@@ -708,7 +734,7 @@ def normalize_firestone(raw: dict, entity_type: str, url_mmr: str | None) -> dic
     raise ValidationError(f"unknown entity_type: {entity_type}")
 ```
 
-- [ ] **Step 4: Run** — `uv run pytest tests/test_normalize.py -q` → Expected: 10 passed.
+- [ ] **Step 4: Run** — `uv run pytest tests/test_normalize.py -q` → Expected: 12 passed.
 
 - [ ] **Step 5: Commit**
 ```bash
