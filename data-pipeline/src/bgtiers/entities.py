@@ -33,8 +33,8 @@ def sync_entities(conn: sqlite3.Connection, cards: list[dict], now: str) -> int:
                                 trinket_class, first_seen_at, last_seen_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (entity_type, card_id) DO UPDATE SET
-                dbf_id        = excluded.dbf_id,
-                name          = excluded.name,
+                dbf_id        = COALESCE(excluded.dbf_id, entity.dbf_id),
+                name          = COALESCE(excluded.name, entity.name),
                 image_url     = COALESCE(entity.image_url, excluded.image_url),
                 trinket_class = COALESCE(excluded.trinket_class, entity.trinket_class),
                 last_seen_at  = excluded.last_seen_at

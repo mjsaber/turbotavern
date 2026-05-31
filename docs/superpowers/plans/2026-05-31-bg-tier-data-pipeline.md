@@ -792,6 +792,13 @@ def test_sync_backfills_existing_stub(conn):
     entities.sync_entities(conn, _cards(), now="t1")
     row = conn.execute("SELECT name, dbf_id, trinket_class FROM entity WHERE card_id='BG30_MagicItem_301'").fetchone()
     assert row["name"] == "Lesser One" and row["dbf_id"] == 60301 and row["trinket_class"] == "lesser"
+
+
+def test_sync_does_not_clobber_known_name_with_null(conn):
+    entities.sync_entities(conn, _cards(), now="t0")                       # name set
+    entities.sync_entities(conn, [{"id": "BG_HERO_001", "type": "HERO", "set": "BATTLEGROUNDS"}], now="t1")  # no name/dbfId
+    row = conn.execute("SELECT name, dbf_id FROM entity WHERE card_id='BG_HERO_001'").fetchone()
+    assert row["name"] == "Test Hero One" and row["dbf_id"] == 50001       # preserved
 ```
 
 - [ ] **Step 3: Run to verify it fails** — `uv run pytest tests/test_entities.py -q` → FAIL.
@@ -835,8 +842,8 @@ def sync_entities(conn: sqlite3.Connection, cards: list[dict], now: str) -> int:
                                 trinket_class, first_seen_at, last_seen_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (entity_type, card_id) DO UPDATE SET
-                dbf_id        = excluded.dbf_id,
-                name          = excluded.name,
+                dbf_id        = COALESCE(excluded.dbf_id, entity.dbf_id),
+                name          = COALESCE(excluded.name, entity.name),
                 image_url     = COALESCE(entity.image_url, excluded.image_url),
                 trinket_class = COALESCE(excluded.trinket_class, entity.trinket_class),
                 last_seen_at  = excluded.last_seen_at
@@ -865,7 +872,7 @@ def ensure_entity(conn: sqlite3.Connection, entity_type: str, card_id: str, now:
     return cur.lastrowid
 ```
 
-- [ ] **Step 5: Run** — `uv run pytest tests/test_entities.py -q` → Expected: 6 passed.
+- [ ] **Step 5: Run** — `uv run pytest tests/test_entities.py -q` → Expected: 7 passed.
 
 - [ ] **Step 6: Commit**
 ```bash

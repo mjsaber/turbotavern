@@ -52,3 +52,10 @@ def test_sync_backfills_existing_stub(conn):
     entities.sync_entities(conn, _cards(), now="t1")
     row = conn.execute("SELECT name, dbf_id, trinket_class FROM entity WHERE card_id='BG30_MagicItem_301'").fetchone()
     assert row["name"] == "Lesser One" and row["dbf_id"] == 60301 and row["trinket_class"] == "lesser"
+
+
+def test_sync_does_not_clobber_known_name_with_null(conn):
+    entities.sync_entities(conn, _cards(), now="t0")                       # name set
+    entities.sync_entities(conn, [{"id": "BG_HERO_001", "type": "HERO", "set": "BATTLEGROUNDS"}], now="t1")  # no name/dbfId
+    row = conn.execute("SELECT name, dbf_id FROM entity WHERE card_id='BG_HERO_001'").fetchone()
+    assert row["name"] == "Test Hero One" and row["dbf_id"] == 50001       # preserved
