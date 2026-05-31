@@ -80,6 +80,8 @@ def load_url(conn: sqlite3.Connection, *, source, entity_type, raw_url, time_per
         assert feeds_by_bracket is not None and body is not None
         outcomes: dict[str, Outcome] = {}
         for bracket, feed in feeds_by_bracket.items():
+            if not feed.rows:          # defensive: never create a snapshot with zero stat rows
+                continue
             if _latest_hash(conn, source, entity_type, bracket, time_period) == content_hash(feed):
                 outcomes[bracket] = Outcome.UNCHANGED
             else:

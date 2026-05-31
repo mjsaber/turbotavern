@@ -65,7 +65,8 @@ def _normalize_hero(raw: dict, url_mmr: str) -> dict[str, NormalizedFeed]:
             raise ValidationError(f"hero row missing heroCardId: {it!r}")
         if "averagePosition" not in it or "dataPoints" not in it:
             raise ValidationError(f"hero row missing core field: {cid}")
-        if it.get("dataPoints") == 0:   # no sample -> placement is a 0 sentinel; skip
+        dp = it.get("dataPoints")
+        if dp == 0 and not isinstance(dp, bool):   # no sample -> 0 sentinel; skip (bool flows to _num)
             continue
         offered, picked = it.get("totalOffered"), it.get("totalPicked")
         pick_rate = (picked / offered) if (offered and picked is not None) else None
@@ -74,7 +75,9 @@ def _normalize_hero(raw: dict, url_mmr: str) -> dict[str, NormalizedFeed]:
                               "placementDistribution", "totalOffered", "totalPicked")}
         rows.append(_mk_row(cid, it["averagePosition"], it["dataPoints"], pick_rate,
                             it.get("placementDistribution"), extra))
-    return {url_mmr: _build_feed(rows, raw, fp)}
+    # all rows were no-sample -> no dimension (consistent with trinket empty-bracket drop;
+    # load_url also skips empty feeds defensively, so no empty snapshot is ever created)
+    return {url_mmr: _build_feed(rows, raw, fp)} if rows else {}
 
 
 def _normalize_trinket(raw: dict) -> dict[str, NormalizedFeed]:
@@ -102,7 +105,8 @@ def _normalize_trinket(raw: dict) -> dict[str, NormalizedFeed]:
                 continue
             if "placement" not in ap or "dataPoints" not in ap:
                 raise ValidationError(f"trinket {cid} mmr {bracket} missing core field")
-            if ap.get("dataPoints") == 0:   # no sample -> placement is a 0 sentinel; skip
+            dp = ap.get("dataPoints")
+            if dp == 0 and not isinstance(dp, bool):   # no sample -> 0 sentinel; skip
                 continue
             per_bracket[bracket].append(
                 _mk_row(cid, ap["placement"], ap["dataPoints"], pr_by_mmr.get(ap.get("mmr")),

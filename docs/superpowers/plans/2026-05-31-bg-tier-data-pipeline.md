@@ -577,6 +577,18 @@ def test_hero_skips_zero_sample_row():
     assert [r.card_id for r in feeds["100"].rows] == ["H1"]
 
 
+def test_hero_all_zero_sample_yields_no_dimension():
+    raw = {"heroStats": [{"heroCardId": "H1", "dataPoints": 0, "averagePosition": 0}]}
+    feeds = normalize.normalize_firestone(raw, entity_type="hero", url_mmr="100")
+    assert feeds == {}                                 # no empty snapshot will be created
+
+
+def test_datapoints_false_is_rejected_not_skipped():
+    bad = {"heroStats": [{"heroCardId": "H1", "dataPoints": False, "averagePosition": 4.0}]}
+    with pytest.raises(normalize.ValidationError):     # bool flows to _num, not treated as 0-sample
+        normalize.normalize_firestone(bad, entity_type="hero", url_mmr="100")
+
+
 def test_validate_rejects_out_of_range_placement():
     bad = {"heroStats": [{"heroCardId": "X", "dataPoints": 10, "averagePosition": 9.9}]}
     with pytest.raises(normalize.ValidationError):
@@ -677,7 +689,8 @@ def _normalize_hero(raw: dict, url_mmr: str) -> dict[str, NormalizedFeed]:
             raise ValidationError(f"hero row missing heroCardId: {it!r}")
         if "averagePosition" not in it or "dataPoints" not in it:
             raise ValidationError(f"hero row missing core field: {cid}")
-        if it.get("dataPoints") == 0:   # no sample -> placement is a 0 sentinel; skip
+        dp = it.get("dataPoints")
+        if dp == 0 and not isinstance(dp, bool):   # no sample -> 0 sentinel; skip (bool flows to _num)
             continue
         offered, picked = it.get("totalOffered"), it.get("totalPicked")
         pick_rate = (picked / offered) if (offered and picked is not None) else None
@@ -686,7 +699,9 @@ def _normalize_hero(raw: dict, url_mmr: str) -> dict[str, NormalizedFeed]:
                               "placementDistribution", "totalOffered", "totalPicked")}
         rows.append(_mk_row(cid, it["averagePosition"], it["dataPoints"], pick_rate,
                             it.get("placementDistribution"), extra))
-    return {url_mmr: _build_feed(rows, raw, fp)}
+    # all rows were no-sample -> no dimension (consistent with trinket empty-bracket drop;
+    # load_url also skips empty feeds defensively, so no empty snapshot is ever created)
+    return {url_mmr: _build_feed(rows, raw, fp)} if rows else {}
 
 
 def _normalize_trinket(raw: dict) -> dict[str, NormalizedFeed]:
@@ -714,7 +729,8 @@ def _normalize_trinket(raw: dict) -> dict[str, NormalizedFeed]:
                 continue
             if "placement" not in ap or "dataPoints" not in ap:
                 raise ValidationError(f"trinket {cid} mmr {bracket} missing core field")
-            if ap.get("dataPoints") == 0:   # no sample -> placement is a 0 sentinel; skip
+            dp = ap.get("dataPoints")
+            if dp == 0 and not isinstance(dp, bool):   # no sample -> 0 sentinel; skip
                 continue
             per_bracket[bracket].append(
                 _mk_row(cid, ap["placement"], ap["dataPoints"], pr_by_mmr.get(ap.get("mmr")),
@@ -734,7 +750,7 @@ def normalize_firestone(raw: dict, entity_type: str, url_mmr: str | None) -> dic
     raise ValidationError(f"unknown entity_type: {entity_type}")
 ```
 
-- [ ] **Step 4: Run** — `uv run pytest tests/test_normalize.py -q` → Expected: 12 passed.
+- [ ] **Step 4: Run** — `uv run pytest tests/test_normalize.py -q` → Expected: 14 passed.
 
 - [ ] **Step 5: Commit**
 ```bash
@@ -1101,6 +1117,8 @@ def load_url(conn: sqlite3.Connection, *, source, entity_type, raw_url, time_per
         assert feeds_by_bracket is not None and body is not None
         outcomes: dict[str, Outcome] = {}
         for bracket, feed in feeds_by_bracket.items():
+            if not feed.rows:          # defensive: never create a snapshot with zero stat rows
+                continue
             if _latest_hash(conn, source, entity_type, bracket, time_period) == content_hash(feed):
                 outcomes[bracket] = Outcome.UNCHANGED
             else:

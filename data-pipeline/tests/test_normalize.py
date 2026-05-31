@@ -87,6 +87,18 @@ def test_hero_skips_zero_sample_row():
     assert [r.card_id for r in feeds["100"].rows] == ["H1"]
 
 
+def test_hero_all_zero_sample_yields_no_dimension():
+    raw = {"heroStats": [{"heroCardId": "H1", "dataPoints": 0, "averagePosition": 0}]}
+    feeds = normalize.normalize_firestone(raw, entity_type="hero", url_mmr="100")
+    assert feeds == {}                                 # no empty snapshot will be created
+
+
+def test_datapoints_false_is_rejected_not_skipped():
+    bad = {"heroStats": [{"heroCardId": "H1", "dataPoints": False, "averagePosition": 4.0}]}
+    with pytest.raises(normalize.ValidationError):     # bool flows to _num, not treated as 0-sample
+        normalize.normalize_firestone(bad, entity_type="hero", url_mmr="100")
+
+
 def test_validate_rejects_out_of_range_placement():
     bad = {"heroStats": [{"heroCardId": "X", "dataPoints": 10, "averagePosition": 9.9}]}
     with pytest.raises(normalize.ValidationError):
