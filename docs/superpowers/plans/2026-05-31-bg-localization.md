@@ -235,12 +235,18 @@ Expected: FAIL（`AttributeError: ... hsjson_locale_config`）
 
 - [ ] **Step 3: 实现**
 
-`data-pipeline/src/bgtiers/config.py`：删除 `hsjson_cards_url`，替换为：
+`data-pipeline/src/bgtiers/config.py`：新增 `hsjson_locale_config`，并把 `hsjson_cards_url` **改成 over 新配置的临时 shim**（Stage 4 cli 改造后删除）——这样本 stage 结束代码仍可运行（旧 `cmd_sync_entities` 经 shim 拿 default-locale URL，无悬空调用）：
 
 ```python
 def hsjson_locale_config(path: str) -> tuple[str, str, list[str]]:
     h = _read(path)["hsjson"]
     return h["cards_url_template"], h["default_locale"], list(h["locales"])
+
+
+def hsjson_cards_url(path: str) -> str:
+    # 临时 shim：旧 cmd_sync_entities 仍调用它；Stage 4 改造 cli 后删除。
+    template, default_locale, _ = hsjson_locale_config(path)
+    return template.format(locale=default_locale)
 ```
 
 `data-pipeline/sources.yaml`：把 `hsjson` 段从
@@ -274,7 +280,7 @@ git commit -m "feat(config): hsjson_locale_config (template+default_locale+local
 - [ ] **Step 6: Codex review**
 
 ```bash
-codex exec --skip-git-repo-check "Review config.hsjson_locale_config + sources.yaml hsjson change in data-pipeline against spec section 3/6.2 of docs/superpowers/specs/2026-05-31-bg-localization-design.md. Confirm template/default_locale/locales returned correctly, old hsjson_cards_url fully removed with no remaining callers (grep), and load_fetch_tasks (firestone) untouched. Classify Critical/Should-fix/Nit. End with 'Final verdict: DONE' or 'NEEDS-CHANGES'." 2>&1 | tail -30
+codex exec --skip-git-repo-check "Review config.hsjson_locale_config + sources.yaml hsjson change in data-pipeline against spec section 3/6.2 of docs/superpowers/specs/2026-05-31-bg-localization-design.md. Confirm: template/default_locale/locales returned correctly; hsjson_cards_url is now a thin SHIM over hsjson_locale_config (intentional — still called by the unchanged cmd_sync_entities so the codebase stays runnable this stage; it will be removed in Stage 4 when cli is rewritten) and the shim returns the default-locale URL against the NEW sources.yaml format (no stale cards_url key); load_fetch_tasks (firestone) untouched. Classify Critical/Should-fix/Nit. End with 'Final verdict: DONE' or 'NEEDS-CHANGES'." 2>&1 | tail -30
 ```
 
 ---
@@ -581,6 +587,26 @@ def ensure_entity(conn: sqlite3.Connection, entity_type: str, card_id: str, now:
     return cur.lastrowid
 ```
 
+- [ ] **Step 4b: interim cli 更新 + 删除 shim（避免悬空调用）**
+
+改 `sync_entities` 签名会破坏 `cli.cmd_sync_entities` 的旧调用，故本 stage 同步做**最小化** cli 更新（单 locale 临时版，多 locale 循环留到 Stage 5），并删除 Stage 3 的 `hsjson_cards_url` shim（此后无调用者）。
+
+`data-pipeline/src/bgtiers/cli.py`：把 `cmd_sync_entities` 临时改为：
+
+```python
+def cmd_sync_entities(args):
+    conn = db.connect(args.db)
+    db.init_db(conn)
+    template, default_locale, _ = config.hsjson_locale_config(args.sources)
+    cards = httpx.get(template.format(locale=default_locale), timeout=60).json()
+    n, _ = entities.sync_entities(conn, cards, default_locale, default_locale, _now())
+    print(f"synced {n} entity-names (interim: default locale {default_locale} only)")
+```
+
+`data-pipeline/src/bgtiers/config.py`：删除 Stage 3 加的 `hsjson_cards_url` shim（现已无调用者）。
+
+> 验证无悬空引用：`cd data-pipeline && grep -rn "hsjson_cards_url" src tests` 应只剩**无**结果（或仅历史注释）。`import` 检查：`uv run python -c "from bgtiers import cli"` 应成功。
+
 - [ ] **Step 5: 跑测试确认通过**
 
 Run: `cd data-pipeline && uv run pytest tests/test_entities.py -q`
@@ -600,8 +626,12 @@ Expected: PASS（3 个 e2e 用例，新签名下不回归）
 - [ ] **Step 6: Commit**
 
 ```bash
-git add data-pipeline/src/bgtiers/entities.py data-pipeline/tests/test_entities.py data-pipeline/tests/test_integration.py data-pipeline/tests/fixtures/hsjson_cards_zhTW.json
-git commit -m "feat(entities): per-locale sync with entity_name upsert/reconcile + seen-map"
+git add data-pipeline/src/bgtiers/entities.py data-pipeline/src/bgtiers/cli.py data-pipeline/src/bgtiers/config.py data-pipeline/tests/test_entities.py data-pipeline/tests/test_integration.py data-pipeline/tests/fixtures/hsjson_cards_zhTW.json
+git commit -m "feat(entities): per-locale sync with entity_name upsert/reconcile + seen-map
+
+Includes interim single-locale cmd_sync_entities update (new sync_entities
+signature) and removal of the temporary hsjson_cards_url shim; full
+multi-locale cmd_sync_entities lands in the next stage."
 ```
 
 - [ ] **Step 7: Codex review**
@@ -812,6 +842,8 @@ codex exec --skip-git-repo-check "Final review of data-pipeline/src/bgtiers/cli.
 **回归保护：** 改 `sync_entities` 签名波及 `test_integration.py` 的 3 处旧调用 → Stage 4 Step 5b 显式更新；Stage 5 Step 5 跑全量套件确认父 spec 用例（fetch-stats / load / normalize）不回归。
 
 **Codex review v1（计划层）已纳入：** Critical（漏改 `test_integration.py`）→ Step 5b；Should-fix（CLI 失败测试未证明事务回滚 / 未证明跳过非 default / 缺 `_ordered_locales` 直测）→ Stage 5 三个新测试；Nit（Stage 2 red 原因措辞）→ 已修正。
+
+**Codex review v2（计划层）已纳入：** Should-fix（Stage 3 删 `hsjson_cards_url` 但 `cli.py` 到 Stage 5 才停用 → 中间态悬空调用）→ 改为 **Stage 3 留 shim + Stage 4 Step 4b 做最小化 cli 更新并删 shim**，保证每个 commit 可运行、无悬空引用（含 `grep` 与 `import` 验证）。cli.py 因此在 Stage 4（interim 单 locale）与 Stage 5（多 locale 全量）各动一次，均最小化。
 
 **Placeholder scan：** 无 TBD / TODO；每个改代码的 step 都给了完整代码。
 
