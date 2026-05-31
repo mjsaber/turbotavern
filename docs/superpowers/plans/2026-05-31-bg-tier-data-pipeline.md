@@ -549,6 +549,12 @@ def test_validate_rejects_empty_trinket_url():
         normalize.normalize_firestone({"trinketStats": []}, entity_type="trinket", url_mmr=None)
 
 
+def test_validate_rejects_trinket_entry_missing_mmr_data():
+    bad = {"trinketStats": [{"trinketCardId": "T", "dataPoints": 10, "averagePlacement": 4.0}]}  # no averagePlacementAtMmr
+    with pytest.raises(normalize.ValidationError):
+        normalize.normalize_firestone(bad, entity_type="trinket", url_mmr=None)
+
+
 def test_validate_rejects_out_of_range_placement():
     bad = {"heroStats": [{"heroCardId": "X", "dataPoints": 10, "averagePosition": 9.9}]}
     with pytest.raises(normalize.ValidationError):
@@ -671,11 +677,14 @@ def _normalize_trinket(raw: dict) -> dict[str, NormalizedFeed]:
         cid = it.get("trinketCardId")
         if not cid:
             raise ValidationError(f"trinket row missing trinketCardId: {it!r}")
+        ap_list = it.get("averagePlacementAtMmr")
+        if not ap_list:   # missing or empty -> core trinket data absent -> reject the URL
+            raise ValidationError(f"trinket {cid} missing averagePlacementAtMmr")
         pr_by_mmr = {p["mmr"]: p.get("pickRate") for p in it.get("pickRateAtMmr", [])}
         extra = {k: v for k, v in it.items()
                  if k not in ("trinketCardId", "averagePlacement", "dataPoints", "pickRate",
                               "averagePlacementAtMmr", "pickRateAtMmr")}
-        for ap in it.get("averagePlacementAtMmr", []):
+        for ap in ap_list:
             bracket = str(ap.get("mmr"))
             if bracket not in per_bracket:
                 continue
@@ -699,7 +708,7 @@ def normalize_firestone(raw: dict, entity_type: str, url_mmr: str | None) -> dic
     raise ValidationError(f"unknown entity_type: {entity_type}")
 ```
 
-- [ ] **Step 4: Run** — `uv run pytest tests/test_normalize.py -q` → Expected: 9 passed.
+- [ ] **Step 4: Run** — `uv run pytest tests/test_normalize.py -q` → Expected: 10 passed.
 
 - [ ] **Step 5: Commit**
 ```bash
