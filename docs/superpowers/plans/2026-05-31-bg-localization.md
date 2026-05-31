@@ -288,9 +288,9 @@ codex exec --skip-git-repo-check "Review config.hsjson_locale_config + sources.y
 ## Stage 4: `sync_entities` 按 locale + seen-map + entity_name
 
 **Files:**
-- Modify: `data-pipeline/src/bgtiers/entities.py`
+- Modify: `data-pipeline/src/bgtiers/entities.py`（核心）、`data-pipeline/src/bgtiers/cli.py`（Step 4b interim 单 locale）、`data-pipeline/src/bgtiers/config.py`（Step 4b 删 shim）
 - Create: `data-pipeline/tests/fixtures/hsjson_cards_zhTW.json`
-- Test: `data-pipeline/tests/test_entities.py`
+- Test: `data-pipeline/tests/test_entities.py`、`data-pipeline/tests/test_integration.py`（Step 5b 适配签名）
 
 - [ ] **Step 1: 建 zhTW fixture**
 
@@ -637,7 +637,7 @@ multi-locale cmd_sync_entities lands in the next stage."
 - [ ] **Step 7: Codex review**
 
 ```bash
-codex exec --skip-git-repo-check "Review data-pipeline/src/bgtiers/entities.py + tests/test_entities.py against spec sections 6.1/4/7/8 of docs/superpowers/specs/2026-05-31-bg-localization-design.md. Verify: default locale upserts identity + returns seen-map; non-default attaches names ONLY to (entity_type,card_id) in known_ids (no raw SELECT path to stale stubs); blank name (normalized empty) DELETEs the (entity_id,locale) row; entity.name stays default-locale; UNIQUE(entity_id,locale) keeps upsert idempotent; collision yields 2 rows. Check the stale-stub guard test actually proves the guard. Classify Critical/Should-fix/Nit. End with 'Final verdict: DONE' or 'NEEDS-CHANGES'." 2>&1 | tail -40
+codex exec --skip-git-repo-check "Review data-pipeline/src/bgtiers/entities.py + the interim cmd_sync_entities in cli.py + the hsjson_cards_url shim removal in config.py + tests/test_entities.py + tests/test_integration.py against spec sections 6.1/4/7/8 of docs/superpowers/specs/2026-05-31-bg-localization-design.md. Verify: default locale upserts identity + returns seen-map; non-default attaches names ONLY to (entity_type,card_id) in known_ids (no raw SELECT path to stale stubs); blank name (normalized empty) DELETEs the (entity_id,locale) row; entity.name stays default-locale; UNIQUE(entity_id,locale) keeps upsert idempotent; collision yields 2 rows. Check the stale-stub guard test actually proves the guard. Confirm the interim single-locale cmd_sync_entities calls the new signature and no caller of hsjson_cards_url remains (grep), and test_integration.py was updated. Classify Critical/Should-fix/Nit. End with 'Final verdict: DONE' or 'NEEDS-CHANGES'." 2>&1 | tail -40
 ```
 
 ---
@@ -758,7 +758,7 @@ def test_sync_entities_default_failure_skips_nondefault(tmp_path, monkeypatch):
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd data-pipeline && uv run pytest tests/test_cli.py -q`
-Expected: FAIL（旧 `cmd_sync_entities` 用 `httpx.get` + `hsjson_cards_url`）
+Expected: FAIL —— interim `cmd_sync_entities`（Stage 4）只同步 default locale、无 `_ordered_locales`、用 `httpx.get`（非 `httpx.Client`），故 `_ordered_locales` 直测 `AttributeError`、多 locale / 回滚 / MockTransport 用例均失败。
 
 - [ ] **Step 3: 实现**
 
