@@ -1,0 +1,6 @@
+*.db
+*.db-wal
+*.db-shm
+.fetch.lock
+__pycache__/
+.venv/
