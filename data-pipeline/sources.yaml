@@ -1,0 +1,7 @@
+firestone:
+  hero_url: "https://static.zerotoheroes.com/api/bgs/hero-stats/mmr-{mmr}/{period}/overview-from-hourly.gz.json"
+  trinket_url: "https://static.zerotoheroes.com/api/bgs/trinket-stats/{period}/overview-from-hourly.gz.json"
+  brackets: ["100", "50", "25", "10", "1"]
+  periods: ["last-patch"]
+hsjson:
+  cards_url: "https://api.hearthstonejson.com/v1/latest/enUS/cards.json"
