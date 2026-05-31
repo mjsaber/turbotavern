@@ -4,4 +4,6 @@ firestone:
   brackets: ["100", "50", "25", "10", "1"]
   periods: ["last-patch"]
 hsjson:
-  cards_url: "https://api.hearthstonejson.com/v1/latest/enUS/cards.json"
+  cards_url_template: "https://api.hearthstonejson.com/v1/latest/{locale}/cards.json"
+  default_locale: "enUS"
+  locales: ["enUS", "zhTW"]

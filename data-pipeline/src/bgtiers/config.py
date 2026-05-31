@@ -24,5 +24,12 @@ def load_fetch_tasks(path: str) -> list[FetchTask]:
     return tasks
 
 
+def hsjson_locale_config(path: str) -> tuple[str, str, list[str]]:
+    h = _read(path)["hsjson"]
+    return h["cards_url_template"], h["default_locale"], list(h["locales"])
+
+
 def hsjson_cards_url(path: str) -> str:
-    return _read(path)["hsjson"]["cards_url"]
+    # 临时 shim：旧 cmd_sync_entities 仍调用它；Stage 4 改造 cli 后删除。
+    template, default_locale, _ = hsjson_locale_config(path)
+    return template.format(locale=default_locale)

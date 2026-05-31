@@ -29,9 +29,15 @@ def test_load_fetch_tasks_hero_per_mmr_trinket_per_period(tmp_path):
     assert {t.raw_url for t in heroes} == {"http://h/100/last-patch.json", "http://h/10/last-patch.json"}
 
 
-def test_hsjson_cards_url(tmp_path):
+def test_hsjson_locale_config(tmp_path):
     path = _write(tmp_path, """
         firestone: {hero_url: "h", trinket_url: "t", brackets: ["100"], periods: ["last-patch"]}
-        hsjson: {cards_url: "http://cards"}
+        hsjson:
+          cards_url_template: "http://cards/{locale}.json"
+          default_locale: "enUS"
+          locales: ["enUS", "zhTW"]
     """)
-    assert config.hsjson_cards_url(path) == "http://cards"
+    template, default_locale, locales = config.hsjson_locale_config(path)
+    assert template == "http://cards/{locale}.json"
+    assert default_locale == "enUS"
+    assert locales == ["enUS", "zhTW"]
