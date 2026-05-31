@@ -23,8 +23,10 @@ def cmd_init_db(args):
 def cmd_sync_entities(args):
     conn = db.connect(args.db)
     db.init_db(conn)
-    cards = httpx.get(config.hsjson_cards_url(args.sources), timeout=60).json()
-    print(f"synced {entities.sync_entities(conn, cards, now=_now())} entities")
+    template, default_locale, _ = config.hsjson_locale_config(args.sources)
+    cards = httpx.get(template.format(locale=default_locale), timeout=60).json()
+    n, _ = entities.sync_entities(conn, cards, default_locale, default_locale, _now())
+    print(f"synced {n} entity-names (interim: default locale {default_locale} only)")
 
 
 def cmd_fetch_stats(args):

@@ -16,7 +16,7 @@ def _load(name):
 def test_hero_e2e_populates_latest_view():
     conn = db.connect(":memory:")
     db.init_db(conn)
-    entities.sync_entities(conn, _load("hsjson_cards.json"), now="t0")
+    entities.sync_entities(conn, _load("hsjson_cards.json"), "enUS", "enUS", "t0")
 
     raw = _load("firestone_heroes.json")
     body = (FIX / "firestone_heroes.json").read_bytes()
@@ -38,7 +38,7 @@ def test_hero_e2e_populates_latest_view():
 def test_trinket_e2e_five_brackets_and_class_join():
     conn = db.connect(":memory:")
     db.init_db(conn)
-    entities.sync_entities(conn, _load("hsjson_cards.json"), now="t0")
+    entities.sync_entities(conn, _load("hsjson_cards.json"), "enUS", "enUS", "t0")
 
     raw = _load("firestone_trinkets.json")
     body = (FIX / "firestone_trinkets.json").read_bytes()
@@ -60,7 +60,7 @@ def test_trinket_e2e_five_brackets_and_class_join():
 def test_latest_view_returns_newest_snapshot_per_dimension():
     conn = db.connect(":memory:")
     db.init_db(conn)
-    entities.sync_entities(conn, _load("hsjson_cards.json"), now="t0")
+    entities.sync_entities(conn, _load("hsjson_cards.json"), "enUS", "enUS", "t0")
     raw = _load("firestone_heroes.json")
     feed_v1 = normalize.normalize_firestone(raw, "hero", url_mmr="100")
     cid = raw["heroStats"][0]["heroCardId"]

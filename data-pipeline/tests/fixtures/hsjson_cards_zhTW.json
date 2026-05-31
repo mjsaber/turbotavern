@@ -1,0 +1,7 @@
+[
+  {"id": "BG_HERO_001", "dbfId": 50001, "name": "測試英雄一", "type": "HERO", "set": "BATTLEGROUNDS"},
+  {"id": "BG_HERO_002", "dbfId": 50002, "name": "測試英雄二", "type": "HERO", "set": "BATTLEGROUNDS"},
+  {"id": "BG30_MagicItem_902", "dbfId": 60902, "name": "神聖之槌", "type": "BATTLEGROUND_TRINKET", "set": "BATTLEGROUNDS", "spellSchool": "GREATER_TRINKET"},
+  {"id": "BG30_MagicItem_301", "dbfId": 60301, "type": "BATTLEGROUND_TRINKET", "set": "BATTLEGROUNDS", "spellSchool": "LESSER_TRINKET"},
+  {"id": "AT_001", "dbfId": 100, "name": "構築卡", "type": "MINION", "set": "TGT"}
+]
