@@ -20,13 +20,47 @@ def cmd_init_db(args):
     print(f"initialized {args.db}")
 
 
+def _ordered_locales(default_locale, locales):
+    """default 永远第一个，整体保序去重。"""
+    seen, out = set(), []
+    for loc in [default_locale, *locales]:
+        if loc not in seen:
+            seen.add(loc)
+            out.append(loc)
+    return out
+
+
 def cmd_sync_entities(args):
     conn = db.connect(args.db)
     db.init_db(conn)
-    template, default_locale, _ = config.hsjson_locale_config(args.sources)
-    cards = httpx.get(template.format(locale=default_locale), timeout=60).json()
-    n, _ = entities.sync_entities(conn, cards, default_locale, default_locale, _now())
-    print(f"synced {n} entity-names (interim: default locale {default_locale} only)")
+    template, default_locale, locales = config.hsjson_locale_config(args.sources)
+    failures = 0
+    known_ids = None
+    total = 0
+    with httpx.Client(timeout=60) as client:
+        for locale in _ordered_locales(default_locale, locales):
+            try:
+                cards = client.get(template.format(locale=locale)).raise_for_status().json()
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    n, synced = entities.sync_entities(conn, cards, locale, default_locale,
+                                                        _now(), known_ids)
+                    conn.execute("COMMIT")
+                except Exception:
+                    conn.execute("ROLLBACK")
+                    raise
+                total += n
+                if locale == default_locale:
+                    known_ids = synced                 # 提交后固化，供非 default 用
+                print(f"synced {locale}: {n} names")
+            except Exception as exc:
+                failures += 1
+                print(f"sync {locale}: FAILED {exc}", file=sys.stderr)
+                if locale == default_locale:
+                    break                              # 身份未建立，非 default 无法继续
+    print(f"synced {total} entity-names total")
+    if failures:
+        sys.exit(1)
 
 
 def cmd_fetch_stats(args):
