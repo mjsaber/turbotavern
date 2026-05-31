@@ -87,11 +87,14 @@ def _normalize_trinket(raw: dict) -> dict[str, NormalizedFeed]:
         cid = it.get("trinketCardId")
         if not cid:
             raise ValidationError(f"trinket row missing trinketCardId: {it!r}")
+        ap_list = it.get("averagePlacementAtMmr")
+        if not ap_list:   # missing or empty -> core trinket data absent -> reject the URL
+            raise ValidationError(f"trinket {cid} missing averagePlacementAtMmr")
         pr_by_mmr = {p["mmr"]: p.get("pickRate") for p in it.get("pickRateAtMmr", [])}
         extra = {k: v for k, v in it.items()
                  if k not in ("trinketCardId", "averagePlacement", "dataPoints", "pickRate",
                               "averagePlacementAtMmr", "pickRateAtMmr")}
-        for ap in it.get("averagePlacementAtMmr", []):
+        for ap in ap_list:
             bracket = str(ap.get("mmr"))
             if bracket not in per_bracket:
                 continue

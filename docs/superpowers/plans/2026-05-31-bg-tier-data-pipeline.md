@@ -619,10 +619,10 @@ def _mk_row(card_id, avg, dp, pick_rate, dist, extra) -> NormalizedRow:
     if dp_i < 0:
         raise ValidationError(f"negative data_points for {card_id}: {dp_i}")
     if dist is not None:
+        # Real feed stores 8 objects ({rank, percentage, totalMatches}), not bare numbers.
+        # Validate it's a length-8 list (BG has 8 ranks); store the objects verbatim.
         if not isinstance(dist, list) or len(dist) != 8:
             raise ValidationError(f"bad placement distribution for {card_id}")
-        for el in dist:
-            _num(el, card_id, "placement element")
     return NormalizedRow(card_id, avg, dp_i, pick_rate, dist, extra)
 
 

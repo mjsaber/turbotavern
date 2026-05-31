@@ -59,6 +59,12 @@ def test_validate_rejects_empty_trinket_url():
         normalize.normalize_firestone({"trinketStats": []}, entity_type="trinket", url_mmr=None)
 
 
+def test_validate_rejects_trinket_entry_missing_mmr_data():
+    bad = {"trinketStats": [{"trinketCardId": "T", "dataPoints": 10, "averagePlacement": 4.0}]}  # no averagePlacementAtMmr
+    with pytest.raises(normalize.ValidationError):
+        normalize.normalize_firestone(bad, entity_type="trinket", url_mmr=None)
+
+
 def test_validate_rejects_out_of_range_placement():
     bad = {"heroStats": [{"heroCardId": "X", "dataPoints": 10, "averagePosition": 9.9}]}
     with pytest.raises(normalize.ValidationError):
