@@ -28,7 +28,8 @@
 | `data-pipeline/tests/test_localize.py` | **新建** | 归一化单测 |
 | `data-pipeline/tests/test_entities.py` | 改 | 适配新签名 + 新增 locale / reconcile / 碰撞 / stale-stub 用例 |
 | `data-pipeline/tests/test_config.py` | 改 | 替换 `test_hsjson_cards_url` → `test_hsjson_locale_config` |
-| `data-pipeline/tests/test_cli.py` | 改 | 新增 `sync-entities` 多 locale + 部分失败用例 |
+| `data-pipeline/tests/test_integration.py` | 改 | 3 处 `sync_entities(conn, cards, now=...)` 调用适配新签名 |
+| `data-pipeline/tests/test_cli.py` | 改 | 新增 `sync-entities` 多 locale + 部分失败 + 事务回滚 + `_ordered_locales` 用例 |
 
 所有命令在 `data-pipeline/` 目录下用 `uv run` 执行。
 
@@ -160,7 +161,7 @@ def test_entity_name_unique_entity_locale(conn):
 - [ ] **Step 2: 跑测试确认失败**
 
 Run: `cd data-pipeline && uv run pytest tests/test_db.py -q`
-Expected: FAIL（`no such table: entity_name`）
+Expected: FAIL —— `test_entity_name_table_and_index_created` 因 `PRAGMA table_info` 返回空集触发**断言失败**（cols == set()），`test_entity_name_unique_entity_locale` 因 `no such table: entity_name` 报错。
 
 - [ ] **Step 3: 实现**
 
@@ -585,10 +586,21 @@ def ensure_entity(conn: sqlite3.Connection, entity_type: str, card_id: str, now:
 Run: `cd data-pipeline && uv run pytest tests/test_entities.py -q`
 Expected: PASS（全部）
 
+- [ ] **Step 5b: 更新 `test_integration.py` 适配新签名**
+
+`test_integration.py` 有 3 处旧调用 `entities.sync_entities(conn, _load("hsjson_cards.json"), now="t0")`（约在第 19/41/63 行）。把每处改为新签名（返回值忽略）：
+
+```python
+entities.sync_entities(conn, _load("hsjson_cards.json"), "enUS", "enUS", "t0")
+```
+
+Run: `cd data-pipeline && uv run pytest tests/test_integration.py -q`
+Expected: PASS（3 个 e2e 用例，新签名下不回归）
+
 - [ ] **Step 6: Commit**
 
 ```bash
-git add data-pipeline/src/bgtiers/entities.py data-pipeline/tests/test_entities.py data-pipeline/tests/fixtures/hsjson_cards_zhTW.json
+git add data-pipeline/src/bgtiers/entities.py data-pipeline/tests/test_entities.py data-pipeline/tests/test_integration.py data-pipeline/tests/fixtures/hsjson_cards_zhTW.json
 git commit -m "feat(entities): per-locale sync with entity_name upsert/reconcile + seen-map"
 ```
 
@@ -608,6 +620,8 @@ codex exec --skip-git-repo-check "Review data-pipeline/src/bgtiers/entities.py +
 
 - [ ] **Step 1: 写失败测试（追加到 test_cli.py）**
 
+> 先确保 `test_cli.py` 顶部 import 含 `entities`：`from bgtiers import cli, db, entities`。
+
 ```python
 def _sync_sources(tmp_path):
     p = tmp_path / "sources_loc.yaml"
@@ -626,10 +640,14 @@ _ZH_CARDS = [{"id": "BG_HERO_001", "dbfId": 1, "name": "斯尼德", "type": "HER
 
 
 def _locale_client(monkeypatch, fail_locale=None):
+    """Patch cli.httpx.Client with a MockTransport; returns the list of fetched locales
+    (so a test can prove a locale was NOT requested)."""
     real_client = httpx.Client
+    requested = []
 
     def handler(req):
         loc = req.url.path.rsplit("/", 1)[-1].replace(".json", "")
+        requested.append(loc)
         if loc == fail_locale:
             return httpx.Response(500)
         body = _ZH_CARDS if loc == "zhTW" else _EN_CARDS
@@ -637,6 +655,13 @@ def _locale_client(monkeypatch, fail_locale=None):
 
     monkeypatch.setattr(cli.httpx, "Client",
                         lambda *a, **k: real_client(transport=httpx.MockTransport(handler)))
+    return requested
+
+
+def test_ordered_locales_default_first_dedupe():
+    assert cli._ordered_locales("enUS", ["zhTW", "enUS", "zhTW"]) == ["enUS", "zhTW"]
+    assert cli._ordered_locales("enUS", ["zhTW"]) == ["enUS", "zhTW"]   # default absent from locales
+    assert cli._ordered_locales("enUS", []) == ["enUS"]
 
 
 def test_sync_entities_loads_both_locales(tmp_path, monkeypatch):
@@ -651,7 +676,7 @@ def test_sync_entities_loads_both_locales(tmp_path, monkeypatch):
     assert conn.execute("SELECT name FROM entity WHERE card_id='BG_HERO_001'").fetchone()["name"] == "Sneed"
 
 
-def test_sync_entities_zhTW_failure_keeps_enus_and_exits_nonzero(tmp_path, monkeypatch):
+def test_sync_entities_zhTW_http_failure_keeps_enus_and_exits_nonzero(tmp_path, monkeypatch):
     dbp = str(tmp_path / "t.db")
     _locale_client(monkeypatch, fail_locale="zhTW")
     args = cli.build_parser().parse_args(["--db", dbp, "--sources", _sync_sources(tmp_path), "sync-entities"])
@@ -660,16 +685,42 @@ def test_sync_entities_zhTW_failure_keeps_enus_and_exits_nonzero(tmp_path, monke
     assert ei.value.code == 1
     conn = db.connect(dbp)
     locs = {r["locale"] for r in conn.execute("SELECT locale FROM entity_name").fetchall()}
-    assert locs == {"enUS"}                            # enUS committed, zhTW rolled back
+    assert locs == {"enUS"}                            # enUS committed, zhTW never written
 
 
-def test_sync_entities_default_failure_skips_nondefault(tmp_path, monkeypatch):
+def test_sync_entities_rolls_back_locale_on_midtxn_error(tmp_path, monkeypatch):
+    # Prove the per-locale BEGIN IMMEDIATE rollback: zhTW writes a row, then raises INSIDE
+    # the transaction. That partial write must be rolled back; enUS stays committed.
     dbp = str(tmp_path / "t.db")
-    _locale_client(monkeypatch, fail_locale="enUS")
+    _locale_client(monkeypatch)
+    real_sync = entities.sync_entities
+
+    def flaky(conn, cards, locale, default_locale, now, known_ids=None):
+        if locale == "zhTW":
+            eid = next(iter(known_ids.values()))
+            conn.execute("INSERT INTO entity_name (entity_id, locale, name, name_key) "
+                         "VALUES (?,?,?,?)", (eid, "zhTW", "斯尼德", "斯尼德"))
+            raise RuntimeError("boom mid-transaction")
+        return real_sync(conn, cards, locale, default_locale, now, known_ids)
+
+    monkeypatch.setattr(cli.entities, "sync_entities", flaky)
     args = cli.build_parser().parse_args(["--db", dbp, "--sources", _sync_sources(tmp_path), "sync-entities"])
     with pytest.raises(SystemExit) as ei:
         args.func(args)
     assert ei.value.code == 1
+    conn = db.connect(dbp)
+    locs = {r["locale"] for r in conn.execute("SELECT locale FROM entity_name").fetchall()}
+    assert locs == {"enUS"}                            # the zhTW row written before boom was rolled back
+
+
+def test_sync_entities_default_failure_skips_nondefault(tmp_path, monkeypatch):
+    dbp = str(tmp_path / "t.db")
+    requested = _locale_client(monkeypatch, fail_locale="enUS")
+    args = cli.build_parser().parse_args(["--db", dbp, "--sources", _sync_sources(tmp_path), "sync-entities"])
+    with pytest.raises(SystemExit) as ei:
+        args.func(args)
+    assert ei.value.code == 1
+    assert requested == ["enUS"]                       # zhTW never fetched (loop broke on default failure)
     conn = db.connect(dbp)
     assert conn.execute("SELECT COUNT(*) FROM entity_name").fetchone()[0] == 0
 ```
@@ -756,7 +807,11 @@ codex exec --skip-git-repo-check "Final review of data-pipeline/src/bgtiers/cli.
 
 ## Self-Review（写完计划的回查）
 
-**Spec coverage：** L1 locale 集合→Stage 3；L2 数据源→Stage 3 sources.yaml；L3 `entity_name` 侧表→Stage 2；L4 归一化精确匹配→Stage 1 + Stage 4 name→entity 测试；L5 `entity.name` 保留→Stage 4 `test_entity_name_default_only_...`；L6 无条件 upsert→Stage 4/5。§4 blank→Stage 1 + Stage 4 reconcile。§6.1 seen-map→Stage 4。§6.2 事务/失败/去重→Stage 5。§7 边界（缺翻译/失败/stub/碰撞）→Stage 4/5 各有用例。§8 成功标准 1-12 全部有对应测试。
+**Spec coverage：** L1 locale 集合→Stage 3；L2 数据源→Stage 3 sources.yaml；L3 `entity_name` 侧表→Stage 2；L4 归一化精确匹配→Stage 1 + Stage 4 name→entity 测试；L5 `entity.name` 保留→Stage 4 `test_entity_name_default_only_...`；L6 无条件 upsert→Stage 4/5。§4 blank→Stage 1 + Stage 4 reconcile。§6.1 seen-map→Stage 4。§6.2 事务/失败/去重→Stage 5：`_ordered_locales` 直测（default 先行 + 保序去重 + default 不在 locales）、HTTP 失败回滚、**事务内 mid-txn 抛错回滚**（`test_sync_entities_rolls_back_locale_on_midtxn_error`）、default 失败**证明非 default 未被 fetch**（断言 `requested == ["enUS"]`）。§7 边界（缺翻译/失败/stub/碰撞）→Stage 4/5 各有用例。§8 成功标准 1-12 全部有对应测试。
+
+**回归保护：** 改 `sync_entities` 签名波及 `test_integration.py` 的 3 处旧调用 → Stage 4 Step 5b 显式更新；Stage 5 Step 5 跑全量套件确认父 spec 用例（fetch-stats / load / normalize）不回归。
+
+**Codex review v1（计划层）已纳入：** Critical（漏改 `test_integration.py`）→ Step 5b；Should-fix（CLI 失败测试未证明事务回滚 / 未证明跳过非 default / 缺 `_ordered_locales` 直测）→ Stage 5 三个新测试；Nit（Stage 2 red 原因措辞）→ 已修正。
 
 **Placeholder scan：** 无 TBD / TODO；每个改代码的 step 都给了完整代码。
 
