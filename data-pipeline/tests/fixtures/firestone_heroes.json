@@ -1,0 +1,2720 @@
+{
+  "heroStats": [
+    {
+      "heroCardId": "BG31_HERO_006",
+      "dataPoints": 5924,
+      "totalOffered": 37475,
+      "totalPicked": 5912,
+      "averagePosition": 3.98,
+      "standardDeviation": 2.08,
+      "standardDeviationOfTheMean": 0.03,
+      "conservativePositionEstimate": 4.06,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 14.854827819041189,
+          "totalMatches": 880
+        },
+        {
+          "rank": 2,
+          "percentage": 14.534098582039162,
+          "totalMatches": 861
+        },
+        {
+          "rank": 3,
+          "percentage": 17.589466576637406,
+          "totalMatches": 1042
+        },
+        {
+          "rank": 4,
+          "percentage": 12.440918298446995,
+          "totalMatches": 737
+        },
+        {
+          "rank": 5,
+          "percentage": 13.99392302498312,
+          "totalMatches": 829
+        },
+        {
+          "rank": 6,
+          "percentage": 10.989196488858878,
+          "totalMatches": 651
+        },
+        {
+          "rank": 7,
+          "percentage": 8.946657663740716,
+          "totalMatches": 530
+        },
+        {
+          "rank": 8,
+          "percentage": 6.650911546252532,
+          "totalMatches": 394
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 3.1
+        },
+        {
+          "turn": 2,
+          "averageStats": 3.62
+        },
+        {
+          "turn": 3,
+          "averageStats": 11.6
+        },
+        {
+          "turn": 4,
+          "averageStats": 22.01
+        },
+        {
+          "turn": 5,
+          "averageStats": 34.63
+        },
+        {
+          "turn": 6,
+          "averageStats": 58.81
+        },
+        {
+          "turn": 7,
+          "averageStats": 93.59
+        },
+        {
+          "turn": 8,
+          "averageStats": 158.11
+        },
+        {
+          "turn": 9,
+          "averageStats": 295.9
+        },
+        {
+          "turn": 10,
+          "averageStats": 576.85
+        },
+        {
+          "turn": 11,
+          "averageStats": 982.06
+        },
+        {
+          "turn": 12,
+          "averageStats": 1675.95
+        },
+        {
+          "turn": 13,
+          "averageStats": 2609.97
+        },
+        {
+          "turn": 14,
+          "averageStats": 3687.54
+        },
+        {
+          "turn": 15,
+          "averageStats": 4944.71
+        },
+        {
+          "turn": 16,
+          "averageStats": 6725.16
+        },
+        {
+          "turn": 17,
+          "averageStats": 9201.88
+        },
+        {
+          "turn": 18,
+          "averageStats": 12394.17
+        },
+        {
+          "turn": 19,
+          "averageStats": 16526
+        },
+        {
+          "turn": 20,
+          "averageStats": null
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": null
+        },
+        {
+          "turn": 2,
+          "winrate": 22.08
+        },
+        {
+          "turn": 3,
+          "winrate": 40.88
+        },
+        {
+          "turn": 4,
+          "winrate": 39.89
+        },
+        {
+          "turn": 5,
+          "winrate": 44.23
+        },
+        {
+          "turn": 6,
+          "winrate": 51.38
+        },
+        {
+          "turn": 7,
+          "winrate": 51.52
+        },
+        {
+          "turn": 8,
+          "winrate": 42.23
+        },
+        {
+          "turn": 9,
+          "winrate": 48
+        },
+        {
+          "turn": 10,
+          "winrate": 49.65
+        },
+        {
+          "turn": 11,
+          "winrate": 47.15
+        },
+        {
+          "turn": 12,
+          "winrate": 51.53
+        },
+        {
+          "turn": 13,
+          "winrate": 52.35
+        },
+        {
+          "turn": 14,
+          "winrate": 46.53
+        },
+        {
+          "turn": 15,
+          "winrate": 56.25
+        },
+        {
+          "turn": 16,
+          "winrate": 51
+        },
+        {
+          "turn": 17,
+          "winrate": 34.38
+        },
+        {
+          "turn": 18,
+          "winrate": 17.67
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 11,
+          "dataPoints": 2789,
+          "dataPointsOnMissingTribe": 3135,
+          "totalOffered": 18506,
+          "totalPicked": 2781,
+          "averagePosition": 4.03,
+          "averagePositionWithoutTribe": 3.94,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": 0.04,
+          "impactAveragePositionVsMissingTribe": 0.09
+        },
+        {
+          "tribe": 14,
+          "dataPoints": 3010,
+          "dataPointsOnMissingTribe": 2914,
+          "totalOffered": 18663,
+          "totalPicked": 3004,
+          "averagePosition": 3.97,
+          "averagePositionWithoutTribe": 4,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.03
+        },
+        {
+          "tribe": 15,
+          "dataPoints": 2975,
+          "dataPointsOnMissingTribe": 2949,
+          "totalOffered": 18839,
+          "totalPicked": 2968,
+          "averagePosition": 4,
+          "averagePositionWithoutTribe": 3.97,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": 0.02,
+          "impactAveragePositionVsMissingTribe": 0.03
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 3104,
+          "dataPointsOnMissingTribe": 2820,
+          "totalOffered": 19133,
+          "totalPicked": 3097,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 3.98,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": 0.01
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 2950,
+          "dataPointsOnMissingTribe": 2974,
+          "totalOffered": 18840,
+          "totalPicked": 2944,
+          "averagePosition": 3.97,
+          "averagePositionWithoutTribe": 3.99,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.01
+        },
+        {
+          "tribe": 17,
+          "dataPoints": 2900,
+          "dataPointsOnMissingTribe": 3024,
+          "totalOffered": 18470,
+          "totalPicked": 2894,
+          "averagePosition": 3.97,
+          "averagePositionWithoutTribe": 3.99,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 2909,
+          "dataPointsOnMissingTribe": 3015,
+          "totalOffered": 18731,
+          "totalPicked": 2904,
+          "averagePosition": 3.97,
+          "averagePositionWithoutTribe": 3.99,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 3128,
+          "dataPointsOnMissingTribe": 2796,
+          "totalOffered": 18792,
+          "totalPicked": 3123,
+          "averagePosition": 3.95,
+          "averagePositionWithoutTribe": 4.02,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": -0.03,
+          "impactAveragePositionVsMissingTribe": -0.06
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 2778,
+          "dataPointsOnMissingTribe": 3146,
+          "totalOffered": 18422,
+          "totalPicked": 2773,
+          "averagePosition": 3.98,
+          "averagePositionWithoutTribe": 3.98,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": 0
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 3077,
+          "dataPointsOnMissingTribe": 2847,
+          "totalOffered": 18979,
+          "totalPicked": 3072,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 3.97,
+          "refAveragePosition": 3.98,
+          "impactAveragePosition": 0.01,
+          "impactAveragePositionVsMissingTribe": 0.02
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    },
+    {
+      "heroCardId": "BG24_HERO_100",
+      "dataPoints": 20220,
+      "totalOffered": 37997,
+      "totalPicked": 20147,
+      "averagePosition": 4.12,
+      "standardDeviation": 2.33,
+      "standardDeviationOfTheMean": 0.02,
+      "conservativePositionEstimate": 4.17,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 18.392680514342235,
+          "totalMatches": 3719
+        },
+        {
+          "rank": 2,
+          "percentage": 13.056379821958457,
+          "totalMatches": 2640
+        },
+        {
+          "rank": 3,
+          "percentage": 14.653808110781405,
+          "totalMatches": 2963
+        },
+        {
+          "rank": 4,
+          "percentage": 10.089020771513352,
+          "totalMatches": 2040
+        },
+        {
+          "rank": 5,
+          "percentage": 11.75568743818002,
+          "totalMatches": 2377
+        },
+        {
+          "rank": 6,
+          "percentage": 10.454995054401582,
+          "totalMatches": 2114
+        },
+        {
+          "rank": 7,
+          "percentage": 11.493570722057369,
+          "totalMatches": 2324
+        },
+        {
+          "rank": 8,
+          "percentage": 10.103857566765578,
+          "totalMatches": 2043
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 3.08
+        },
+        {
+          "turn": 2,
+          "averageStats": 4.22
+        },
+        {
+          "turn": 3,
+          "averageStats": 11.64
+        },
+        {
+          "turn": 4,
+          "averageStats": 21.5
+        },
+        {
+          "turn": 5,
+          "averageStats": 32.6
+        },
+        {
+          "turn": 6,
+          "averageStats": 61.49
+        },
+        {
+          "turn": 7,
+          "averageStats": 106.58
+        },
+        {
+          "turn": 8,
+          "averageStats": 188.48
+        },
+        {
+          "turn": 9,
+          "averageStats": 368.65
+        },
+        {
+          "turn": 10,
+          "averageStats": 656.2
+        },
+        {
+          "turn": 11,
+          "averageStats": 1188.18
+        },
+        {
+          "turn": 12,
+          "averageStats": 2007.73
+        },
+        {
+          "turn": 13,
+          "averageStats": 3254.39
+        },
+        {
+          "turn": 14,
+          "averageStats": 5073.08
+        },
+        {
+          "turn": 15,
+          "averageStats": 6346.37
+        },
+        {
+          "turn": 16,
+          "averageStats": 7923.48
+        },
+        {
+          "turn": 17,
+          "averageStats": 8345.41
+        },
+        {
+          "turn": 18,
+          "averageStats": 9210.48
+        },
+        {
+          "turn": 19,
+          "averageStats": 9905.91
+        },
+        {
+          "turn": 20,
+          "averageStats": 9109
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": 22.22
+        },
+        {
+          "turn": 2,
+          "winrate": 28.88
+        },
+        {
+          "turn": 3,
+          "winrate": 42.31
+        },
+        {
+          "turn": 4,
+          "winrate": 43.33
+        },
+        {
+          "turn": 5,
+          "winrate": 43.46
+        },
+        {
+          "turn": 6,
+          "winrate": 41.25
+        },
+        {
+          "turn": 7,
+          "winrate": 45.99
+        },
+        {
+          "turn": 8,
+          "winrate": 45.9
+        },
+        {
+          "turn": 9,
+          "winrate": 54.52
+        },
+        {
+          "turn": 10,
+          "winrate": 55.7
+        },
+        {
+          "turn": 11,
+          "winrate": 57.34
+        },
+        {
+          "turn": 12,
+          "winrate": 58.56
+        },
+        {
+          "turn": 13,
+          "winrate": 59.99
+        },
+        {
+          "turn": 14,
+          "winrate": 58.94
+        },
+        {
+          "turn": 15,
+          "winrate": 67.56
+        },
+        {
+          "turn": 16,
+          "winrate": 53.6
+        },
+        {
+          "turn": 17,
+          "winrate": 56.23
+        },
+        {
+          "turn": 18,
+          "winrate": 57.31
+        },
+        {
+          "turn": 19,
+          "winrate": 50.33
+        },
+        {
+          "turn": 20,
+          "winrate": 21
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 14,
+          "dataPoints": 10382,
+          "dataPointsOnMissingTribe": 9838,
+          "totalOffered": 18999,
+          "totalPicked": 10348,
+          "averagePosition": 4.06,
+          "averagePositionWithoutTribe": 4.17,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": -0.05,
+          "impactAveragePositionVsMissingTribe": -0.11
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 10338,
+          "dataPointsOnMissingTribe": 9882,
+          "totalOffered": 19391,
+          "totalPicked": 10292,
+          "averagePosition": 4.12,
+          "averagePositionWithoutTribe": 4.12,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": 0
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 9996,
+          "dataPointsOnMissingTribe": 10224,
+          "totalOffered": 19175,
+          "totalPicked": 9954,
+          "averagePosition": 4.16,
+          "averagePositionWithoutTribe": 4.08,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": 0.04,
+          "impactAveragePositionVsMissingTribe": 0.08
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 10231,
+          "dataPointsOnMissingTribe": 9989,
+          "totalOffered": 19107,
+          "totalPicked": 10198,
+          "averagePosition": 4.07,
+          "averagePositionWithoutTribe": 4.16,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": -0.04,
+          "impactAveragePositionVsMissingTribe": -0.09
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 10256,
+          "dataPointsOnMissingTribe": 9964,
+          "totalOffered": 19284,
+          "totalPicked": 10215,
+          "averagePosition": 4.13,
+          "averagePositionWithoutTribe": 4.1,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": 0.01,
+          "impactAveragePositionVsMissingTribe": 0.03
+        },
+        {
+          "tribe": 15,
+          "dataPoints": 9856,
+          "dataPointsOnMissingTribe": 10364,
+          "totalOffered": 18830,
+          "totalPicked": 9823,
+          "averagePosition": 4.17,
+          "averagePositionWithoutTribe": 4.07,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": 0.05,
+          "impactAveragePositionVsMissingTribe": 0.1
+        },
+        {
+          "tribe": 17,
+          "dataPoints": 10049,
+          "dataPointsOnMissingTribe": 10171,
+          "totalOffered": 18712,
+          "totalPicked": 10012,
+          "averagePosition": 4.11,
+          "averagePositionWithoutTribe": 4.13,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 10094,
+          "dataPointsOnMissingTribe": 10126,
+          "totalOffered": 18805,
+          "totalPicked": 10063,
+          "averagePosition": 4.09,
+          "averagePositionWithoutTribe": 4.14,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.05
+        },
+        {
+          "tribe": 11,
+          "dataPoints": 9961,
+          "dataPointsOnMissingTribe": 10259,
+          "totalOffered": 18735,
+          "totalPicked": 9933,
+          "averagePosition": 4.12,
+          "averagePositionWithoutTribe": 4.12,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": 0
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 9937,
+          "dataPointsOnMissingTribe": 10283,
+          "totalOffered": 18947,
+          "totalPicked": 9897,
+          "averagePosition": 4.15,
+          "averagePositionWithoutTribe": 4.09,
+          "refAveragePosition": 4.12,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.06
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    },
+    {
+      "heroCardId": "BG20_HERO_242",
+      "dataPoints": 10744,
+      "totalOffered": 37530,
+      "totalPicked": 10707,
+      "averagePosition": 4.07,
+      "standardDeviation": 2.24,
+      "standardDeviationOfTheMean": 0.02,
+      "conservativePositionEstimate": 4.13,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 16.790766939687266,
+          "totalMatches": 1804
+        },
+        {
+          "rank": 2,
+          "percentage": 13.933358153387937,
+          "totalMatches": 1497
+        },
+        {
+          "rank": 3,
+          "percentage": 16.064780342516755,
+          "totalMatches": 1726
+        },
+        {
+          "rank": 4,
+          "percentage": 10.517498138495904,
+          "totalMatches": 1130
+        },
+        {
+          "rank": 5,
+          "percentage": 12.425539836187639,
+          "totalMatches": 1335
+        },
+        {
+          "rank": 6,
+          "percentage": 10.56403574087863,
+          "totalMatches": 1135
+        },
+        {
+          "rank": 7,
+          "percentage": 11.169024571854058,
+          "totalMatches": 1200
+        },
+        {
+          "rank": 8,
+          "percentage": 8.534996276991809,
+          "totalMatches": 917
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 3.23
+        },
+        {
+          "turn": 2,
+          "averageStats": 4
+        },
+        {
+          "turn": 3,
+          "averageStats": 11.36
+        },
+        {
+          "turn": 4,
+          "averageStats": 20.51
+        },
+        {
+          "turn": 5,
+          "averageStats": 31.74
+        },
+        {
+          "turn": 6,
+          "averageStats": 56.38
+        },
+        {
+          "turn": 7,
+          "averageStats": 99.44
+        },
+        {
+          "turn": 8,
+          "averageStats": 187.81
+        },
+        {
+          "turn": 9,
+          "averageStats": 351.45
+        },
+        {
+          "turn": 10,
+          "averageStats": 642.99
+        },
+        {
+          "turn": 11,
+          "averageStats": 1151.96
+        },
+        {
+          "turn": 12,
+          "averageStats": 1922.23
+        },
+        {
+          "turn": 13,
+          "averageStats": 3320.04
+        },
+        {
+          "turn": 14,
+          "averageStats": 4835.23
+        },
+        {
+          "turn": 15,
+          "averageStats": 6701.94
+        },
+        {
+          "turn": 16,
+          "averageStats": 8002.68
+        },
+        {
+          "turn": 17,
+          "averageStats": 7662.9
+        },
+        {
+          "turn": 18,
+          "averageStats": 9694.4
+        },
+        {
+          "turn": 19,
+          "averageStats": 9442.5
+        },
+        {
+          "turn": 20,
+          "averageStats": 9510
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": 50
+        },
+        {
+          "turn": 2,
+          "winrate": 22.36
+        },
+        {
+          "turn": 3,
+          "winrate": 37.89
+        },
+        {
+          "turn": 4,
+          "winrate": 38.27
+        },
+        {
+          "turn": 5,
+          "winrate": 38.02
+        },
+        {
+          "turn": 6,
+          "winrate": 44.2
+        },
+        {
+          "turn": 7,
+          "winrate": 46.51
+        },
+        {
+          "turn": 8,
+          "winrate": 53.56
+        },
+        {
+          "turn": 9,
+          "winrate": 55.59
+        },
+        {
+          "turn": 10,
+          "winrate": 54.05
+        },
+        {
+          "turn": 11,
+          "winrate": 57.84
+        },
+        {
+          "turn": 12,
+          "winrate": 59.65
+        },
+        {
+          "turn": 13,
+          "winrate": 62.08
+        },
+        {
+          "turn": 14,
+          "winrate": 57.46
+        },
+        {
+          "turn": 15,
+          "winrate": 60.63
+        },
+        {
+          "turn": 16,
+          "winrate": 59.67
+        },
+        {
+          "turn": 17,
+          "winrate": 42.78
+        },
+        {
+          "turn": 18,
+          "winrate": 22
+        },
+        {
+          "turn": 19,
+          "winrate": 15.5
+        },
+        {
+          "turn": 20,
+          "winrate": 0
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 17,
+          "dataPoints": 5174,
+          "dataPointsOnMissingTribe": 5570,
+          "totalOffered": 18568,
+          "totalPicked": 5158,
+          "averagePosition": 4.05,
+          "averagePositionWithoutTribe": 4.08,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.03
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 5375,
+          "dataPointsOnMissingTribe": 5369,
+          "totalOffered": 18968,
+          "totalPicked": 5360,
+          "averagePosition": 4.09,
+          "averagePositionWithoutTribe": 4.05,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.02,
+          "impactAveragePositionVsMissingTribe": 0.03
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 5472,
+          "dataPointsOnMissingTribe": 5272,
+          "totalOffered": 18607,
+          "totalPicked": 5450,
+          "averagePosition": 4.05,
+          "averagePositionWithoutTribe": 4.09,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.04
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 5264,
+          "dataPointsOnMissingTribe": 5480,
+          "totalOffered": 18711,
+          "totalPicked": 5242,
+          "averagePosition": 4.09,
+          "averagePositionWithoutTribe": 4.05,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.02,
+          "impactAveragePositionVsMissingTribe": 0.03
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 5656,
+          "dataPointsOnMissingTribe": 5088,
+          "totalOffered": 18657,
+          "totalPicked": 5642,
+          "averagePosition": 4,
+          "averagePositionWithoutTribe": 4.14,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.07,
+          "impactAveragePositionVsMissingTribe": -0.14
+        },
+        {
+          "tribe": 14,
+          "dataPoints": 5475,
+          "dataPointsOnMissingTribe": 5269,
+          "totalOffered": 18873,
+          "totalPicked": 5456,
+          "averagePosition": 4.05,
+          "averagePositionWithoutTribe": 4.09,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.04
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 5263,
+          "dataPointsOnMissingTribe": 5481,
+          "totalOffered": 18909,
+          "totalPicked": 5242,
+          "averagePosition": 4.1,
+          "averagePositionWithoutTribe": 4.04,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.06
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 5503,
+          "dataPointsOnMissingTribe": 5241,
+          "totalOffered": 19032,
+          "totalPicked": 5477,
+          "averagePosition": 4.06,
+          "averagePositionWithoutTribe": 4.08,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 11,
+          "dataPoints": 5158,
+          "dataPointsOnMissingTribe": 5586,
+          "totalOffered": 18502,
+          "totalPicked": 5143,
+          "averagePosition": 4.12,
+          "averagePositionWithoutTribe": 4.02,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.05,
+          "impactAveragePositionVsMissingTribe": 0.1
+        },
+        {
+          "tribe": 15,
+          "dataPoints": 5380,
+          "dataPointsOnMissingTribe": 5364,
+          "totalOffered": 18823,
+          "totalPicked": 5365,
+          "averagePosition": 4.09,
+          "averagePositionWithoutTribe": 4.04,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.02,
+          "impactAveragePositionVsMissingTribe": 0.05
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    },
+    {
+      "heroCardId": "BG33_HERO_001",
+      "dataPoints": 9247,
+      "totalOffered": 37881,
+      "totalPicked": 9222,
+      "averagePosition": 4.07,
+      "standardDeviation": 2.14,
+      "standardDeviationOfTheMean": 0.02,
+      "conservativePositionEstimate": 4.14,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 14.55607223964529,
+          "totalMatches": 1346
+        },
+        {
+          "rank": 2,
+          "percentage": 14.220828376770845,
+          "totalMatches": 1315
+        },
+        {
+          "rank": 3,
+          "percentage": 17.31372336974154,
+          "totalMatches": 1601
+        },
+        {
+          "rank": 4,
+          "percentage": 11.528063155618039,
+          "totalMatches": 1066
+        },
+        {
+          "rank": 5,
+          "percentage": 13.528712014707473,
+          "totalMatches": 1251
+        },
+        {
+          "rank": 6,
+          "percentage": 11.09549042932843,
+          "totalMatches": 1026
+        },
+        {
+          "rank": 7,
+          "percentage": 10.392559749107818,
+          "totalMatches": 961
+        },
+        {
+          "rank": 8,
+          "percentage": 7.364550665080567,
+          "totalMatches": 681
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 3.05
+        },
+        {
+          "turn": 2,
+          "averageStats": 3.92
+        },
+        {
+          "turn": 3,
+          "averageStats": 11.38
+        },
+        {
+          "turn": 4,
+          "averageStats": 20.04
+        },
+        {
+          "turn": 5,
+          "averageStats": 30.12
+        },
+        {
+          "turn": 6,
+          "averageStats": 48.68
+        },
+        {
+          "turn": 7,
+          "averageStats": 82.54
+        },
+        {
+          "turn": 8,
+          "averageStats": 152.86
+        },
+        {
+          "turn": 9,
+          "averageStats": 286.35
+        },
+        {
+          "turn": 10,
+          "averageStats": 539.29
+        },
+        {
+          "turn": 11,
+          "averageStats": 893.66
+        },
+        {
+          "turn": 12,
+          "averageStats": 1569.35
+        },
+        {
+          "turn": 13,
+          "averageStats": 2591.68
+        },
+        {
+          "turn": 14,
+          "averageStats": 3784.85
+        },
+        {
+          "turn": 15,
+          "averageStats": 5367.3
+        },
+        {
+          "turn": 16,
+          "averageStats": 7018.68
+        },
+        {
+          "turn": 17,
+          "averageStats": 8100.69
+        },
+        {
+          "turn": 18,
+          "averageStats": 9006.78
+        },
+        {
+          "turn": 19,
+          "averageStats": 9382.4
+        },
+        {
+          "turn": 20,
+          "averageStats": null
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": 25
+        },
+        {
+          "turn": 2,
+          "winrate": 32.4
+        },
+        {
+          "turn": 3,
+          "winrate": 43.19
+        },
+        {
+          "turn": 4,
+          "winrate": 41.59
+        },
+        {
+          "turn": 5,
+          "winrate": 41.38
+        },
+        {
+          "turn": 6,
+          "winrate": 37.9
+        },
+        {
+          "turn": 7,
+          "winrate": 38.98
+        },
+        {
+          "turn": 8,
+          "winrate": 47.04
+        },
+        {
+          "turn": 9,
+          "winrate": 50.81
+        },
+        {
+          "turn": 10,
+          "winrate": 52.67
+        },
+        {
+          "turn": 11,
+          "winrate": 56.67
+        },
+        {
+          "turn": 12,
+          "winrate": 53.86
+        },
+        {
+          "turn": 13,
+          "winrate": 54.52
+        },
+        {
+          "turn": 14,
+          "winrate": 54.12
+        },
+        {
+          "turn": 15,
+          "winrate": 53.47
+        },
+        {
+          "turn": 16,
+          "winrate": 42.47
+        },
+        {
+          "turn": 17,
+          "winrate": 48.18
+        },
+        {
+          "turn": 18,
+          "winrate": 36.2
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 15,
+          "dataPoints": 4182,
+          "dataPointsOnMissingTribe": 5065,
+          "totalOffered": 18872,
+          "totalPicked": 4170,
+          "averagePosition": 4.12,
+          "averagePositionWithoutTribe": 4.03,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.05,
+          "impactAveragePositionVsMissingTribe": 0.09
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 4797,
+          "dataPointsOnMissingTribe": 4450,
+          "totalOffered": 19515,
+          "totalPicked": 4785,
+          "averagePosition": 4.06,
+          "averagePositionWithoutTribe": 4.08,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.03
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 4947,
+          "dataPointsOnMissingTribe": 4300,
+          "totalOffered": 19087,
+          "totalPicked": 4938,
+          "averagePosition": 4.02,
+          "averagePositionWithoutTribe": 4.12,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.05,
+          "impactAveragePositionVsMissingTribe": -0.1
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 4686,
+          "dataPointsOnMissingTribe": 4561,
+          "totalOffered": 19214,
+          "totalPicked": 4674,
+          "averagePosition": 4.11,
+          "averagePositionWithoutTribe": 4.02,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.04,
+          "impactAveragePositionVsMissingTribe": 0.09
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 4538,
+          "dataPointsOnMissingTribe": 4709,
+          "totalOffered": 18885,
+          "totalPicked": 4526,
+          "averagePosition": 4.05,
+          "averagePositionWithoutTribe": 4.09,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.04
+        },
+        {
+          "tribe": 11,
+          "dataPoints": 4994,
+          "dataPointsOnMissingTribe": 4253,
+          "totalOffered": 18503,
+          "totalPicked": 4981,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 4.16,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.08,
+          "impactAveragePositionVsMissingTribe": -0.17
+        },
+        {
+          "tribe": 14,
+          "dataPoints": 4425,
+          "dataPointsOnMissingTribe": 4822,
+          "totalOffered": 18645,
+          "totalPicked": 4411,
+          "averagePosition": 4.06,
+          "averagePositionWithoutTribe": 4.08,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.01
+        },
+        {
+          "tribe": 17,
+          "dataPoints": 4843,
+          "dataPointsOnMissingTribe": 4404,
+          "totalOffered": 18757,
+          "totalPicked": 4830,
+          "averagePosition": 4.07,
+          "averagePositionWithoutTribe": 4.06,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": 0.01
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 4374,
+          "dataPointsOnMissingTribe": 4873,
+          "totalOffered": 18929,
+          "totalPicked": 4363,
+          "averagePosition": 4.14,
+          "averagePositionWithoutTribe": 4.01,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.07,
+          "impactAveragePositionVsMissingTribe": 0.12
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 4449,
+          "dataPointsOnMissingTribe": 4798,
+          "totalOffered": 18998,
+          "totalPicked": 4432,
+          "averagePosition": 4.1,
+          "averagePositionWithoutTribe": 4.04,
+          "refAveragePosition": 4.07,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.05
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    },
+    {
+      "heroCardId": "BG32_HERO_002",
+      "dataPoints": 19140,
+      "totalOffered": 38048,
+      "totalPicked": 19069,
+      "averagePosition": 3.84,
+      "standardDeviation": 2.22,
+      "standardDeviationOfTheMean": 0.02,
+      "conservativePositionEstimate": 3.89,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 18.99164054336468,
+          "totalMatches": 3635
+        },
+        {
+          "rank": 2,
+          "percentage": 15.428422152560083,
+          "totalMatches": 2953
+        },
+        {
+          "rank": 3,
+          "percentage": 16.980146290491117,
+          "totalMatches": 3250
+        },
+        {
+          "rank": 4,
+          "percentage": 10.517241379310345,
+          "totalMatches": 2013
+        },
+        {
+          "rank": 5,
+          "percentage": 11.536050156739812,
+          "totalMatches": 2208
+        },
+        {
+          "rank": 6,
+          "percentage": 9.61337513061651,
+          "totalMatches": 1840
+        },
+        {
+          "rank": 7,
+          "percentage": 9.503657262277953,
+          "totalMatches": 1819
+        },
+        {
+          "rank": 8,
+          "percentage": 7.429467084639499,
+          "totalMatches": 1422
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 3.07
+        },
+        {
+          "turn": 2,
+          "averageStats": 3.9
+        },
+        {
+          "turn": 3,
+          "averageStats": 11.15
+        },
+        {
+          "turn": 4,
+          "averageStats": 19.96
+        },
+        {
+          "turn": 5,
+          "averageStats": 30.97
+        },
+        {
+          "turn": 6,
+          "averageStats": 52.58
+        },
+        {
+          "turn": 7,
+          "averageStats": 86.9
+        },
+        {
+          "turn": 8,
+          "averageStats": 175.45
+        },
+        {
+          "turn": 9,
+          "averageStats": 361.22
+        },
+        {
+          "turn": 10,
+          "averageStats": 652.63
+        },
+        {
+          "turn": 11,
+          "averageStats": 1118.84
+        },
+        {
+          "turn": 12,
+          "averageStats": 1955.61
+        },
+        {
+          "turn": 13,
+          "averageStats": 3135.79
+        },
+        {
+          "turn": 14,
+          "averageStats": 4623.89
+        },
+        {
+          "turn": 15,
+          "averageStats": 5693.34
+        },
+        {
+          "turn": 16,
+          "averageStats": 6933.21
+        },
+        {
+          "turn": 17,
+          "averageStats": 7754.58
+        },
+        {
+          "turn": 18,
+          "averageStats": 8293.25
+        },
+        {
+          "turn": 19,
+          "averageStats": 10140.33
+        },
+        {
+          "turn": 20,
+          "averageStats": 9641.25
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": 33.33
+        },
+        {
+          "turn": 2,
+          "winrate": 26.27
+        },
+        {
+          "turn": 3,
+          "winrate": 39.2
+        },
+        {
+          "turn": 4,
+          "winrate": 38.33
+        },
+        {
+          "turn": 5,
+          "winrate": 36.51
+        },
+        {
+          "turn": 6,
+          "winrate": 37.62
+        },
+        {
+          "turn": 7,
+          "winrate": 37.89
+        },
+        {
+          "turn": 8,
+          "winrate": 49.37
+        },
+        {
+          "turn": 9,
+          "winrate": 52.71
+        },
+        {
+          "turn": 10,
+          "winrate": 55.87
+        },
+        {
+          "turn": 11,
+          "winrate": 55.32
+        },
+        {
+          "turn": 12,
+          "winrate": 56.24
+        },
+        {
+          "turn": 13,
+          "winrate": 60.8
+        },
+        {
+          "turn": 14,
+          "winrate": 55.09
+        },
+        {
+          "turn": 15,
+          "winrate": 52.71
+        },
+        {
+          "turn": 16,
+          "winrate": 51.04
+        },
+        {
+          "turn": 17,
+          "winrate": 45.1
+        },
+        {
+          "turn": 18,
+          "winrate": 60.7
+        },
+        {
+          "turn": 19,
+          "winrate": 47.5
+        },
+        {
+          "turn": 20,
+          "winrate": 60
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 11,
+          "dataPoints": 9424,
+          "dataPointsOnMissingTribe": 9716,
+          "totalOffered": 18746,
+          "totalPicked": 9384,
+          "averagePosition": 3.88,
+          "averagePositionWithoutTribe": 3.8,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": 0.04,
+          "impactAveragePositionVsMissingTribe": 0.08
+        },
+        {
+          "tribe": 15,
+          "dataPoints": 9615,
+          "dataPointsOnMissingTribe": 9525,
+          "totalOffered": 19098,
+          "totalPicked": 9586,
+          "averagePosition": 3.83,
+          "averagePositionWithoutTribe": 3.86,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.03
+        },
+        {
+          "tribe": 17,
+          "dataPoints": 9348,
+          "dataPointsOnMissingTribe": 9792,
+          "totalOffered": 18818,
+          "totalPicked": 9312,
+          "averagePosition": 3.85,
+          "averagePositionWithoutTribe": 3.83,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": 0.01,
+          "impactAveragePositionVsMissingTribe": 0.02
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 9683,
+          "dataPointsOnMissingTribe": 9457,
+          "totalOffered": 19088,
+          "totalPicked": 9633,
+          "averagePosition": 3.82,
+          "averagePositionWithoutTribe": 3.86,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.04
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 9368,
+          "dataPointsOnMissingTribe": 9772,
+          "totalOffered": 18935,
+          "totalPicked": 9348,
+          "averagePosition": 3.85,
+          "averagePositionWithoutTribe": 3.83,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": 0.01,
+          "impactAveragePositionVsMissingTribe": 0.02
+        },
+        {
+          "tribe": 14,
+          "dataPoints": 9525,
+          "dataPointsOnMissingTribe": 9615,
+          "totalOffered": 18926,
+          "totalPicked": 9495,
+          "averagePosition": 3.82,
+          "averagePositionWithoutTribe": 3.86,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.04
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 9703,
+          "dataPointsOnMissingTribe": 9437,
+          "totalOffered": 19279,
+          "totalPicked": 9660,
+          "averagePosition": 3.87,
+          "averagePositionWithoutTribe": 3.81,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.06
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 9894,
+          "dataPointsOnMissingTribe": 9246,
+          "totalOffered": 19563,
+          "totalPicked": 9857,
+          "averagePosition": 3.82,
+          "averagePositionWithoutTribe": 3.86,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.04
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 9444,
+          "dataPointsOnMissingTribe": 9696,
+          "totalOffered": 18873,
+          "totalPicked": 9410,
+          "averagePosition": 3.87,
+          "averagePositionWithoutTribe": 3.81,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.06
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 9696,
+          "dataPointsOnMissingTribe": 9444,
+          "totalOffered": 18914,
+          "totalPicked": 9660,
+          "averagePosition": 3.8,
+          "averagePositionWithoutTribe": 3.88,
+          "refAveragePosition": 3.84,
+          "impactAveragePosition": -0.04,
+          "impactAveragePositionVsMissingTribe": -0.08
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    },
+    {
+      "heroCardId": "TB_BaconShop_HERO_16",
+      "dataPoints": 15771,
+      "totalOffered": 38046,
+      "totalPicked": 15716,
+      "averagePosition": 3.97,
+      "standardDeviation": 2.11,
+      "standardDeviationOfTheMean": 0.02,
+      "conservativePositionEstimate": 4.02,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 14.97685625515186,
+          "totalMatches": 2362
+        },
+        {
+          "rank": 2,
+          "percentage": 14.526662862215458,
+          "totalMatches": 2291
+        },
+        {
+          "rank": 3,
+          "percentage": 17.760446388941727,
+          "totalMatches": 2801
+        },
+        {
+          "rank": 4,
+          "percentage": 12.459577705915923,
+          "totalMatches": 1965
+        },
+        {
+          "rank": 5,
+          "percentage": 13.892587660896583,
+          "totalMatches": 2191
+        },
+        {
+          "rank": 6,
+          "percentage": 10.994863990869318,
+          "totalMatches": 1734
+        },
+        {
+          "rank": 7,
+          "percentage": 9.054593874833555,
+          "totalMatches": 1428
+        },
+        {
+          "rank": 8,
+          "percentage": 6.334411261175576,
+          "totalMatches": 999
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 0
+        },
+        {
+          "turn": 2,
+          "averageStats": 0
+        },
+        {
+          "turn": 3,
+          "averageStats": 17.83
+        },
+        {
+          "turn": 4,
+          "averageStats": 26.81
+        },
+        {
+          "turn": 5,
+          "averageStats": 39.54
+        },
+        {
+          "turn": 6,
+          "averageStats": 67.8
+        },
+        {
+          "turn": 7,
+          "averageStats": 110.26
+        },
+        {
+          "turn": 8,
+          "averageStats": 177.93
+        },
+        {
+          "turn": 9,
+          "averageStats": 327.99
+        },
+        {
+          "turn": 10,
+          "averageStats": 583.62
+        },
+        {
+          "turn": 11,
+          "averageStats": 1025.4
+        },
+        {
+          "turn": 12,
+          "averageStats": 1622.72
+        },
+        {
+          "turn": 13,
+          "averageStats": 2697.02
+        },
+        {
+          "turn": 14,
+          "averageStats": 4256.26
+        },
+        {
+          "turn": 15,
+          "averageStats": 5741.28
+        },
+        {
+          "turn": 16,
+          "averageStats": 7233.3
+        },
+        {
+          "turn": 17,
+          "averageStats": 7858.53
+        },
+        {
+          "turn": 18,
+          "averageStats": 9966
+        },
+        {
+          "turn": 19,
+          "averageStats": 6875.6
+        },
+        {
+          "turn": 20,
+          "averageStats": 13305.5
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": 0
+        },
+        {
+          "turn": 2,
+          "winrate": 0.14
+        },
+        {
+          "turn": 3,
+          "winrate": 60.99
+        },
+        {
+          "turn": 4,
+          "winrate": 55.49
+        },
+        {
+          "turn": 5,
+          "winrate": 52.95
+        },
+        {
+          "turn": 6,
+          "winrate": 56.05
+        },
+        {
+          "turn": 7,
+          "winrate": 52.26
+        },
+        {
+          "turn": 8,
+          "winrate": 48.63
+        },
+        {
+          "turn": 9,
+          "winrate": 49.16
+        },
+        {
+          "turn": 10,
+          "winrate": 48.35
+        },
+        {
+          "turn": 11,
+          "winrate": 47.24
+        },
+        {
+          "turn": 12,
+          "winrate": 50.57
+        },
+        {
+          "turn": 13,
+          "winrate": 52.63
+        },
+        {
+          "turn": 14,
+          "winrate": 54.04
+        },
+        {
+          "turn": 15,
+          "winrate": 55.02
+        },
+        {
+          "turn": 16,
+          "winrate": 41.73
+        },
+        {
+          "turn": 17,
+          "winrate": 49.6
+        },
+        {
+          "turn": 18,
+          "winrate": 65.7
+        },
+        {
+          "turn": 19,
+          "winrate": 51.67
+        },
+        {
+          "turn": 20,
+          "winrate": 78.5
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 17,
+          "dataPoints": 7937,
+          "dataPointsOnMissingTribe": 7834,
+          "totalOffered": 18789,
+          "totalPicked": 7914,
+          "averagePosition": 3.97,
+          "averagePositionWithoutTribe": 3.96,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": 0.01
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 8124,
+          "dataPointsOnMissingTribe": 7647,
+          "totalOffered": 18952,
+          "totalPicked": 8089,
+          "averagePosition": 3.88,
+          "averagePositionWithoutTribe": 4.06,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": -0.09,
+          "impactAveragePositionVsMissingTribe": -0.18
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 7791,
+          "dataPointsOnMissingTribe": 7980,
+          "totalOffered": 19179,
+          "totalPicked": 7766,
+          "averagePosition": 3.96,
+          "averagePositionWithoutTribe": 3.97,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.01
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 8083,
+          "dataPointsOnMissingTribe": 7688,
+          "totalOffered": 19081,
+          "totalPicked": 8061,
+          "averagePosition": 3.94,
+          "averagePositionWithoutTribe": 3.99,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": -0.03,
+          "impactAveragePositionVsMissingTribe": -0.06
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 8013,
+          "dataPointsOnMissingTribe": 7758,
+          "totalOffered": 19005,
+          "totalPicked": 7980,
+          "averagePosition": 3.9,
+          "averagePositionWithoutTribe": 4.03,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": -0.06,
+          "impactAveragePositionVsMissingTribe": -0.13
+        },
+        {
+          "tribe": 14,
+          "dataPoints": 7712,
+          "dataPointsOnMissingTribe": 8059,
+          "totalOffered": 19081,
+          "totalPicked": 7683,
+          "averagePosition": 4.02,
+          "averagePositionWithoutTribe": 3.92,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": 0.05,
+          "impactAveragePositionVsMissingTribe": 0.1
+        },
+        {
+          "tribe": 15,
+          "dataPoints": 7728,
+          "dataPointsOnMissingTribe": 8043,
+          "totalOffered": 19046,
+          "totalPicked": 7700,
+          "averagePosition": 4,
+          "averagePositionWithoutTribe": 3.94,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.06
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 8005,
+          "dataPointsOnMissingTribe": 7766,
+          "totalOffered": 19338,
+          "totalPicked": 7973,
+          "averagePosition": 3.98,
+          "averagePositionWithoutTribe": 3.95,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": 0.01,
+          "impactAveragePositionVsMissingTribe": 0.03
+        },
+        {
+          "tribe": 11,
+          "dataPoints": 7728,
+          "dataPointsOnMissingTribe": 8043,
+          "totalOffered": 18702,
+          "totalPicked": 7702,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 3.94,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.06
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 7734,
+          "dataPointsOnMissingTribe": 8037,
+          "totalOffered": 19057,
+          "totalPicked": 7712,
+          "averagePosition": 4.03,
+          "averagePositionWithoutTribe": 3.91,
+          "refAveragePosition": 3.97,
+          "impactAveragePosition": 0.06,
+          "impactAveragePositionVsMissingTribe": 0.11
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    },
+    {
+      "heroCardId": "BG21_HERO_010",
+      "dataPoints": 7007,
+      "totalOffered": 37343,
+      "totalPicked": 6964,
+      "averagePosition": 4.29,
+      "standardDeviation": 2.12,
+      "standardDeviationOfTheMean": 0.03,
+      "conservativePositionEstimate": 4.36,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 12.31625517339803,
+          "totalMatches": 863
+        },
+        {
+          "rank": 2,
+          "percentage": 12.430426716141001,
+          "totalMatches": 871
+        },
+        {
+          "rank": 3,
+          "percentage": 16.383616383616385,
+          "totalMatches": 1148
+        },
+        {
+          "rank": 4,
+          "percentage": 11.959469102326246,
+          "totalMatches": 838
+        },
+        {
+          "rank": 5,
+          "percentage": 14.685314685314685,
+          "totalMatches": 1029
+        },
+        {
+          "rank": 6,
+          "percentage": 12.30198373055516,
+          "totalMatches": 862
+        },
+        {
+          "rank": 7,
+          "percentage": 11.902383330954759,
+          "totalMatches": 834
+        },
+        {
+          "rank": 8,
+          "percentage": 8.020550877693735,
+          "totalMatches": 562
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 3.17
+        },
+        {
+          "turn": 2,
+          "averageStats": 4.26
+        },
+        {
+          "turn": 3,
+          "averageStats": 12.46
+        },
+        {
+          "turn": 4,
+          "averageStats": 21.13
+        },
+        {
+          "turn": 5,
+          "averageStats": 33.44
+        },
+        {
+          "turn": 6,
+          "averageStats": 53.91
+        },
+        {
+          "turn": 7,
+          "averageStats": 89.61
+        },
+        {
+          "turn": 8,
+          "averageStats": 157.03
+        },
+        {
+          "turn": 9,
+          "averageStats": 295.44
+        },
+        {
+          "turn": 10,
+          "averageStats": 533.18
+        },
+        {
+          "turn": 11,
+          "averageStats": 1007.24
+        },
+        {
+          "turn": 12,
+          "averageStats": 1738.05
+        },
+        {
+          "turn": 13,
+          "averageStats": 2777.94
+        },
+        {
+          "turn": 14,
+          "averageStats": 4466.9
+        },
+        {
+          "turn": 15,
+          "averageStats": 6550.22
+        },
+        {
+          "turn": 16,
+          "averageStats": 7471.18
+        },
+        {
+          "turn": 17,
+          "averageStats": 9454
+        },
+        {
+          "turn": 18,
+          "averageStats": 8952
+        },
+        {
+          "turn": 19,
+          "averageStats": 9401.33
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": null
+        },
+        {
+          "turn": 2,
+          "winrate": 28.46
+        },
+        {
+          "turn": 3,
+          "winrate": 43.85
+        },
+        {
+          "turn": 4,
+          "winrate": 41.77
+        },
+        {
+          "turn": 5,
+          "winrate": 46.95
+        },
+        {
+          "turn": 6,
+          "winrate": 46.91
+        },
+        {
+          "turn": 7,
+          "winrate": 42.01
+        },
+        {
+          "turn": 8,
+          "winrate": 40.34
+        },
+        {
+          "turn": 9,
+          "winrate": 38.01
+        },
+        {
+          "turn": 10,
+          "winrate": 40.77
+        },
+        {
+          "turn": 11,
+          "winrate": 50.54
+        },
+        {
+          "turn": 12,
+          "winrate": 45.15
+        },
+        {
+          "turn": 13,
+          "winrate": 47.6
+        },
+        {
+          "turn": 14,
+          "winrate": 55
+        },
+        {
+          "turn": 15,
+          "winrate": 37.27
+        },
+        {
+          "turn": 16,
+          "winrate": 27.14
+        },
+        {
+          "turn": 17,
+          "winrate": 42.8
+        },
+        {
+          "turn": 18,
+          "winrate": 43.33
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 11,
+          "dataPoints": 3527,
+          "dataPointsOnMissingTribe": 3480,
+          "totalOffered": 18294,
+          "totalPicked": 3500,
+          "averagePosition": 4.25,
+          "averagePositionWithoutTribe": 4.33,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": -0.04,
+          "impactAveragePositionVsMissingTribe": -0.08
+        },
+        {
+          "tribe": 17,
+          "dataPoints": 3476,
+          "dataPointsOnMissingTribe": 3531,
+          "totalOffered": 18458,
+          "totalPicked": 3458,
+          "averagePosition": 4.27,
+          "averagePositionWithoutTribe": 4.31,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": -0.02,
+          "impactAveragePositionVsMissingTribe": -0.04
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 3448,
+          "dataPointsOnMissingTribe": 3559,
+          "totalOffered": 19036,
+          "totalPicked": 3431,
+          "averagePosition": 4.29,
+          "averagePositionWithoutTribe": 4.29,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": 0.01
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 3596,
+          "dataPointsOnMissingTribe": 3411,
+          "totalOffered": 18684,
+          "totalPicked": 3578,
+          "averagePosition": 4.3,
+          "averagePositionWithoutTribe": 4.28,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": 0.01,
+          "impactAveragePositionVsMissingTribe": 0.02
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 3580,
+          "dataPointsOnMissingTribe": 3419,
+          "totalOffered": 18826,
+          "totalPicked": 3552,
+          "averagePosition": 4.29,
+          "averagePositionWithoutTribe": 4.29,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": -0.01
+        },
+        {
+          "tribe": 14,
+          "dataPoints": 3551,
+          "dataPointsOnMissingTribe": 3456,
+          "totalOffered": 18636,
+          "totalPicked": 3525,
+          "averagePosition": 4.3,
+          "averagePositionWithoutTribe": 4.27,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": 0.01,
+          "impactAveragePositionVsMissingTribe": 0.03
+        },
+        {
+          "tribe": 15,
+          "dataPoints": 3353,
+          "dataPointsOnMissingTribe": 3654,
+          "totalOffered": 18705,
+          "totalPicked": 3332,
+          "averagePosition": 4.34,
+          "averagePositionWithoutTribe": 4.24,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": 0.05,
+          "impactAveragePositionVsMissingTribe": 0.09
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 3486,
+          "dataPointsOnMissingTribe": 3521,
+          "totalOffered": 18814,
+          "totalPicked": 3469,
+          "averagePosition": 4.32,
+          "averagePositionWithoutTribe": 4.26,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.05
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 3628,
+          "dataPointsOnMissingTribe": 3379,
+          "totalOffered": 18504,
+          "totalPicked": 3604,
+          "averagePosition": 4.28,
+          "averagePositionWithoutTribe": 4.3,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 3390,
+          "dataPointsOnMissingTribe": 3617,
+          "totalOffered": 18724,
+          "totalPicked": 3371,
+          "averagePosition": 4.25,
+          "averagePositionWithoutTribe": 4.32,
+          "refAveragePosition": 4.29,
+          "impactAveragePosition": -0.04,
+          "impactAveragePositionVsMissingTribe": -0.07
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    },
+    {
+      "heroCardId": "BG20_HERO_202",
+      "dataPoints": 16738,
+      "totalOffered": 37963,
+      "totalPicked": 16684,
+      "averagePosition": 4,
+      "standardDeviation": 2.21,
+      "standardDeviationOfTheMean": 0.02,
+      "conservativePositionEstimate": 4.05,
+      "placementDistribution": [
+        {
+          "rank": 1,
+          "percentage": 17.206356792926275,
+          "totalMatches": 2880
+        },
+        {
+          "rank": 2,
+          "percentage": 13.90847174094874,
+          "totalMatches": 2328
+        },
+        {
+          "rank": 3,
+          "percentage": 16.298243517744055,
+          "totalMatches": 2728
+        },
+        {
+          "rank": 4,
+          "percentage": 11.291671645357868,
+          "totalMatches": 1890
+        },
+        {
+          "rank": 5,
+          "percentage": 12.343171227147808,
+          "totalMatches": 2066
+        },
+        {
+          "rank": 6,
+          "percentage": 10.807742860556816,
+          "totalMatches": 1809
+        },
+        {
+          "rank": 7,
+          "percentage": 10.503046959015414,
+          "totalMatches": 1758
+        },
+        {
+          "rank": 8,
+          "percentage": 7.641295256303023,
+          "totalMatches": 1279
+        }
+      ],
+      "warbandStats": [
+        {
+          "turn": 1,
+          "averageStats": 3.87
+        },
+        {
+          "turn": 2,
+          "averageStats": 5.82
+        },
+        {
+          "turn": 3,
+          "averageStats": 14.25
+        },
+        {
+          "turn": 4,
+          "averageStats": 24.93
+        },
+        {
+          "turn": 5,
+          "averageStats": 38.31
+        },
+        {
+          "turn": 6,
+          "averageStats": 62.89
+        },
+        {
+          "turn": 7,
+          "averageStats": 100.04
+        },
+        {
+          "turn": 8,
+          "averageStats": 169.66
+        },
+        {
+          "turn": 9,
+          "averageStats": 327.76
+        },
+        {
+          "turn": 10,
+          "averageStats": 629.4
+        },
+        {
+          "turn": 11,
+          "averageStats": 1110
+        },
+        {
+          "turn": 12,
+          "averageStats": 1864.76
+        },
+        {
+          "turn": 13,
+          "averageStats": 3089.26
+        },
+        {
+          "turn": 14,
+          "averageStats": 4606.87
+        },
+        {
+          "turn": 15,
+          "averageStats": 6126.38
+        },
+        {
+          "turn": 16,
+          "averageStats": 6667.94
+        },
+        {
+          "turn": 17,
+          "averageStats": 6361.4
+        },
+        {
+          "turn": 18,
+          "averageStats": 5258.57
+        },
+        {
+          "turn": 19,
+          "averageStats": 6688.29
+        },
+        {
+          "turn": 20,
+          "averageStats": 7643
+        }
+      ],
+      "combatWinrate": [
+        {
+          "turn": 1,
+          "winrate": 50
+        },
+        {
+          "turn": 2,
+          "winrate": 49.94
+        },
+        {
+          "turn": 3,
+          "winrate": 52.32
+        },
+        {
+          "turn": 4,
+          "winrate": 52.39
+        },
+        {
+          "turn": 5,
+          "winrate": 55.5
+        },
+        {
+          "turn": 6,
+          "winrate": 53.41
+        },
+        {
+          "turn": 7,
+          "winrate": 49.89
+        },
+        {
+          "turn": 8,
+          "winrate": 50.3
+        },
+        {
+          "turn": 9,
+          "winrate": 51.15
+        },
+        {
+          "turn": 10,
+          "winrate": 54.07
+        },
+        {
+          "turn": 11,
+          "winrate": 53.17
+        },
+        {
+          "turn": 12,
+          "winrate": 56.74
+        },
+        {
+          "turn": 13,
+          "winrate": 54.75
+        },
+        {
+          "turn": 14,
+          "winrate": 56.53
+        },
+        {
+          "turn": 15,
+          "winrate": 51.42
+        },
+        {
+          "turn": 16,
+          "winrate": 43.54
+        },
+        {
+          "turn": 17,
+          "winrate": 50.38
+        },
+        {
+          "turn": 18,
+          "winrate": 45.5
+        },
+        {
+          "turn": 19,
+          "winrate": 37.29
+        },
+        {
+          "turn": 20,
+          "winrate": 14
+        }
+      ],
+      "tribeStats": [
+        {
+          "tribe": 11,
+          "dataPoints": 8283,
+          "dataPointsOnMissingTribe": 8455,
+          "totalOffered": 18564,
+          "totalPicked": 8252,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 4.01,
+          "refAveragePosition": 4,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 14,
+          "dataPoints": 8355,
+          "dataPointsOnMissingTribe": 8383,
+          "totalOffered": 19000,
+          "totalPicked": 8324,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 4.02,
+          "refAveragePosition": 4,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.03
+        },
+        {
+          "tribe": 15,
+          "dataPoints": 8188,
+          "dataPointsOnMissingTribe": 8550,
+          "totalOffered": 18865,
+          "totalPicked": 8154,
+          "averagePosition": 4.04,
+          "averagePositionWithoutTribe": 3.97,
+          "refAveragePosition": 4,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.07
+        },
+        {
+          "tribe": 17,
+          "dataPoints": 8273,
+          "dataPointsOnMissingTribe": 8465,
+          "totalOffered": 18717,
+          "totalPicked": 8257,
+          "averagePosition": 4.03,
+          "averagePositionWithoutTribe": 3.98,
+          "refAveragePosition": 4,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.05
+        },
+        {
+          "tribe": 23,
+          "dataPoints": 8400,
+          "dataPointsOnMissingTribe": 8338,
+          "totalOffered": 19015,
+          "totalPicked": 8376,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 4.01,
+          "refAveragePosition": 4,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 18,
+          "dataPoints": 8540,
+          "dataPointsOnMissingTribe": 8198,
+          "totalOffered": 19287,
+          "totalPicked": 8519,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 4.01,
+          "refAveragePosition": 4,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 92,
+          "dataPoints": 8456,
+          "dataPointsOnMissingTribe": 8282,
+          "totalOffered": 19123,
+          "totalPicked": 8430,
+          "averagePosition": 3.97,
+          "averagePositionWithoutTribe": 4.04,
+          "refAveragePosition": 4,
+          "impactAveragePosition": -0.03,
+          "impactAveragePositionVsMissingTribe": -0.07
+        },
+        {
+          "tribe": 20,
+          "dataPoints": 8405,
+          "dataPointsOnMissingTribe": 8333,
+          "totalOffered": 18844,
+          "totalPicked": 8378,
+          "averagePosition": 3.99,
+          "averagePositionWithoutTribe": 4.01,
+          "refAveragePosition": 4,
+          "impactAveragePosition": -0.01,
+          "impactAveragePositionVsMissingTribe": -0.02
+        },
+        {
+          "tribe": 24,
+          "dataPoints": 8261,
+          "dataPointsOnMissingTribe": 8477,
+          "totalOffered": 19107,
+          "totalPicked": 8229,
+          "averagePosition": 4,
+          "averagePositionWithoutTribe": 4.01,
+          "refAveragePosition": 4,
+          "impactAveragePosition": 0,
+          "impactAveragePositionVsMissingTribe": -0.01
+        },
+        {
+          "tribe": 43,
+          "dataPoints": 8529,
+          "dataPointsOnMissingTribe": 8209,
+          "totalOffered": 19293,
+          "totalPicked": 8501,
+          "averagePosition": 4.04,
+          "averagePositionWithoutTribe": 3.97,
+          "refAveragePosition": 4,
+          "impactAveragePosition": 0.03,
+          "impactAveragePositionVsMissingTribe": 0.07
+        }
+      ],
+      "mmrPercentile": 100,
+      "timePeriod": "last-patch"
+    }
+  ],
+  "lastUpdateDate": "2026-05-31T09:10:34.134Z",
+  "dataPoints": 879685,
+  "mmrPercentiles": [
+    {
+      "percentile": 100,
+      "mmr": 0
+    },
+    {
+      "percentile": 50,
+      "mmr": 5661
+    },
+    {
+      "percentile": 25,
+      "mmr": 6349
+    },
+    {
+      "percentile": 10,
+      "mmr": 6869
+    },
+    {
+      "percentile": 1,
+      "mmr": 8613
+    }
+  ]
+}

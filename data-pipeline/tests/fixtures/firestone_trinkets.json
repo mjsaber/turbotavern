@@ -1,0 +1,487 @@
+{
+  "trinketStats": [
+    {
+      "trinketCardId": "BG30_MagicItem_902",
+      "dataPoints": 4752,
+      "pickRate": 0.11175917215428034,
+      "averagePlacement": 4.084962759787167,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 4752,
+          "placement": 4.084962759787167
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 1901,
+          "placement": 4.209158340201965
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 797,
+          "placement": 4.185150793650794
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 241,
+          "placement": 4.184355828220859
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 15,
+          "placement": 3.6
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 4752,
+          "pickRate": 0.11175917215428034
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 1901,
+          "pickRate": 0.08950094161958569
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 797,
+          "pickRate": 0.07876272358928747
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 241,
+          "pickRate": 0.08669064748201438
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 15,
+          "pickRate": 0.3125
+        }
+      ]
+    },
+    {
+      "trinketCardId": "BG30_MagicItem_426t",
+      "dataPoints": 48485,
+      "pickRate": 0.3519143531119579,
+      "averagePlacement": 3.833537795830548,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 48485,
+          "placement": 3.833537795830548
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 24163,
+          "placement": 3.9808341797203544
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 11978,
+          "placement": 4.0256704249320086
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 4613,
+          "placement": 4.0647617771090845
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 399,
+          "placement": 3.693877551020409
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 48485,
+          "pickRate": 0.3519143531119579
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 24163,
+          "pickRate": 0.3504118568362434
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 11978,
+          "pickRate": 0.34911104634217427
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 4613,
+          "pickRate": 0.3386433710174717
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 399,
+          "pickRate": 0.35720680393912263
+        }
+      ]
+    },
+    {
+      "trinketCardId": "BG30_MagicItem_900",
+      "dataPoints": 8042,
+      "pickRate": 0.1899969286743686,
+      "averagePlacement": 3.7866383615654584,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 8042,
+          "placement": 3.7866383615654584
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 2824,
+          "placement": 3.9784712829744096
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 1149,
+          "placement": 4.033682940825798
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 386,
+          "placement": 3.9429392446633824
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 43,
+          "placement": 3.15
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 8042,
+          "pickRate": 0.1899969286743686
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 2824,
+          "pickRate": 0.13223450084285446
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 1149,
+          "pickRate": 0.11037463976945244
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 386,
+          "pickRate": 0.11117511520737328
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 43,
+          "pickRate": 0.4574468085106383
+        }
+      ]
+    },
+    {
+      "trinketCardId": "BG35_MagicItem_840t",
+      "dataPoints": 13749,
+      "pickRate": 0.38533112861186625,
+      "averagePlacement": 3.49045737859805,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 13749,
+          "placement": 3.49045737859805
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 7440,
+          "placement": 3.590438468090991
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 3961,
+          "placement": 3.6165782830379376
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 1666,
+          "placement": 3.5998396310188774
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 180,
+          "placement": 2.9090330788804075
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 13749,
+          "pickRate": 0.38533112861186625
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 7440,
+          "pickRate": 0.4083873092545834
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 3961,
+          "pickRate": 0.42618893910049493
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 1666,
+          "pickRate": 0.4491776759234295
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 180,
+          "pickRate": 0.5714285714285714
+        }
+      ]
+    },
+    {
+      "trinketCardId": "BG35_MagicItem_434",
+      "dataPoints": 5113,
+      "pickRate": 0.3582037270561861,
+      "averagePlacement": 3.967710737934321,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 5113,
+          "placement": 3.967710737934321
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 2326,
+          "placement": 4.16315077366587
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 1099,
+          "placement": 4.173308451160162
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 401,
+          "placement": 4.252777777777778
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 39,
+          "placement": 2.9583333333333335
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 5113,
+          "pickRate": 0.3582037270561861
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 2326,
+          "pickRate": 0.3423105224429728
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 1099,
+          "pickRate": 0.3352654057352044
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 401,
+          "pickRate": 0.3675527039413382
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 39,
+          "pickRate": 0.9069767441860465
+        }
+      ]
+    },
+    {
+      "trinketCardId": "BG32_MagicItem_808t",
+      "dataPoints": 4006,
+      "pickRate": 0.28473949818750444,
+      "averagePlacement": 3.8425093964242327,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 4006,
+          "placement": 3.8425093964242327
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 1596,
+          "placement": 4.025818448468825
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 661,
+          "placement": 4.072174471448331
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 197,
+          "placement": 4.038968824940047
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 10,
+          "placement": 4.222222222222222
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 4006,
+          "pickRate": 0.28473949818750444
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 1596,
+          "pickRate": 0.24553846153846154
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 661,
+          "pickRate": 0.21974734042553193
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 197,
+          "pickRate": 0.27097661623108665
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 10,
+          "pickRate": 0.7692307692307693
+        }
+      ]
+    },
+    {
+      "trinketCardId": "BG30_MagicItem_547",
+      "dataPoints": 2882,
+      "pickRate": 0.19286622498828884,
+      "averagePlacement": 4.058597066608027,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 2882,
+          "placement": 4.058597066608027
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 1183,
+          "placement": 4.350133308531745
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 454,
+          "placement": 4.301625353337681
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 129,
+          "placement": 4.051971326164875
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 11,
+          "placement": 3.85
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 2882,
+          "pickRate": 0.19286622498828884
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 1183,
+          "pickRate": 0.15492404400209533
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 454,
+          "pickRate": 0.13128976286871025
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 129,
+          "pickRate": 0.18859649122807018
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 11,
+          "pickRate": 0.7857142857142857
+        }
+      ]
+    },
+    {
+      "trinketCardId": "BG35_MagicItem_733",
+      "dataPoints": 8971,
+      "pickRate": 0.453653603034134,
+      "averagePlacement": 3.7431528945328765,
+      "averagePlacementAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 8971,
+          "placement": 3.7431528945328765
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 4863,
+          "placement": 3.887162578279852
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 2542,
+          "placement": 3.907353061778588
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 1068,
+          "placement": 3.816672205747008
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 118,
+          "placement": 3.2009259259259264
+        }
+      ],
+      "pickRateAtMmr": [
+        {
+          "mmr": 100,
+          "dataPoints": 8971,
+          "pickRate": 0.453653603034134
+        },
+        {
+          "mmr": 50,
+          "dataPoints": 4863,
+          "pickRate": 0.4721817652199243
+        },
+        {
+          "mmr": 25,
+          "dataPoints": 2542,
+          "pickRate": 0.4820785131803527
+        },
+        {
+          "mmr": 10,
+          "dataPoints": 1068,
+          "pickRate": 0.4967441860465116
+        },
+        {
+          "mmr": 1,
+          "dataPoints": 118,
+          "pickRate": 0.6742857142857143
+        }
+      ]
+    }
+  ],
+  "lastUpdateDate": "2026-05-31T00:10:26.522Z",
+  "dataPoints": 1639030,
+  "timePeriod": "last-patch"
+}

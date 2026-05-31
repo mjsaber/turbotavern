@@ -96,7 +96,8 @@
   - 英雄：数组 `heroStats`，id `heroCardId`，`avg_placement←averagePosition`，`data_points←dataPoints`，`placement_distribution←placementDistribution`，pick_rate←`totalPicked/totalOffered`（可空）；产出 `{该URL的mmr: feed}`。
   - 饰品：数组 `trinketStats`，id `trinketCardId`；对每条目的 `averagePlacementAtMmr` 逐 mmr 展开：`avg_placement←placement`、`data_points←该mmr的dataPoints`、`pick_rate←pickRateAtMmr[同mmr]`；产出 `{100:feed,50:feed,25:feed,10:feed,1:feed}`。
   - 未建模字段（`tribeStats`、`standardDeviation` 等）原样进 `extra_json`；整份原始响应体存 `raw_payload`（§5.5）。
-  - **校验（任一不过 → 拒绝整个 URL 的全部维度，不发布、不推进校验器）**：feed 非空、行数 ≤ 上限；每行 `card_id` + `avg_placement` + `data_points` 必填、类型合法、`1 ≤ avg_placement ≤ 8`、`data_points ≥ 0`；`placement_distribution` 若存在须为长度 8 的数值数组；同维度内 `card_id` 不重复。
+  - **校验（任一不过 → 拒绝整个 URL 的全部维度，不发布、不推进校验器）**：**URL 级数组非空**（`heroStats`/`trinketStats`）、行数 ≤ 上限；每行 `card_id` + `avg_placement` + `data_points` 必填、类型合法、`1 ≤ avg_placement ≤ 8`、`data_points ≥ 0`；`placement_distribution` 若存在须为长度 8 的数值数组；同维度内 `card_id` 不重复。
+  - **饰品展开的空分段**：URL 级非空已校验；展开后某 mmr 分段可能为空（如 top-1% 低样本）→ **该分段直接丢弃，不产出维度**（不报错、load 也不会建空 snapshot）。
 - **load（事务，`BEGIN IMMEDIATE`）**：一个 URL 的全部维度 + 该 URL 的 `fetch_state` 更新放进**一个** `BEGIN IMMEDIATE` 事务（SQLite 立即取写锁，串行化）：
   1. 对每个维度算 `content_hash`（含 provenance，契约见 §5.6）。
   2. 查该维度**最新 snapshot 的 `content_hash`**（`SELECT … ORDER BY fetched_at DESC, snapshot_id DESC LIMIT 1`）；**相同 → 跳过**该维度；**不同 → 追加** 一个 `snapshot` + 一批 `entity_stats` + 一条 `raw_payload`。
