@@ -44,3 +44,22 @@ def test_entity_type_check_constraint(conn):
     except sqlite3.IntegrityError:
         raised = True
     assert raised
+
+
+def test_entity_name_table_and_index_created(conn):
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(entity_name)").fetchall()}
+    assert cols == {"entity_id", "locale", "name", "name_key"}
+    idx = {r["name"] for r in conn.execute("PRAGMA index_list(entity_name)").fetchall()}
+    assert "idx_entity_name_lookup" in idx
+
+
+def test_entity_name_unique_entity_locale(conn):
+    import pytest
+    conn.execute("INSERT INTO entity (entity_type, card_id, first_seen_at, last_seen_at) "
+                 "VALUES ('hero','H',?,?)", ("t", "t"))
+    eid = conn.execute("SELECT entity_id FROM entity").fetchone()["entity_id"]
+    conn.execute("INSERT INTO entity_name (entity_id, locale, name, name_key) VALUES (?,?,?,?)",
+                 (eid, "enUS", "Foo", "foo"))
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute("INSERT INTO entity_name (entity_id, locale, name, name_key) VALUES (?,?,?,?)",
+                     (eid, "enUS", "Bar", "bar"))

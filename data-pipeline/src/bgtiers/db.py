@@ -15,6 +15,16 @@ CREATE TABLE IF NOT EXISTS entity (
   UNIQUE (entity_type, card_id)
 );
 
+-- localized display names + normalized search key, one row per (entity, locale).
+-- entity.name stays the default-locale string; this table is the multi-language source.
+CREATE TABLE IF NOT EXISTS entity_name (
+  entity_id  INTEGER NOT NULL REFERENCES entity(entity_id),
+  locale     TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  name_key   TEXT NOT NULL,
+  UNIQUE (entity_id, locale)
+);
+
 -- fetch_state is keyed by URL (the fetch unit): a trinket URL feeds 5 dimensions
 -- but has one ETag, so validators live per-URL. Dedup does NOT live here.
 CREATE TABLE IF NOT EXISTS fetch_state (
@@ -63,6 +73,7 @@ CREATE TABLE IF NOT EXISTS raw_payload (
   byte_size        INTEGER NOT NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_entity_name_lookup ON entity_name (locale, name_key);
 CREATE INDEX IF NOT EXISTS idx_entity_stats_entity ON entity_stats(entity_id);
 CREATE INDEX IF NOT EXISTS idx_snapshot_latest
   ON snapshot(source, entity_type, mmr_bracket, time_period, mode, region, fetched_at);
