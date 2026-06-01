@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1, "bracket": "100", "period": "last-patch", "generatedAt": "t",
+  "heroes": [
+    { "cardId": "BG_HERO_001", "tier": "S", "names": { "zhTW": "斯尼德", "enUS": "Sneed" } },
+    { "cardId": "BG_HERO_002", "tier": "A", "names": { "enUS": "Patches the Pirate" } },
+    { "cardId": "BG_HERO_003", "tier": "B", "names": { "zhTW": "米羅克", "enUS": "Mirok" } },
+    { "cardId": "BG_HERO_005", "tier": "B", "names": { "enUS": "Brann" } },
+    { "cardId": "BG_HERO_006", "tier": "C", "names": { "enUS": "Brawn" } }
+  ]
+}
