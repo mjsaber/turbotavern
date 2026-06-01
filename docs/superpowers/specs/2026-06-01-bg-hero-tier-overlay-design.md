@@ -1,7 +1,7 @@
 # BG Hero-Select Tier Overlay — Design
 
 **Date:** 2026-06-01
-**Status:** v3 (Codex round-2 addressed)
+**Status:** v4 (Codex round-2 + OCR-engine research addressed; §6.1)
 **Scope:** Android overlay feature only. Heroes only. Bundled tier data. No backend.
 
 ---
@@ -31,7 +31,7 @@ without blocking the user's ability to tap a hero.*
   hero-name dictionary, anchor each badge to the matched name's bounding box. **No
   hard-coded pixel regions, no per-device calibration.**
 - Merged into the existing overlay-app. New subsystems: `MediaProjection` screen capture,
-  a touch-through badge overlay, ML Kit OCR. Reuses the mihomo connection source and the
+  a touch-through badge overlay, on-device ML OCR (PP-OCRv5 primary; see §6.1). Reuses the mihomo connection source and the
   host foreground service; **does not modify** the existing kill-button path or its handler.
 
 ### Out of scope (v1, deferred)
@@ -50,21 +50,27 @@ Each produces a short recorded findings note that gates the stage depending on i
 non-device components (matcher, tier table, normalization, badge-layout math, trigger logic,
 coordinator wiring with fakes) are built and unit-tested independently of the spikes.
 
-### Spike A — OCR accuracy & wrong-badge rate (gates the OCR/matching stages)
+### Spike A — OCR engine bake-off, accuracy & wrong-badge rate (gates the OCR/matching stages)
 - Capture real hero-select frames on the OnePlus 10T in **both** zhTW and enUS clients:
   **≥ 8 frames per locale**, varied heroes including long names, decorative-quote names
   (e.g. `『深沉絕望』尤格薩倫`), and stylized fonts; capture at the moment names are visible.
-- Run bundled ML Kit text recognition (`text-recognition` Latin + `text-recognition-chinese`)
-  and dump, **at `Text.Line` and `Text.Element` granularity**, `{text, box, confidence?}`.
-- Feed each through the real `HeroMatcher` + `TierTable` and record results.
+- **Bake-off** between the two candidate `HeroOcr` impls on the *same* frames (engine choice is
+  §6.1): **PP-OCRv5 mobile** (primary; one multilingual rec model covers Traditional Chinese +
+  English) vs **ML Kit** (baseline; bundled Latin + Chinese recognizers). Dump per line
+  `{text, box, confidence?}`.
+- Feed each through the real `HeroMatcher` + `TierTable` and record results per engine.
 - **Pass criteria (gate):**
   - **Recall:** every offered hero in the frame resolves to its correct cardId in **≥ 80%**
     of frames per locale (one good frame in the capture loop is enough at runtime).
   - **Precision:** **zero wrong badges** across all spike frames (a wrong cardId is a hard
     fail — see §7 ambiguity rules).
-- **If Chinese recall is short**, apply fallbacks in order and record which was needed:
-  (1) upscale a loose name band before OCR, (2) light preprocessing (grayscale/contrast),
-  (3) reconsider engine. **If precision fails** (any wrong badge), tighten §7 thresholds
+- **Engine selection:** an engine is *eligible* only if it meets the gate (recall ≥80%,
+  **zero wrong badges**) on **both** locales. Among eligible engines, prefer the one stronger on
+  **Traditional Chinese** (the harder case), then lower latency / smaller APK; if only one is
+  eligible, it ships. If **none** is eligible, apply fallbacks in order and record which was
+  needed: (1) upscale a loose name band before OCR, (2) light preprocessing (grayscale/
+  contrast), (3) the other engine / a different PP-OCRv5 build. **If precision fails** (any
+  wrong badge), tighten §7 thresholds
   until zero, even at recall cost.
 - Harness: a debug screen / script that loads a captured PNG, runs OCR + matcher, prints
   the table — buildable without the device; the *capture + run on-device* is the user step.
@@ -192,6 +198,39 @@ the screen. Hero-tier uses a **strict gate** built on the same detector but inve
   keeps its own optimistic behavior; the two gates are independent.)
 - On foreground-lost (HS backgrounded) mid-window: stop the capture loop and clear badges.
 
+## 6.1 OCR engine (research-backed; finalized by the Spike-A bake-off)
+
+`HeroOcr` is an interface returning `List<OcrLine>` (capture-pixel boxes), so the engine is
+swappable and the rest of the pipeline is engine-agnostic. Two candidate impls; Spike A picks
+the winner on real frames under the zero-wrong-badge gate.
+
+- **Primary: PP-OCRv5 mobile (PaddleOCR).** A **single multilingual recognition model**
+  (SVTRv2 head, ~18,383-char dict) covers **Traditional Chinese + English** (also Simplified /
+  Japanese / Pinyin) — so one model handles both in-game languages; no per-locale model
+  needed. Pipeline = DBNet detection (gives the name **boxes** we anchor to) → rec per line.
+  Published mobile accuracy: Traditional Chinese ≈ 0.72, English ≈ 0.88 on hard scene text.
+  **Hypothesis (Spike A tests it):** large, high-contrast hero-name UI text recognizes better
+  than benchmark scene text, with residual errors recovered by the closed-dictionary fuzzy
+  match (§7). On-device runtimes with PP-OCRv5 Android ports: **LiteRT/TFLite**
+  (`iFleey/PPOCRv5-Android`, Apache-2.0, FP16 det/rec + dict, GPU/XNNPACK) and **ncnn**
+  (`nihui/ncnn-android-ppocrv5`). ONNX Runtime (`RapidAI/RapidOcrAndroidOnnx`) is a mature
+  Android OCR reference but **not confirmed as a PP-OCRv5 port** — only after verifying
+  PP-OCRv5 ONNX model compatibility. PP-OCR models are Apache-2.0. The exact runtime is chosen
+  in Spike A by integration effort + latency + APK size.
+- **Baseline: ML Kit on-device text recognition** (bundled Latin + Chinese). Near-zero
+  integration, free, offline. ML Kit lists Chinese (incl. `zh-Hant`) as supported, **but
+  Traditional accuracy on stylized game text is unproven** and community issues report Chinese
+  recognition errors / traditional↔simplified confusion (googlesamples/mlkit #421). Treat it as
+  a *risk to validate in Spike A*, not a guaranteed-good baseline; ships only if it clears the
+  zero-wrong-badge gate on both locales.
+
+**Box coordinate note:** raw PP-OCR-style runtimes return detector boxes in the model's
+preprocessed input space (e.g. letterboxed 640×640); **that impl maps boxes back to
+capture-bitmap pixels** before returning. ML Kit already returns boxes in input-bitmap (=
+capture) pixels, so no mapping is needed there. Either way `OcrLine.box` is in **capture
+pixels** (distinct from `BadgeLayout`'s capture→screen transform, §9.3); the Spike-A harness
+draws a sanity overlay to confirm box alignment per engine.
+
 ## 7. Matching (`HeroMatcher` + `NameKey`) (Critical, Should-fix #2/#4)
 
 ### 7.1 Normalization — byte-for-byte parity with `data-pipeline`
@@ -206,8 +245,9 @@ mirror; the plan adds a tiny sync-guard test asserting the two files match). Any
 update the canonical file, the mirror, and re-run both suites.
 
 ### 7.2 Match per OCR line/element (not block)
-Match at `Text.Line` granularity (fall back to `Text.Element` joining within a line);
-**never** whole `Text.Block` (blocks can fuse multiple UI strings). For each candidate
+Match at **recognized-line granularity** (one detected text line per candidate; for engines
+that expose sub-line elements, also try element-level candidates as a fallback). **Never**
+match a whole multi-line block (blocks can fuse multiple UI strings). For each candidate
 string `s` with `k = NameKey.of(s)`:
 
 1. **Exact** hit in either locale map → accept.
@@ -342,7 +382,7 @@ asserts that fallback. Mirrors the validated percentile methodology.
 - **Tap-through:** can actually pick a hero with badges shown (Critical #4 verification).
 - Projection stop (revoke) → badges clear, feature goes inert, no crash.
 - Rotation mid-window → badges reposition / clear cleanly.
-- ML Kit model availability for both recognizers on the device.
+- OCR engine + models load and run on the device (both languages).
 - Spike A (OCR accuracy/precision) and Spike B (trigger) as above.
 
 ## 12. Error handling & isolation
@@ -350,8 +390,8 @@ asserts that fallback. Mirrors the validated percentile methodology.
   unaffected; breadcrumb logged; re-enable re-requests consent.
 - **OCR throws / empty:** that round yields no badges; capture loop retries within the
   window; gives up after `MAX_ATTEMPTS` without crashing.
-- **Recognizer init fails:** log + degrade (the working locale still functions); one-time
-  hint. (Both recognizers are bundled, so this is rare.)
+- **OCR engine/model init fails:** log + disable the feature (inert), one-time hint; the
+  kill button and rest of the app are unaffected. (Models ship in the APK, so this is rare.)
 - **Per-round isolation:** each capture→ocr→match round is independent; one bad frame never
   breaks the window or leaks state.
 - **Handler ownership:** `htHandler` is owned solely by `HeroTierCoordinator`; `stop()` may
@@ -368,6 +408,13 @@ asserts that fallback. Mirrors the validated percentile methodology.
    minimizes prompts; exact FGS handling specified in §5.
 5. **Capture/display coordinate drift.** Mitigated by full transform metadata in §9.3.
 6. **Spikes need the user's device.** Flagged as user-executed steps with prepared harnesses.
+7. **OCR engine integration cost (PP-OCRv5).** Bundling det+rec+dict+native libs grows the APK
+   and adds an arm64-only `.so`; the exact model **license/notice/checksum** must be recorded
+   when vendoring. Mitigated by measuring size in Spike A and shipping ML Kit if PP-OCRv5's cost
+   isn't justified.
+8. **OCR latency vs the capture loop.** PP-OCRv5's larger dictionary makes it slower than v4;
+   det→rec p95 must fit within `CAPTURE_INTERVAL_MS` (or the loop just takes more attempts).
+   Measured per engine in Spike A and used as a selection input.
 
 ## 14. Resolved assumptions
 - Badges hold until window close (we don't detect the individual pick); acceptable since the
