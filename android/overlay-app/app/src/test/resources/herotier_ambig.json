@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1, "bracket": "100", "period": "last-patch", "generatedAt": "t",
+  "heroes": [
+    { "cardId": "BG_X", "tier": "A", "names": { "zhTW": "雙子甲", "enUS": "Twin" } },
+    { "cardId": "BG_Y", "tier": "C", "names": { "zhTW": "雙子乙", "enUS": "Twin" } }
+  ]
+}
