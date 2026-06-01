@@ -1,17 +1,28 @@
 package com.bobassist.phase0.herotier
 
 import android.graphics.Bitmap
-import android.graphics.Rect
 
 enum class Tier { S, A, B, C }
 
 data class HeroTier(val cardId: String, val tier: Tier)
 
+/**
+ * App-owned integer rectangle in pixels. Used for all OCR/badge geometry so the pure-logic stages
+ * (matcher, badge layout) are testable in plain JUnit without Robolectric and without depending on
+ * `android.graphics.Rect` behavior under the mockable Android jar. Framework edges (OCR impls,
+ * overlay) convert to/from platform `Rect` at the boundary.
+ */
+data class BoxPx(val left: Int, val top: Int, val right: Int, val bottom: Int) {
+    val width get() = right - left
+    val height get() = bottom - top
+    val centerX get() = (left + right) / 2
+}
+
 /** One recognized OCR line. [box] is in CAPTURE-bitmap pixels (never screen px). */
-data class OcrLine(val text: String, val box: Rect, val confidence: Float? = null)
+data class OcrLine(val text: String, val box: BoxPx, val confidence: Float? = null)
 
 /** A matched hero to render. [box] is in CAPTURE-bitmap pixels; BadgeLayout maps it to screen. */
-data class HeroBadge(val cardId: String, val tier: Tier, val box: Rect)
+data class HeroBadge(val cardId: String, val tier: Tier, val box: BoxPx)
 
 /**
  * Capture->screen mapping. The capture buffer is sized to the display's CURRENT orientation, so

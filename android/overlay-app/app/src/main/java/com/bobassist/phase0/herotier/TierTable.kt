@@ -26,6 +26,7 @@ class TierTable private constructor(private val byName: Map<String, HeroTier?>) 
             for (i in 0 until heroes.length()) {
                 val h = heroes.getJSONObject(i)
                 val cid = h.getString("cardId")
+                require(cid !in tierOf) { "duplicate cardId in tier asset: $cid" }
                 tierOf[cid] = HeroTier(cid, Tier.valueOf(h.getString("tier")))
                 val names = h.getJSONObject("names")
                 for (loc in names.keys()) {

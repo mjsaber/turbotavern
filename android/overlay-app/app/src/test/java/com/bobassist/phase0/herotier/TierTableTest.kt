@@ -28,4 +28,26 @@ class TierTableTest {
         val t = load("herotier_test.json")
         assertEquals(t.lookup(NameKey.of("Sneed"))!!.cardId, t.lookup(NameKey.of("斯尼德"))!!.cardId)
     }
+
+    @Test fun localesNormalizingToSameKeySameCardNotAmbiguous() {
+        // zhTW "Foo" and enUS "foo" both normalize to "foo"; same cardId -> still resolves.
+        val t = TierTable.fromJson(
+            """{"heroes":[{"cardId":"BG_F","tier":"A","names":{"zhTW":"Foo","enUS":"foo"}}]}""")
+        assertEquals("BG_F", t.lookup(NameKey.of("foo"))!!.cardId)
+    }
+
+    @Test fun blankAndMissingLocaleNamesTolerated() {
+        // one hero with a blank zhTW and only enUS present; blank key is skipped, enUS resolves.
+        val t = TierTable.fromJson(
+            """{"heroes":[{"cardId":"BG_G","tier":"C","names":{"zhTW":"  ","enUS":"Gar"}}]}""")
+        assertEquals("BG_G", t.lookup(NameKey.of("Gar"))!!.cardId)
+        assertEquals(1, t.size)                                  // blank key not stored
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun duplicateCardIdFailsLoudly() {
+        TierTable.fromJson(
+            """{"heroes":[{"cardId":"BG_D","tier":"S","names":{"enUS":"A"}},
+                          {"cardId":"BG_D","tier":"C","names":{"enUS":"B"}}]}""")
+    }
 }
