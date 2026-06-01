@@ -8,14 +8,14 @@ import android.view.WindowManager
  * hand fake (no Mockito). Production delegates to the real [WindowManager].
  */
 interface WindowHost {
-    fun add(view: View, p: WindowManager.LayoutParams)
+    /** Returns true iff the view was actually added (so the caller only tracks live windows). */
+    fun add(view: View, p: WindowManager.LayoutParams): Boolean
     fun remove(view: View)
 }
 
 class AndroidWindowHost(private val wm: WindowManager) : WindowHost {
-    override fun add(view: View, p: WindowManager.LayoutParams) {
-        runCatching { wm.addView(view, p) }
-    }
+    override fun add(view: View, p: WindowManager.LayoutParams): Boolean =
+        runCatching { wm.addView(view, p) }.isSuccess
 
     override fun remove(view: View) {
         runCatching { wm.removeView(view) }

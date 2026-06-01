@@ -14,7 +14,7 @@ import org.robolectric.annotation.Config
 private class FakeWindowHost : WindowHost {
     val added = mutableListOf<WindowManager.LayoutParams>()
     var removeCount = 0
-    override fun add(view: View, p: WindowManager.LayoutParams) { added += p }
+    override fun add(view: View, p: WindowManager.LayoutParams): Boolean { added += p; return true }
     override fun remove(view: View) { removeCount++ }
 }
 
@@ -39,6 +39,17 @@ class TierOverlayTest {
         assertTrue(p.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE != 0)
         assertTrue(p.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0)
         assertTrue(p.alpha <= 0.5f)
+        assertEquals(40, p.width); assertEquals(40, p.height)
+    }
+
+    @Test fun layoutParamsTypeGravityAndPlacement() {
+        val h = FakeWindowHost()
+        // a non-zero screen rect must map to x=left, y=top, w/h from the rect
+        overlay(h, 0.5f).show(listOf(badge("A"))) { BoxPx(12, 34, 52, 74) }
+        val p = h.added.single()
+        assertEquals(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, p.type)
+        assertEquals(android.view.Gravity.TOP or android.view.Gravity.START, p.gravity)
+        assertEquals(12, p.x); assertEquals(34, p.y)
         assertEquals(40, p.width); assertEquals(40, p.height)
     }
 

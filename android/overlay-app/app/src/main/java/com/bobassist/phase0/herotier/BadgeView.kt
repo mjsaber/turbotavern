@@ -8,8 +8,14 @@ import android.view.View
 /** A small colored rounded badge drawing the tier letter (spec §9.4 colors). */
 class BadgeView(context: Context, private val tier: Tier) : View(context) {
     private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = colorFor(tier) }
+    private val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF000000.toInt()                     // dark contrasting outline (spec §9.4)
+        style = Paint.Style.STROKE
+        textAlign = Paint.Align.CENTER
+    }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFFFFFFFF.toInt()
+        style = Paint.Style.FILL
         textAlign = Paint.Align.CENTER
     }
 
@@ -18,9 +24,13 @@ class BadgeView(context: Context, private val tier: Tier) : View(context) {
         val h = height.toFloat()
         val radius = minOf(w, h) * 0.2f
         canvas.drawRoundRect(0f, 0f, w, h, radius, radius, bgPaint)
-        textPaint.textSize = h * 0.6f
+        val size = h * 0.6f
+        textPaint.textSize = size
+        outlinePaint.textSize = size
+        outlinePaint.strokeWidth = size * 0.12f
         val baseline = h / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(tier.name, w / 2f, baseline, textPaint)
+        canvas.drawText(tier.name, w / 2f, baseline, outlinePaint)   // outline first
+        canvas.drawText(tier.name, w / 2f, baseline, textPaint)      // white fill on top
     }
 
     companion object {

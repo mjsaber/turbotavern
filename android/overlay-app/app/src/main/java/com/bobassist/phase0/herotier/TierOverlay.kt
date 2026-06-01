@@ -33,11 +33,10 @@ class TierOverlay(
                 PixelFormat.TRANSLUCENT,
             ).apply {
                 gravity = Gravity.TOP or Gravity.START
-                alpha = opacityCap()
+                alpha = opacityCap().coerceIn(0f, 1f)   // defend against an out-of-range provider
             }
             val v = BadgeView(context, b.tier)
-            host.add(v, lp)
-            views += v
+            if (host.add(v, lp)) views += v             // only track windows that actually attached
         }
     }
 
