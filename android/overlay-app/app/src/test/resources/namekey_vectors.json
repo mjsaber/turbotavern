@@ -1,0 +1,10 @@
+[
+  {"in": "Sneed", "out": "sneed"},
+  {"in": "  Patches the Pirate ", "out": "patches the pirate"},
+  {"in": "A.F.Kay", "out": "a.f.kay"},
+  {"in": "N'Zoth", "out": "n'zoth"},
+  {"in": "斯尼德", "out": "斯尼德"},
+  {"in": "『深沉絕望』尤格薩倫", "out": "『深沉絕望』尤格薩倫"},
+  {"in": "ＳＮＥＥＤ", "out": "sneed"},
+  {"in": "foo\t bar\n baz", "out": "foo bar baz"}
+]
