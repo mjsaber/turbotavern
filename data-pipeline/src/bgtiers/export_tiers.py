@@ -16,7 +16,10 @@ def _tier(p: float) -> str:
 def build(conn, *, generated_at: str | None = None) -> dict:
     distinct = [tuple(r) for r in conn.execute(
         "SELECT DISTINCT mode, region FROM v_latest_stats WHERE entity_type='hero'"
-        " AND source='firestone' AND mmr_bracket='100' AND time_period='last-patch'").fetchall()]
+        " AND source='firestone' AND mmr_bracket='100' AND time_period='last-patch'"
+        " ORDER BY mode, region").fetchall()]
+    if not distinct:
+        raise ValueError("no hero rows for bracket=100 last-patch")
     if distinct != [("solo", "global")]:
         raise ValueError(f"expected single (solo,global) mode/region, got {distinct}")
     rows = conn.execute(
@@ -29,10 +32,12 @@ def build(conn, *, generated_at: str | None = None) -> dict:
         "   AND v.time_period='last-patch' AND v.mode='solo' AND v.region='global'"
         " ORDER BY v.avg_placement ASC, v.card_id ASC").fetchall()
     n = len(rows)
-    if n == 0:
+    if n == 0:                       # defensive: empty-result already caught by the distinct guard
         raise ValueError("no hero rows for bracket=100 last-patch")
     heroes = []
     for i, r in enumerate(rows):
+        if r["en_name"] is None:     # entity.name is nullable; a hero with no enUS name is a data bug
+            raise ValueError(f"hero {r['card_id']} missing enUS name")
         p = (i + 0.5) / n
         zh = r["zh_name"] if r["zh_name"] is not None else r["en_name"]
         heroes.append({"cardId": r["card_id"], "tier": _tier(p),
