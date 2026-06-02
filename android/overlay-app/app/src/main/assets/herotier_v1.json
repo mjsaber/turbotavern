@@ -1,0 +1,912 @@
+{
+  "schemaVersion": 1,
+  "bracket": "100",
+  "period": "last-patch",
+  "generatedAt": "2026-06-02T05:53:32Z",
+  "heroes": [
+    {
+      "cardId": "TB_BaconShop_HERO_17",
+      "tier": "S",
+      "names": {
+        "zhTW": "米歐菲瑟‧曼納斯頓",
+        "enUS": "Millificent Manastorm"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_18",
+      "tier": "S",
+      "names": {
+        "zhTW": "海盜派奇",
+        "enUS": "Patches the Pirate"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_56",
+      "tier": "S",
+      "names": {
+        "zhTW": "雅立史卓莎",
+        "enUS": "Alexstrasza"
+      }
+    },
+    {
+      "cardId": "BG34_HERO_004",
+      "tier": "S",
+      "names": {
+        "zhTW": "米羅克",
+        "enUS": "Morchie"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_35",
+      "tier": "S",
+      "names": {
+        "zhTW": "『深沉絕望』尤格薩倫",
+        "enUS": "Yogg-Saron, Hope's End"
+      }
+    },
+    {
+      "cardId": "BG30_HERO_304",
+      "tier": "S",
+      "names": {
+        "zhTW": "經理馬林",
+        "enUS": "Marin the Manager"
+      }
+    },
+    {
+      "cardId": "BG34_HERO_000",
+      "tier": "S",
+      "names": {
+        "zhTW": "『無縛者』姆多茲諾",
+        "enUS": "Murozond, Unbounded"
+      }
+    },
+    {
+      "cardId": "BG32_HERO_002",
+      "tier": "S",
+      "names": {
+        "zhTW": "扣仔",
+        "enUS": "Buttons"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_14",
+      "tier": "S",
+      "names": {
+        "zhTW": "瓦哥托戈女王",
+        "enUS": "Queen Wagtoggle"
+      }
+    },
+    {
+      "cardId": "BG21_HERO_030",
+      "tier": "S",
+      "names": {
+        "zhTW": "斯尼德",
+        "enUS": "Sneed"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_102",
+      "tier": "S",
+      "names": {
+        "zhTW": "薩魯法爾霸王",
+        "enUS": "Overlord Saurfang"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_702",
+      "tier": "S",
+      "names": {
+        "zhTW": "閻獄之主",
+        "enUS": "The Jailer"
+      }
+    },
+    {
+      "cardId": "BG26_HERO_101",
+      "tier": "S",
+      "names": {
+        "zhTW": "霍格爾船長",
+        "enUS": "Cap'n Hoggarr"
+      }
+    },
+    {
+      "cardId": "BG23_HERO_306",
+      "tier": "S",
+      "names": {
+        "zhTW": "希瓦娜斯‧風行者",
+        "enUS": "Sylvanas Windrunner"
+      }
+    },
+    {
+      "cardId": "BG26_HERO_102",
+      "tier": "A",
+      "names": {
+        "zhTW": "『鋼鐵禮頌』英格",
+        "enUS": "Inge, the Iron Hymn"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_22",
+      "tier": "A",
+      "names": {
+        "zhTW": "巫妖王",
+        "enUS": "The Lich King"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_34",
+      "tier": "A",
+      "names": {
+        "zhTW": "縫補者",
+        "enUS": "Patchwerk"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_003",
+      "tier": "A",
+      "names": {
+        "zhTW": "范達爾·雷矛",
+        "enUS": "Vanndar Stormpike"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_38",
+      "tier": "A",
+      "names": {
+        "zhTW": "穆克拉",
+        "enUS": "King Mukla"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_76",
+      "tier": "A",
+      "names": {
+        "zhTW": "奧拉基爾",
+        "enUS": "Al'Akir"
+      }
+    },
+    {
+      "cardId": "BG25_HERO_103",
+      "tier": "A",
+      "names": {
+        "zhTW": "泰朗‧血魔",
+        "enUS": "Teron Gorefiend"
+      }
+    },
+    {
+      "cardId": "BG27_HERO_801",
+      "tier": "A",
+      "names": {
+        "zhTW": "『風暴之王』索林姆",
+        "enUS": "Thorim, Stormlord"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_21",
+      "tier": "A",
+      "names": {
+        "zhTW": "魔術大師阿卡贊札拉克",
+        "enUS": "The Great Akazamzarak"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_37",
+      "tier": "A",
+      "names": {
+        "zhTW": "賈拉克瑟斯領主",
+        "enUS": "Lord Jaraxxus"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_52",
+      "tier": "A",
+      "names": {
+        "zhTW": "死亡之翼",
+        "enUS": "Deathwing"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_305",
+      "tier": "A",
+      "names": {
+        "zhTW": "奧妮克希亞",
+        "enUS": "Onyxia"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_16",
+      "tier": "A",
+      "names": {
+        "zhTW": "詹莉‧伊夏",
+        "enUS": "A. F. Kay"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_36",
+      "tier": "A",
+      "names": {
+        "zhTW": "跳舞的戴瑞",
+        "enUS": "Dancin' Deryl"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_53",
+      "tier": "A",
+      "names": {
+        "zhTW": "伊瑟拉",
+        "enUS": "Ysera"
+      }
+    },
+    {
+      "cardId": "BG31_HERO_006",
+      "tier": "A",
+      "names": {
+        "zhTW": "奧薩爾主教",
+        "enUS": "Exarch Othaar"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_202",
+      "tier": "A",
+      "names": {
+        "zhTW": "阮大師",
+        "enUS": "Master Nguyen"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_75",
+      "tier": "A",
+      "names": {
+        "zhTW": "拉卡尼休",
+        "enUS": "Rakanishu"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_94",
+      "tier": "A",
+      "names": {
+        "zhTW": "提卡特斯",
+        "enUS": "Tickatus"
+      }
+    },
+    {
+      "cardId": "BG23_HERO_304",
+      "tier": "A",
+      "names": {
+        "zhTW": "瓦許女士",
+        "enUS": "Lady Vashj"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_15",
+      "tier": "A",
+      "names": {
+        "zhTW": "墮落的喬治",
+        "enUS": "George the Fallen"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_90",
+      "tier": "A",
+      "names": {
+        "zhTW": "希拉斯‧暗月",
+        "enUS": "Silas Darkmoon"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_301",
+      "tier": "A",
+      "names": {
+        "zhTW": "吞噬者穆坦努斯",
+        "enUS": "Mutanus the Devourer"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_000",
+      "tier": "A",
+      "names": {
+        "zhTW": "塔維西‧雷矛",
+        "enUS": "Tavish Stormpike"
+      }
+    },
+    {
+      "cardId": "BG24_HERO_204",
+      "tier": "A",
+      "names": {
+        "zhTW": "強化機器人",
+        "enUS": "Enhance-o Mechano"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_64",
+      "tier": "A",
+      "names": {
+        "zhTW": "尤多拉船長",
+        "enUS": "Captain Eudora"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_23",
+      "tier": "B",
+      "names": {
+        "zhTW": "哮斗龍",
+        "enUS": "Shudderwock"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_40",
+      "tier": "B",
+      "names": {
+        "zhTW": "芬利‧莫戈頓爵士",
+        "enUS": "Sir Finley Mrrgglton"
+      }
+    },
+    {
+      "cardId": "BG25_HERO_105",
+      "tier": "B",
+      "names": {
+        "zhTW": "『樂團經理』精英牛頭大佬",
+        "enUS": "E.T.C., Band Manager"
+      }
+    },
+    {
+      "cardId": "BG26_HERO_104",
+      "tier": "B",
+      "names": {
+        "zhTW": "搖滾大師沃恩",
+        "enUS": "Rock Master Voone"
+      }
+    },
+    {
+      "cardId": "BG33_HERO_001",
+      "tier": "B",
+      "names": {
+        "zhTW": "『活蹦亂跳的傳奇』樂樂",
+        "enUS": "Loh, the Living Legend"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_08",
+      "tier": "B",
+      "names": {
+        "zhTW": "伊利丹‧怒風",
+        "enUS": "Illidan Stormrage"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_57",
+      "tier": "B",
+      "names": {
+        "zhTW": "諾茲多姆",
+        "enUS": "Nozdormu"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_242",
+      "tier": "B",
+      "names": {
+        "zhTW": "葛夫‧符文圖騰",
+        "enUS": "Guff Runetotem"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_49",
+      "tier": "B",
+      "names": {
+        "zhTW": "米歐浩斯‧曼納斯頓",
+        "enUS": "Millhouse Manastorm"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_55",
+      "tier": "B",
+      "names": {
+        "zhTW": "真菌術師弗勒戈",
+        "enUS": "Fungalmancer Flurgl"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_001",
+      "tier": "B",
+      "names": {
+        "zhTW": "布魯坎",
+        "enUS": "Bru'kan"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_201",
+      "tier": "B",
+      "names": {
+        "zhTW": "沃金",
+        "enUS": "Vol'jin"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_002",
+      "tier": "B",
+      "names": {
+        "zhTW": "德雷克塔爾",
+        "enUS": "Drek'Thar"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_201",
+      "tier": "B",
+      "names": {
+        "zhTW": "費林大使",
+        "enUS": "Ambassador Faelin"
+      }
+    },
+    {
+      "cardId": "BG23_HERO_303",
+      "tier": "B",
+      "names": {
+        "zhTW": "魚爾摩斯",
+        "enUS": "Murloc Holmes"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_004",
+      "tier": "B",
+      "names": {
+        "zhTW": "瓦登‧晨握",
+        "enUS": "Varden Dawngrasp"
+      }
+    },
+    {
+      "cardId": "BG28_HERO_801",
+      "tier": "B",
+      "names": {
+        "zhTW": "醫生荷利代",
+        "enUS": "Doctor Holli'dae"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_02",
+      "tier": "B",
+      "names": {
+        "zhTW": "葛拉克朗",
+        "enUS": "Galakrond"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_45",
+      "tier": "B",
+      "names": {
+        "zhTW": "極盜天王拉法姆",
+        "enUS": "Arch-Villain Rafaam"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_67",
+      "tier": "B",
+      "names": {
+        "zhTW": "鉤牙船長",
+        "enUS": "Captain Hooktusk"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_93",
+      "tier": "B",
+      "names": {
+        "zhTW": "恩若司",
+        "enUS": "N'Zoth"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_100",
+      "tier": "B",
+      "names": {
+        "zhTW": "洛卡菈",
+        "enUS": "Rokara"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_283",
+      "tier": "B",
+      "names": {
+        "zhTW": "飆翼",
+        "enUS": "Galewing"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_007",
+      "tier": "B",
+      "names": {
+        "zhTW": "艾薩拉女王",
+        "enUS": "Queen Azshara"
+      }
+    },
+    {
+      "cardId": "BG22_HERO_200",
+      "tier": "B",
+      "names": {
+        "zhTW": "伊尼‧風暴線圈",
+        "enUS": "Ini Stormcoil"
+      }
+    },
+    {
+      "cardId": "BG24_HERO_100",
+      "tier": "B",
+      "names": {
+        "zhTW": "戴納瑟斯王",
+        "enUS": "Sire Denathrius"
+      }
+    },
+    {
+      "cardId": "BG31_HERO_802",
+      "tier": "B",
+      "names": {
+        "zhTW": "亞坦尼斯",
+        "enUS": "Artanis"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_27",
+      "tier": "B",
+      "names": {
+        "zhTW": "辛德拉苟莎",
+        "enUS": "Sindragosa"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_33",
+      "tier": "B",
+      "names": {
+        "zhTW": "館長",
+        "enUS": "The Curator"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_92",
+      "tier": "B",
+      "names": {
+        "zhTW": "亞煞拉懼",
+        "enUS": "Y'Shaarj"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_12",
+      "tier": "B",
+      "names": {
+        "zhTW": "老鼠王",
+        "enUS": "The Rat King"
+      }
+    },
+    {
+      "cardId": "BG21_HERO_000",
+      "tier": "B",
+      "names": {
+        "zhTW": "凱瑞爾‧羅姆",
+        "enUS": "Cariel Roame"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_42",
+      "tier": "B",
+      "names": {
+        "zhTW": "伊莉絲‧尋星者",
+        "enUS": "Elise Starseeker"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_43",
+      "tier": "B",
+      "names": {
+        "zhTW": "恐龍馴服者布萊恩",
+        "enUS": "Dinotamer Brann"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_58",
+      "tier": "B",
+      "names": {
+        "zhTW": "瑪里苟斯",
+        "enUS": "Malygos"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_70",
+      "tier": "B",
+      "names": {
+        "zhTW": "畢勾沃斯先生",
+        "enUS": "Mr. Bigglesworth"
+      }
+    },
+    {
+      "cardId": "BG21_HERO_020",
+      "tier": "B",
+      "names": {
+        "zhTW": "餅乾大廚",
+        "enUS": "Cookie the Cook"
+      }
+    },
+    {
+      "cardId": "BG35_HERO_001",
+      "tier": "C",
+      "names": {
+        "zhTW": "『狼人之王』吉恩",
+        "enUS": "Genn, Worgen King"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_29",
+      "tier": "C",
+      "names": {
+        "zhTW": "克蘇恩",
+        "enUS": "C'Thun"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_62",
+      "tier": "C",
+      "names": {
+        "zhTW": "瑪翼夫‧影歌",
+        "enUS": "Maiev Shadowsong"
+      }
+    },
+    {
+      "cardId": "BG31_HERO_003",
+      "tier": "C",
+      "names": {
+        "zhTW": "先知諾柏多",
+        "enUS": "Farseer Nobundo"
+      }
+    },
+    {
+      "cardId": "BG32_HERO_001",
+      "tier": "C",
+      "names": {
+        "zhTW": "森林之王塞納留斯",
+        "enUS": "Forest Lord Cenarius"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_60",
+      "tier": "C",
+      "names": {
+        "zhTW": "凱爾薩斯‧逐日者",
+        "enUS": "Kael'thas Sunstrider"
+      }
+    },
+    {
+      "cardId": "BG31_HERO_811",
+      "tier": "C",
+      "names": {
+        "zhTW": "『刀鋒女皇』凱莉根",
+        "enUS": "Kerrigan, Queen of Blades"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_01",
+      "tier": "C",
+      "names": {
+        "zhTW": "艾德溫‧范克里夫",
+        "enUS": "Edwin VanCleef"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_95",
+      "tier": "C",
+      "names": {
+        "zhTW": "灰枝",
+        "enUS": "Greybough"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_101",
+      "tier": "C",
+      "names": {
+        "zhTW": "賽瑞菈",
+        "enUS": "Xyrella"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_68",
+      "tier": "C",
+      "names": {
+        "zhTW": "天空隊長克拉格",
+        "enUS": "Skycap'n Kragg"
+      }
+    },
+    {
+      "cardId": "BG25_HERO_100",
+      "tier": "C",
+      "names": {
+        "zhTW": "普崔希德教授",
+        "enUS": "Professor Putricide"
+      }
+    },
+    {
+      "cardId": "BG31_HERO_801",
+      "tier": "C",
+      "names": {
+        "zhTW": "吉姆‧雷諾",
+        "enUS": "Jim Raynor"
+      }
+    },
+    {
+      "cardId": "BG34_HERO_002",
+      "tier": "C",
+      "names": {
+        "zhTW": "鐘錶沃斯先生",
+        "enUS": "Mister Clocksworth"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_74",
+      "tier": "C",
+      "names": {
+        "zhTW": "森林看守者歐穆",
+        "enUS": "Forest Warden Omu"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_78",
+      "tier": "C",
+      "names": {
+        "zhTW": "泫瓦拉",
+        "enUS": "Chenvaala"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_103",
+      "tier": "C",
+      "names": {
+        "zhTW": "亡語者黑棘",
+        "enUS": "Death Speaker Blackthorn"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_41",
+      "tier": "C",
+      "names": {
+        "zhTW": "里諾‧傑克森",
+        "enUS": "Reno Jackson"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_10",
+      "tier": "C",
+      "names": {
+        "zhTW": "貿易親王加里維克斯",
+        "enUS": "Trade Prince Gallywix"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_280",
+      "tier": "C",
+      "names": {
+        "zhTW": "克圖斯‧灰殞",
+        "enUS": "Kurtrus Ashfallen"
+      }
+    },
+    {
+      "cardId": "BG31_HERO_005",
+      "tier": "C",
+      "names": {
+        "zhTW": "複製大師澤瑞克",
+        "enUS": "Zerek, Master Cloner"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_39",
+      "tier": "C",
+      "names": {
+        "zhTW": "瘋狂金字塔",
+        "enUS": "Pyramad"
+      }
+    },
+    {
+      "cardId": "BG21_HERO_010",
+      "tier": "C",
+      "names": {
+        "zhTW": "史蓋伯斯‧油切",
+        "enUS": "Scabbs Cutterbutter"
+      }
+    },
+    {
+      "cardId": "BG23_HERO_305",
+      "tier": "C",
+      "names": {
+        "zhTW": "劫匪大亨托戈瓦哥",
+        "enUS": "Heistbaron Togwaggle"
+      }
+    },
+    {
+      "cardId": "BG28_HERO_800",
+      "tier": "C",
+      "names": {
+        "zhTW": "泰瑟連‧血腥看守者",
+        "enUS": "Tae'thelan Bloodwatcher"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_71",
+      "tier": "C",
+      "names": {
+        "zhTW": "詹迪斯‧巴羅夫",
+        "enUS": "Jandice Barov"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_28",
+      "tier": "C",
+      "names": {
+        "zhTW": "無限托奇",
+        "enUS": "Infinite Toki"
+      }
+    },
+    {
+      "cardId": "BG20_HERO_282",
+      "tier": "C",
+      "names": {
+        "zhTW": "塔姆辛‧羅姆",
+        "enUS": "Tamsin Roame"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_25",
+      "tier": "C",
+      "names": {
+        "zhTW": "巫妖拜茲希爾",
+        "enUS": "Lich Baz'hial"
+      }
+    },
+    {
+      "cardId": "BG34_HERO_001",
+      "tier": "C",
+      "names": {
+        "zhTW": "時光轉繞者克羅米",
+        "enUS": "Time Twister Chromie"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_59",
+      "tier": "C",
+      "names": {
+        "zhTW": "艾蘭娜‧尋星者",
+        "enUS": "Aranna Starseeker"
+      }
+    },
+    {
+      "cardId": "BG28_HERO_400",
+      "tier": "C",
+      "names": {
+        "zhTW": "蛇眼",
+        "enUS": "Snake Eyes"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_91",
+      "tier": "C",
+      "names": {
+        "zhTW": "偉大的賽佛瑞斯",
+        "enUS": "Zephrys, the Great"
+      }
+    },
+    {
+      "cardId": "BG23_HERO_201",
+      "tier": "C",
+      "names": {
+        "zhTW": "歐蘇瑪特",
+        "enUS": "Ozumat"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_50",
+      "tier": "C",
+      "names": {
+        "zhTW": "泰絲‧葛雷邁恩",
+        "enUS": "Tess Greymane"
+      }
+    },
+    {
+      "cardId": "TB_BaconShop_HERO_11",
+      "tier": "C",
+      "names": {
+        "zhTW": "『炎魔』拉格納羅斯",
+        "enUS": "Ragnaros the Firelord"
+      }
+    }
+  ]
+}
