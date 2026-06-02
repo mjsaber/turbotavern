@@ -23,25 +23,33 @@ def build(conn, *, generated_at: str | None = None) -> dict:
     if distinct != [("solo", "global")]:
         raise ValueError(f"expected single (solo,global) mode/region, got {distinct}")
     rows = conn.execute(
-        "SELECT v.card_id AS card_id, v.name AS en_name, en.name AS zh_name,"
+        "SELECT e.entity_id AS eid, v.card_id AS card_id, v.name AS en_name,"
         "       v.avg_placement AS avg"
         " FROM v_latest_stats v"
         " JOIN entity e ON e.card_id=v.card_id AND e.entity_type=v.entity_type"
-        " LEFT JOIN entity_name en ON en.entity_id=e.entity_id AND en.locale='zhTW'"
         " WHERE v.entity_type='hero' AND v.source='firestone' AND v.mmr_bracket='100'"
         "   AND v.time_period='last-patch' AND v.mode='solo' AND v.region='global'"
         " ORDER BY v.avg_placement ASC, v.card_id ASC").fetchall()
     n = len(rows)
     if n == 0:                       # defensive: empty-result already caught by the distinct guard
         raise ValueError("no hero rows for bracket=100 last-patch")
+    # All localized names per entity: entity_id -> {locale: name}. enUS comes from entity.name
+    # (the default-locale identity); other locales (zhTW, zhCN, ...) flow through as-is. A locale
+    # with no name is simply absent (no enUS-fallback — there is no text to match in that locale).
+    names_by_eid: dict[int, dict[str, str]] = {}
+    for r in conn.execute("SELECT entity_id, locale, name FROM entity_name"):
+        if r["name"]:
+            names_by_eid.setdefault(r["entity_id"], {})[r["locale"]] = r["name"]
     heroes = []
     for i, r in enumerate(rows):
         if r["en_name"] is None:     # entity.name is nullable; a hero with no enUS name is a data bug
             raise ValueError(f"hero {r['card_id']} missing enUS name")
         p = (i + 0.5) / n
-        zh = r["zh_name"] if r["zh_name"] is not None else r["en_name"]
-        heroes.append({"cardId": r["card_id"], "tier": _tier(p),
-                       "names": {"zhTW": zh, "enUS": r["en_name"]}})
+        names = {"enUS": r["en_name"]}
+        for loc, name in sorted(names_by_eid.get(r["eid"], {}).items()):
+            if loc != "enUS":
+                names[loc] = name
+        heroes.append({"cardId": r["card_id"], "tier": _tier(p), "names": names})
     return {"schemaVersion": 1, "bracket": "100", "period": "last-patch",
             "generatedAt": generated_at or dt.datetime.now(dt.timezone.utc)
                 .strftime("%Y-%m-%dT%H:%M:%SZ"),

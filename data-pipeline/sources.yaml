@@ -6,4 +6,4 @@ firestone:
 hsjson:
   cards_url_template: "https://api.hearthstonejson.com/v1/latest/{locale}/cards.json"
   default_locale: "enUS"
-  locales: ["enUS", "zhTW"]
+  locales: ["enUS", "zhTW", "zhCN"]
