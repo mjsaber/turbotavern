@@ -40,7 +40,13 @@ class HeroMatcher(
         val out = ArrayList<OcrLine>()
         for (top in lines) for (bot in lines) {
             if (top === bot) continue
-            if (stacked(top.box, bot.box)) out.add(OcrLine(top.text + bot.text, union(top.box, bot.box)))
+            if (!stacked(top.box, bot.box)) continue
+            // Only merge wrapped FRAGMENTS: if either line already resolves to a hero on its own it
+            // is a complete name, not a fragment — merging it would only risk a spurious key.
+            if (table.lookup(NameKey.of(top.text)) != null || table.lookup(NameKey.of(bot.text)) != null) continue
+            val u = union(top.box, bot.box)
+            out.add(OcrLine(top.text + bot.text, u))            // CJK wraps with no separator
+            out.add(OcrLine(top.text + " " + bot.text, u))      // Latin wraps need a space
         }
         return out
     }

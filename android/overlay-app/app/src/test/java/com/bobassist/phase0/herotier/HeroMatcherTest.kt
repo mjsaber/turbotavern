@@ -58,6 +58,26 @@ class HeroMatcherTest {
         assertTrue(HeroMatcher(clk).match(listOf(a, far)).isEmpty())
     }
 
+    @Test fun sameColumnTooLargeGapNoMerge() {                       // aligned x, but far below
+        val top = OcrLine("钟表先生", BoxPx(1707, 648, 1850, 675))
+        val bot = OcrLine("克劳沃斯", BoxPx(1707, 900, 1850, 935))   // gap 225 >> line height
+        assertTrue(HeroMatcher(clk).match(listOf(top, bot)).isEmpty())
+    }
+
+    @Test fun smallGapInsufficientXOverlapNoMerge() {                // close vertically, no x overlap
+        val top = OcrLine("钟表先生", BoxPx(1707, 648, 1850, 675))
+        val bot = OcrLine("克劳沃斯", BoxPx(1900, 683, 2043, 718))   // to the right, no overlap
+        assertTrue(HeroMatcher(clk).match(listOf(top, bot)).isEmpty())
+    }
+
+    @Test fun mergesLatinWrappedNameWithSpace() {                    // English wraps need a space join
+        val t = TierTable.fromJson(
+            """{"heroes":[{"cardId":"BG_LK","tier":"S","names":{"enUS":"The Lich King"}}]}""")
+        val top = OcrLine("The Lich", BoxPx(100, 100, 260, 130))
+        val bot = OcrLine("King", BoxPx(120, 135, 240, 165))
+        assertEquals("BG_LK", HeroMatcher(t).match(listOf(top, bot)).single().cardId)
+    }
+
     @Test fun mergedCandidatesAreExactOnly() {
         // A merge that is not an EXACT dictionary name must be rejected (no fuzzy on merges), so a
         // spurious concatenation never becomes a wrong badge.
