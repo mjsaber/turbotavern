@@ -3,6 +3,7 @@ package com.bobassist.phase0
 import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Intent
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
@@ -72,6 +73,13 @@ class MainActivity : Activity() {
                 startActivity(intent)
             }
         }
+        val enableTierBtn = Button(this).apply {
+            text = "Enable Tier Overlay (screen capture)"
+            setOnClickListener {
+                val mpm = getSystemService(MediaProjectionManager::class.java)
+                startActivityForResult(mpm.createScreenCaptureIntent(), REQ_PROJECTION)
+            }
+        }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 80, 40, 40)
@@ -80,6 +88,7 @@ class MainActivity : Activity() {
             addView(stopBtn)
             addView(grantOverlayBtn)
             addView(grantUsageBtn)
+            addView(enableTierBtn)
         }
     }
 
@@ -137,6 +146,19 @@ class MainActivity : Activity() {
         if (requestCode == REQ_VPN_AUTHORIZE) {
             if (resultCode == RESULT_OK) launchService()
             else statusView.text = "${statusView.text}\nVPN denied"
+        } else if (requestCode == REQ_PROJECTION) {
+            if (resultCode == RESULT_OK && data != null) {
+                startForegroundService(
+                    Intent(this, BobVpnService::class.java).apply {
+                        action = BobVpnService.ACTION_ENABLE_TIER
+                        putExtra(BobVpnService.EXTRA_RESULT_CODE, resultCode)
+                        putExtra(BobVpnService.EXTRA_RESULT_DATA, data)
+                    }
+                )
+                statusView.text = "${statusView.text}\ntier overlay enabling..."
+            } else {
+                statusView.text = "${statusView.text}\nscreen capture denied"
+            }
         }
     }
 
@@ -148,6 +170,7 @@ class MainActivity : Activity() {
     companion object {
         private const val TAG = "BobPhase0"
         private const val REQ_VPN_AUTHORIZE = 1001
+        private const val REQ_PROJECTION = 1002
         const val EXTRA_AUTO_START = "auto_start"
     }
 }

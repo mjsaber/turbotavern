@@ -9,6 +9,12 @@ import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.PixelFormat
+import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
+import android.media.ImageReader
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Handler
@@ -17,12 +23,25 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import android.view.WindowManager
 import com.bobassist.phase0.core.BattleCandidateCache
 import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.ConnectionCoreProvider
 import com.bobassist.phase0.core.ForegroundOverrideHolder
 import com.bobassist.phase0.core.RealLifecycleCore
 import com.bobassist.phase0.foreground.ForegroundDetector
+import com.bobassist.phase0.herotier.AndroidWindowHost
+import com.bobassist.phase0.herotier.Foreground
+import com.bobassist.phase0.herotier.HeroMatcher
+import com.bobassist.phase0.herotier.HeroTierCoordinator
+import com.bobassist.phase0.herotier.MediaProjectionGrabber
+import com.bobassist.phase0.herotier.MlKitHeroOcr
+import com.bobassist.phase0.herotier.OpacityCap
+import com.bobassist.phase0.herotier.OverlayBadgeRenderer
+import com.bobassist.phase0.herotier.SelectPhaseTrigger
+import com.bobassist.phase0.herotier.StrictForeground
+import com.bobassist.phase0.herotier.TierOverlay
+import com.bobassist.phase0.herotier.TierTable
 import com.bobassist.phase0.overlay.OverlayPoller
 import com.bobassist.phase0.overlay.OverlayWindow
 import com.bobassist.phase0.session.OverlaySession
@@ -53,6 +72,24 @@ class BobVpnService : VpnService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     @Volatile private var overlayRunning = false   // idempotency guard (P1 #4)
 
+    // --- hero-tier overlay (additive; independent of the kill-button path above) ---
+    private var projection: MediaProjection? = null
+    private var virtualDisplay: VirtualDisplay? = null
+    private var imageReader: ImageReader? = null
+    private var tierThread: HandlerThread? = null
+    private var tierCoordinator: HeroTierCoordinator? = null
+    private var captureW = 0
+    private var captureH = 0
+    // Stage 9.4 (post-Spike B) wires the real select-phase predicate. Until then the window is
+    // driven by this debug flag so the live capture->overlay path can be exercised on-device.
+    @Volatile private var tierForceOpen = false
+    private val projectionCallback = object : MediaProjection.Callback() {
+        override fun onStop() {
+            breadcrumb("tier: projection onStop")
+            mainHandler.post { disableTier() }
+        }
+    }
+
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
 
     override fun onCreate() {
@@ -68,6 +105,16 @@ class BobVpnService : VpnService() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            ACTION_ENABLE_TIER -> {
+                @Suppress("DEPRECATION")
+                val data = intent.getParcelableExtra<Intent>(EXTRA_RESULT_DATA)
+                val code = intent.getIntExtra(EXTRA_RESULT_CODE, 0)   // 0 == RESULT_CANCELED
+                enableTier(code, data)
+                return START_STICKY
+            }
+            ACTION_DISABLE_TIER -> { disableTier(); return START_STICKY }
+            ACTION_TIER_FORCE_OPEN -> { tierForceOpen = true; return START_STICKY }
+            ACTION_TIER_FORCE_CLOSE -> { tierForceOpen = false; return START_STICKY }
             else -> startForegroundNotification()
         }
         bringUp()
@@ -289,6 +336,7 @@ class BobVpnService : VpnService() {
     }
 
     private fun tearDown() {
+        disableTier()
         liveSession = null
         overlayRunning = false
         session?.stop()
@@ -308,7 +356,7 @@ class BobVpnService : VpnService() {
         pfd = null
     }
 
-    private fun startForegroundNotification() {
+    private fun startForegroundNotification(withProjection: Boolean = false) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getSystemService(NotificationManager::class.java).createNotificationChannel(
                 NotificationChannel(CHANNEL_ID, "Bob VPN", NotificationManager.IMPORTANCE_LOW)
@@ -329,11 +377,114 @@ class BobVpnService : VpnService() {
             .setOngoing(true)
             .build()
         if (Build.VERSION.SDK_INT >= 34) {
-            startForeground(NOTIF_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            // The mediaProjection type can only be claimed once we hold consent (enableTier).
+            var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            if (withProjection) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            startForeground(NOTIF_ID, notif, type)
         } else {
             startForeground(NOTIF_ID, notif)
         }
-        breadcrumb("foreground notification posted")
+        breadcrumb("foreground notification posted (projection=$withProjection)")
+    }
+
+    /**
+     * Enable the hero-tier overlay: claim the mediaProjection FGS type, build the projection +
+     * VirtualDisplay/ImageReader, and start a [HeroTierCoordinator] on its own HandlerThread.
+     * Purely additive — the kill-button path and its handler are untouched.
+     */
+    private fun enableTier(resultCode: Int, data: Intent?) {
+        if (resultCode != -1 || data == null) {           // -1 == RESULT_OK
+            breadcrumb("tier: enable without consent; ignoring")
+            return
+        }
+        if (tierCoordinator != null) { breadcrumb("tier: already enabled"); return }
+        startForegroundNotification(withProjection = true)
+        val mpm = getSystemService(MediaProjectionManager::class.java)
+        val mp = runCatching { mpm.getMediaProjection(resultCode, data) }.getOrNull()
+        if (mp == null) { breadcrumb("tier: getMediaProjection failed"); return }
+        mp.registerCallback(projectionCallback, mainHandler)
+        projection = mp
+
+        val info = displayInfoNow()
+        captureW = info.width
+        captureH = info.height
+        val reader = ImageReader.newInstance(captureW, captureH, PixelFormat.RGBA_8888, 2)
+        imageReader = reader
+        virtualDisplay = runCatching {
+            mp.createVirtualDisplay(
+                "herotier", captureW, captureH, resources.displayMetrics.densityDpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader.surface, null, null,
+            )
+        }.getOrElse {
+            breadcrumb("tier: createVirtualDisplay failed: ${it.message}")
+            disableTier()
+            return
+        }
+
+        val grabber = MediaProjectionGrabber(reader, captureW, captureH) { displayInfoNow() }
+        val overlay = TierOverlay(
+            AndroidWindowHost(getSystemService(WindowManager::class.java)), this,
+            opacityCap = { OpacityCap.of(this) },
+        )
+        val renderer = OverlayBadgeRenderer(overlay, BADGE_PX, GAP_PX)
+        val ht = HandlerThread("herotier").apply { start() }
+        tierThread = ht
+        val coordinator = HeroTierCoordinator(
+            connectionsJson = {
+                runCatching { ConnectionCoreProvider.get().connectionsJson() }.getOrDefault("")
+            },
+            // Stage 9.4 (post-Spike B) replaces this with the real select-phase predicate /
+            // visual-probe path. Until then a debug flag drives the window.
+            trigger = SelectPhaseTrigger(isOpen = { tierForceOpen }),
+            grabber = grabber,
+            ocr = MlKitHeroOcr(),
+            matcher = HeroMatcher(loadTierTable()),
+            renderer = renderer,
+            foreground = { StrictForeground.of(queryForegroundPackage(), HS_PACKAGE) },
+            currentRotation = { displayInfoNow().rotationDeg },
+            handler = Handler(ht.looper),
+            mainHandler = mainHandler,
+            breadcrumb = { msg -> breadcrumb(msg) },
+        )
+        tierCoordinator = coordinator
+        coordinator.start()
+        breadcrumb("tier: enabled (capture ${captureW}x$captureH)")
+    }
+
+    private fun disableTier() {
+        tierCoordinator?.stop()
+        tierCoordinator = null
+        tierThread?.quitSafely()
+        tierThread = null
+        runCatching { projection?.unregisterCallback(projectionCallback) }
+        runCatching { virtualDisplay?.release() }
+        virtualDisplay = null
+        runCatching { imageReader?.close() }
+        imageReader = null
+        runCatching { projection?.stop() }
+        projection = null
+        tierForceOpen = false
+        breadcrumb("tier: disabled")
+    }
+
+    private fun loadTierTable(): TierTable =
+        runCatching {
+            TierTable.fromJson(assets.open(TIER_ASSET).bufferedReader().use { it.readText() })
+        }.getOrElse {
+            breadcrumb("tier: asset $TIER_ASSET missing/invalid -> empty table (${it.message})")
+            TierTable.fromJson("""{"heroes":[]}""")
+        }
+
+    private fun displayInfoNow(): MediaProjectionGrabber.DisplayInfo {
+        val wm = getSystemService(WindowManager::class.java)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val b = wm.currentWindowMetrics.bounds
+            MediaProjectionGrabber.DisplayInfo(b.width(), b.height(), display?.rotation ?: 0)
+        } else {
+            @Suppress("DEPRECATION") val rot = wm.defaultDisplay.rotation
+            val dm = resources.displayMetrics
+            MediaProjectionGrabber.DisplayInfo(dm.widthPixels, dm.heightPixels, rot)
+        }
     }
 
     private fun breadcrumb(msg: String) {
@@ -363,6 +514,17 @@ class BobVpnService : VpnService() {
 
         const val ACTION_START = "com.bobassist.phase0.START"
         const val ACTION_STOP = "com.bobassist.phase0.STOP"
+
+        // hero-tier overlay
+        const val ACTION_ENABLE_TIER = "com.bobassist.phase0.ENABLE_TIER"
+        const val ACTION_DISABLE_TIER = "com.bobassist.phase0.DISABLE_TIER"
+        const val ACTION_TIER_FORCE_OPEN = "com.bobassist.phase0.TIER_FORCE_OPEN"   // debug: Stage 9
+        const val ACTION_TIER_FORCE_CLOSE = "com.bobassist.phase0.TIER_FORCE_CLOSE" // debug: Stage 9
+        const val EXTRA_RESULT_CODE = "tier_result_code"
+        const val EXTRA_RESULT_DATA = "tier_result_data"
+        private const val TIER_ASSET = "herotier_v1.json"
+        private const val BADGE_PX = 64
+        private const val GAP_PX = 10
 
         @Volatile var liveSession: OverlaySession? = null
             internal set
