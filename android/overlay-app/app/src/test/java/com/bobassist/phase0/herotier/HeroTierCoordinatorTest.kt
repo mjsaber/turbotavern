@@ -160,6 +160,26 @@ class HeroTierCoordinatorTest {
         assertEquals("stale-rotation frame not rendered", 0, r.renderCount)
     }
 
+    @Test fun captureLoopBoundedByMaxAttempts() {
+        val g = FakeGrabber(); val r = FakeRenderer()
+        coordinator(g, FakeOcr(emptyList()), r).start()       // never matches -> loop runs to maxAttempts
+        openSignal = true; drain(300)
+        assertEquals("stops at maxAttempts", 3, g.captureCount)
+        drain(1_000)                                          // still well before maxWindowMs(10s)
+        assertEquals("stays bounded before timeout", 3, g.captureCount)
+    }
+
+    @Test fun rotationChangeBeforeRenderDropsBadges() {
+        val g = FakeGrabber(rotationDeg = 0); val r = FakeRenderer()
+        rotation = 0
+        coordinator(g, FakeOcr(sneedLine), r).start()
+        openSignal = true
+        shadowOf(ht.looper).idleFor(150, TimeUnit.MILLISECONDS)   // run captures; render runnables queued on main
+        rotation = 90                                             // rotate AFTER match, BEFORE main render runs
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("render-time guard drops rotated frame", 0, r.renderCount)
+    }
+
     @Test fun stopRemovesCallbacks() {
         val g = FakeGrabber(); val r = FakeRenderer()
         val c = coordinator(g, FakeOcr(sneedLine), r); c.start()

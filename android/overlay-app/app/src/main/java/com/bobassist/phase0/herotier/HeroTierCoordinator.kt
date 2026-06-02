@@ -31,7 +31,7 @@ class HeroTierCoordinator(
     private val breadcrumb: (String) -> Unit = {},
 ) {
     @Volatile private var started = false
-    private var open = false
+    @Volatile private var open = false     // @Volatile so the main-thread render runnable can re-check it
     private var attempts = 0
 
     private val pollTick = object : Runnable {
@@ -116,12 +116,21 @@ class HeroTierCoordinator(
 
     private fun captureOnce() {
         val frame = grabber.capture() ?: return
-        val badges = matcher.match(ocr.recognize(frame))
+        // Isolate a bad OCR/match round so one exception never kills the handler loop.
+        val badges = runCatching { matcher.match(ocr.recognize(frame)) }
+            .getOrElse { breadcrumb("herotier: ocr/match failed: ${it.message}"); emptyList() }
+        runCatching { frame.bitmap.recycle() }            // free the capture bitmap; render needs only transform
         if (badges.isEmpty()) return
-        if (currentRotation() != frame.rotationDeg) {     // stale-rotation guard
+        if (currentRotation() != frame.rotationDeg) {     // stale-rotation guard (pre-post)
             breadcrumb("herotier: dropped stale-rotation frame")
             return
         }
-        mainHandler.post { if (started) runCatching { renderer.render(badges, frame.transform) } }
+        // Re-check at render time: the window may have closed or the display rotated while this
+        // render runnable sat on the (possibly delayed) main queue.
+        mainHandler.post {
+            if (started && open && currentRotation() == frame.rotationDeg) {
+                runCatching { renderer.render(badges, frame.transform) }
+            }
+        }
     }
 }

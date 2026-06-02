@@ -30,8 +30,13 @@ class MediaProjectionGrabber(
             val bufferW = captureW + (if (pixelStride > 0) rowPadding / pixelStride else 0)
             val padded = Bitmap.createBitmap(bufferW, captureH, Bitmap.Config.ARGB_8888)
             padded.copyPixelsFromBuffer(plane.buffer)
-            val bitmap = if (bufferW != captureW)
-                Bitmap.createBitmap(padded, 0, 0, captureW, captureH) else padded
+            val bitmap = if (bufferW != captureW) {
+                val cropped = Bitmap.createBitmap(padded, 0, 0, captureW, captureH)
+                padded.recycle()                          // free the padded intermediate immediately
+                cropped
+            } else {
+                padded
+            }
             val d = displayInfo()
             val t = Transform(
                 scaleX = d.width.toFloat() / captureW,
