@@ -14,5 +14,15 @@
                 <action android:name="com.bobassist.phase0.TEST" />
             </intent-filter>
         </receiver>
+
+        <!-- Spike-A OCR probe (debug-only). Trigger: am broadcast -a com.bobassist.phase0.OCR_PROBE -->
+        <receiver
+            android:name="com.bobassist.phase0.herotier.debug.OcrProbeReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="com.bobassist.phase0.OCR_PROBE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
