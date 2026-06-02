@@ -14,17 +14,48 @@ class HeroMatcher(
     private val fuzzyCap: Int = 2,
     private val fuzzyRatio: Double = 0.2,
     private val ambigMargin: Int = 2,
+    private val verticalMerge: Boolean = true,
 ) {
     fun match(lines: List<OcrLine>): List<HeroBadge> {
         val out = LinkedHashMap<String, HeroBadge>()
+        // 1) per-line (exact + short-exact + fuzzy). Originals first so their tighter box wins dedup.
         for (ln in lines) {
             val k = NameKey.of(ln.text)
             if (k.isEmpty()) continue
             val ht = resolve(k) ?: continue
             out.getOrPut(ht.cardId) { HeroBadge(ht.cardId, ht.tier, ln.box) }
         }
+        // 2) vertically-wrapped names: concatenate stacked, x-overlapping line pairs and accept
+        //    ONLY exact matches (table.lookup is ambiguity-safe) so a spurious concat is never a badge.
+        if (verticalMerge) {
+            for (m in verticalMerges(lines)) {
+                val ht = table.lookup(NameKey.of(m.text)) ?: continue
+                out.getOrPut(ht.cardId) { HeroBadge(ht.cardId, ht.tier, m.box) }
+            }
+        }
         return out.values.toList()
     }
+
+    private fun verticalMerges(lines: List<OcrLine>): List<OcrLine> {
+        val out = ArrayList<OcrLine>()
+        for (top in lines) for (bot in lines) {
+            if (top === bot) continue
+            if (stacked(top.box, bot.box)) out.add(OcrLine(top.text + bot.text, union(top.box, bot.box)))
+        }
+        return out
+    }
+
+    /** True when [bot] sits directly below [top]: majority horizontal overlap + small vertical gap. */
+    private fun stacked(top: BoxPx, bot: BoxPx): Boolean {
+        val overlapX = minOf(top.right, bot.right) - maxOf(top.left, bot.left)
+        if (overlapX <= 0.5 * minOf(top.width, bot.width)) return false
+        val h = top.height
+        val gap = bot.top - top.bottom
+        return gap >= -h / 2 && gap <= 4 * h / 5
+    }
+
+    private fun union(a: BoxPx, b: BoxPx) =
+        BoxPx(minOf(a.left, b.left), minOf(a.top, b.top), maxOf(a.right, b.right), maxOf(a.bottom, b.bottom))
 
     private fun resolve(k: String): HeroTier? {
         table.lookup(k)?.let { return it }                 // exact (ambiguity-safe)

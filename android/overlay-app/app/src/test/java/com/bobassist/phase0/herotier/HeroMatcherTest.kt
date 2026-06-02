@@ -37,6 +37,35 @@ class HeroMatcherTest {
         assertEquals(box, m.match(listOf(OcrLine("Sneed", box))).single().box)
     }
 
+    // 4+4 split: each single line (len 4 -> fuzzy cap 0) cannot match alone; only the merge can.
+    private val clk = TierTable.fromJson(
+        """{"heroes":[{"cardId":"BG_CLK","tier":"A","names":{"zhCN":"钟表先生克劳沃斯"}}]}""")
+
+    @Test fun mergesVerticallyWrappedName() {
+        val top = OcrLine("钟表先生", BoxPx(1707, 648, 1850, 675))
+        val bot = OcrLine("克劳沃斯", BoxPx(1707, 683, 1850, 718))
+        assertEquals("BG_CLK", HeroMatcher(clk).match(listOf(top, bot)).single().cardId)
+    }
+
+    @Test fun singleWrappedLinesDoNotMatchAlone() {
+        assertTrue(HeroMatcher(clk).match(listOf(OcrLine("钟表先生", BoxPx(1707, 648, 1850, 675)))).isEmpty())
+        assertTrue(HeroMatcher(clk).match(listOf(OcrLine("克劳沃斯", BoxPx(1707, 683, 1850, 718)))).isEmpty())
+    }
+
+    @Test fun nonAdjacentLinesDoNotMerge() {
+        val a = OcrLine("钟表先生", BoxPx(1707, 648, 1850, 675))
+        val far = OcrLine("克劳沃斯", BoxPx(100, 1200, 243, 1235))   // far away -> no merge
+        assertTrue(HeroMatcher(clk).match(listOf(a, far)).isEmpty())
+    }
+
+    @Test fun mergedCandidatesAreExactOnly() {
+        // A merge that is not an EXACT dictionary name must be rejected (no fuzzy on merges), so a
+        // spurious concatenation never becomes a wrong badge.
+        val top = OcrLine("钟表先生", BoxPx(1707, 648, 1850, 675))
+        val botWrong = OcrLine("克劳沃丝", BoxPx(1707, 683, 1850, 718))  // 丝 != 斯 -> "...沃丝" not exact
+        assertTrue(HeroMatcher(clk).match(listOf(top, botWrong)).isEmpty())
+    }
+
     @Test fun fuzzyBestIsAmbiguousKeyDropped() {
         // Two heroes share enUS "Grommashar" -> that key is ambiguous in TierTable.
         // "Grommashbr" is distance 1 from it (margin satisfied vs the far "zephrys"), so the
