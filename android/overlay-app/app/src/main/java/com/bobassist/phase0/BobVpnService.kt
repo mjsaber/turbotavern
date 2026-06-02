@@ -113,8 +113,8 @@ class BobVpnService : VpnService() {
                 return START_STICKY
             }
             ACTION_DISABLE_TIER -> { disableTier(); return START_STICKY }
-            ACTION_TIER_FORCE_OPEN -> { tierForceOpen = true; return START_STICKY }
-            ACTION_TIER_FORCE_CLOSE -> { tierForceOpen = false; return START_STICKY }
+            ACTION_TIER_FORCE_OPEN -> { if (BuildConfig.DEBUG) tierForceOpen = true; return START_STICKY }
+            ACTION_TIER_FORCE_CLOSE -> { if (BuildConfig.DEBUG) tierForceOpen = false; return START_STICKY }
             else -> startForegroundNotification()
         }
         bringUp()
@@ -129,6 +129,7 @@ class BobVpnService : VpnService() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
         session?.handleConfigurationChanged()
+        onTierConfigChanged()
     }
 
     private fun bringUp() {
@@ -336,7 +337,7 @@ class BobVpnService : VpnService() {
     }
 
     private fun tearDown() {
-        disableTier()
+        disableTier(restoreForeground = false)   // service is stopping; don't re-post foreground
         liveSession = null
         overlayRunning = false
         session?.stop()
@@ -404,22 +405,31 @@ class BobVpnService : VpnService() {
         if (mp == null) { breadcrumb("tier: getMediaProjection failed"); return }
         mp.registerCallback(projectionCallback, mainHandler)
         projection = mp
+        if (!startTierPipeline(mp)) disableTier()
+    }
 
+    /**
+     * Build (or rebuild) the VirtualDisplay + ImageReader + coordinator for the current display
+     * size, reusing the existing [projection] token. Returns false on failure (caller cleans up).
+     * Used by [enableTier] and by [onTierConfigChanged] (rotation/size change).
+     */
+    private fun startTierPipeline(mp: MediaProjection): Boolean {
         val info = displayInfoNow()
         captureW = info.width
         captureH = info.height
         val reader = ImageReader.newInstance(captureW, captureH, PixelFormat.RGBA_8888, 2)
         imageReader = reader
-        virtualDisplay = runCatching {
+        val vd = runCatching {
             mp.createVirtualDisplay(
                 "herotier", captureW, captureH, resources.displayMetrics.densityDpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader.surface, null, null,
             )
-        }.getOrElse {
-            breadcrumb("tier: createVirtualDisplay failed: ${it.message}")
-            disableTier()
-            return
+        }.getOrElse { breadcrumb("tier: createVirtualDisplay threw: ${it.message}"); null }
+        if (vd == null) {                                  // createVirtualDisplay can return null too
+            breadcrumb("tier: createVirtualDisplay returned null")
+            return false
         }
+        virtualDisplay = vd
 
         val grabber = MediaProjectionGrabber(reader, captureW, captureH) { displayInfoNow() }
         val overlay = TierOverlay(
@@ -448,22 +458,40 @@ class BobVpnService : VpnService() {
         )
         tierCoordinator = coordinator
         coordinator.start()
-        breadcrumb("tier: enabled (capture ${captureW}x$captureH)")
+        breadcrumb("tier: pipeline up (capture ${captureW}x$captureH)")
+        return true
     }
 
-    private fun disableTier() {
+    /** Rotation/size change: rebuild the capture pipeline at the new size, reusing the projection. */
+    private fun onTierConfigChanged() {
+        val mp = projection ?: return
+        releaseTierPipeline()
+        if (!startTierPipeline(mp)) disableTier()
+    }
+
+    /** Tear down the capture pipeline but KEEP the projection token (for a rebuild). */
+    private fun releaseTierPipeline() {
         tierCoordinator?.stop()
         tierCoordinator = null
         tierThread?.quitSafely()
         tierThread = null
-        runCatching { projection?.unregisterCallback(projectionCallback) }
         runCatching { virtualDisplay?.release() }
         virtualDisplay = null
         runCatching { imageReader?.close() }
         imageReader = null
+    }
+
+    /**
+     * Fully disable the tier feature. [restoreForeground] re-claims the SPECIAL_USE-only FGS type
+     * (dropping MEDIA_PROJECTION) when the VPN service keeps running; tearDown passes false.
+     */
+    private fun disableTier(restoreForeground: Boolean = true) {
+        releaseTierPipeline()
+        runCatching { projection?.unregisterCallback(projectionCallback) }
         runCatching { projection?.stop() }
         projection = null
         tierForceOpen = false
+        if (restoreForeground && coreRunning) startForegroundNotification(withProjection = false)
         breadcrumb("tier: disabled")
     }
 
