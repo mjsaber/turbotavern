@@ -22,7 +22,9 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.util.DisplayMetrics
 import android.util.Log
+import android.view.Display
 import android.view.WindowManager
 import com.bobassist.phase0.core.BattleCandidateCache
 import com.bobassist.phase0.core.BattleConnectionController
@@ -399,10 +401,14 @@ class BobVpnService : VpnService() {
             return
         }
         if (tierCoordinator != null) { breadcrumb("tier: already enabled"); return }
-        startForegroundNotification(withProjection = true)
+        // ORDER MATTERS (Android 14+): getMediaProjection() first — it grants the android:project_media
+        // appop that startForeground(mediaProjection) then requires. Claiming the FGS type before the
+        // projection throws SecurityException.
         val mpm = getSystemService(MediaProjectionManager::class.java)
-        val mp = runCatching { mpm.getMediaProjection(resultCode, data) }.getOrNull()
+        val mp = runCatching { mpm.getMediaProjection(resultCode, data) }
+            .getOrElse { breadcrumb("tier: getMediaProjection threw: ${it.message}"); null }
         if (mp == null) { breadcrumb("tier: getMediaProjection failed"); return }
+        startForegroundNotification(withProjection = true)
         mp.registerCallback(projectionCallback, mainHandler)
         projection = mp
         if (!startTierPipeline(mp)) disableTier()
@@ -504,15 +510,12 @@ class BobVpnService : VpnService() {
         }
 
     private fun displayInfoNow(): MediaProjectionGrabber.DisplayInfo {
-        val wm = getSystemService(WindowManager::class.java)
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val b = wm.currentWindowMetrics.bounds
-            MediaProjectionGrabber.DisplayInfo(b.width(), b.height(), display?.rotation ?: 0)
-        } else {
-            @Suppress("DEPRECATION") val rot = wm.defaultDisplay.rotation
-            val dm = resources.displayMetrics
-            MediaProjectionGrabber.DisplayInfo(dm.widthPixels, dm.heightPixels, rot)
-        }
+        // A Service is a non-visual Context, so Context.getDisplay()/currentWindowMetrics throw.
+        // Resolve the default Display via DisplayManager, which works from any context.
+        val disp = getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)
+        val m = DisplayMetrics()
+        @Suppress("DEPRECATION") disp.getRealMetrics(m)        // real (full-screen) pixels
+        return MediaProjectionGrabber.DisplayInfo(m.widthPixels, m.heightPixels, disp.rotation)
     }
 
     private fun breadcrumb(msg: String) {
