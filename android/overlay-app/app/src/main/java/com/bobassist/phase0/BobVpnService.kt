@@ -401,14 +401,17 @@ class BobVpnService : VpnService() {
             return
         }
         if (tierCoordinator != null) { breadcrumb("tier: already enabled"); return }
-        // ORDER MATTERS (Android 14+): getMediaProjection() first — it grants the android:project_media
-        // appop that startForeground(mediaProjection) then requires. Claiming the FGS type before the
-        // projection throws SecurityException.
+        // Android 14+ ordering: claim the mediaProjection FGS type FIRST (allowed by the fresh consent
+        // appop), because getMediaProjection() then requires the service to already hold that type.
+        // Wrap the claim so a stale/again-consumed consent fails gracefully instead of crashing.
+        val claimed = runCatching { startForegroundNotification(withProjection = true) }
+            .onFailure { breadcrumb("tier: FGS mediaProjection claim failed: ${it.message}") }
+            .isSuccess
+        if (!claimed) { startForegroundNotification(withProjection = false); return }
         val mpm = getSystemService(MediaProjectionManager::class.java)
         val mp = runCatching { mpm.getMediaProjection(resultCode, data) }
             .getOrElse { breadcrumb("tier: getMediaProjection threw: ${it.message}"); null }
-        if (mp == null) { breadcrumb("tier: getMediaProjection failed"); return }
-        startForegroundNotification(withProjection = true)
+        if (mp == null) { disableTier(); return }          // disableTier restores the specialUse FGS type
         mp.registerCallback(projectionCallback, mainHandler)
         projection = mp
         if (!startTierPipeline(mp)) disableTier()
@@ -433,10 +436,18 @@ class BobVpnService : VpnService() {
         }.getOrElse { breadcrumb("tier: createVirtualDisplay threw: ${it.message}"); null }
         if (vd == null) {                                  // createVirtualDisplay can return null too
             breadcrumb("tier: createVirtualDisplay returned null")
+            runCatching { reader.close() }
+            imageReader = null
             return false
         }
         virtualDisplay = vd
+        startCoordinator(reader)
+        breadcrumb("tier: pipeline up (capture ${captureW}x$captureH)")
+        return true
+    }
 
+    /** Build + start the capture->ocr->match->render coordinator over [reader]. Reused across resizes. */
+    private fun startCoordinator(reader: ImageReader) {
         val grabber = MediaProjectionGrabber(reader, captureW, captureH) { displayInfoNow() }
         val overlay = TierOverlay(
             AndroidWindowHost(getSystemService(WindowManager::class.java)), this,
@@ -464,23 +475,51 @@ class BobVpnService : VpnService() {
         )
         tierCoordinator = coordinator
         coordinator.start()
-        breadcrumb("tier: pipeline up (capture ${captureW}x$captureH)")
-        return true
     }
 
-    /** Rotation/size change: rebuild the capture pipeline at the new size, reusing the projection. */
-    private fun onTierConfigChanged() {
-        val mp = projection ?: return
-        releaseTierPipeline()
-        if (!startTierPipeline(mp)) disableTier()
-    }
-
-    /** Tear down the capture pipeline but KEEP the projection token (for a rebuild). */
-    private fun releaseTierPipeline() {
+    /** Stop + drop the coordinator and its thread, keeping the projection + virtualDisplay alive. */
+    private fun stopCoordinator() {
         tierCoordinator?.stop()
         tierCoordinator = null
         tierThread?.quitSafely()
         tierThread = null
+    }
+
+    /**
+     * Rotation/size change. Android 14 forbids a SECOND MediaProjection#createVirtualDisplay on the
+     * same projection instance (it throws and kills capture), so we REUSE the existing VirtualDisplay:
+     * resize it and point it at a fresh ImageReader, then rebuild the coordinator around that reader.
+     */
+    private fun onTierConfigChanged() {
+        val vd = virtualDisplay ?: return
+        val info = displayInfoNow()
+        if (info.width == captureW && info.height == captureH) return   // no real size change
+        stopCoordinator()
+        val old = imageReader
+        val newW = info.width
+        val newH = info.height
+        val reader = ImageReader.newInstance(newW, newH, PixelFormat.RGBA_8888, 2)
+        // Transactional: only commit (swap reader, close old, restart) if resize+setSurface succeed.
+        val ok = runCatching {
+            vd.resize(newW, newH, resources.displayMetrics.densityDpi)
+            vd.surface = reader.surface
+        }.onFailure { breadcrumb("tier: vd resize failed: ${it.message}") }.isSuccess
+        if (!ok) {                                         // VD may still point at the old surface
+            runCatching { reader.close() }                 // drop the unused new reader; keep old intact
+            disableTier()
+            return
+        }
+        captureW = newW
+        captureH = newH
+        imageReader = reader
+        runCatching { old?.close() }
+        startCoordinator(reader)
+        breadcrumb("tier: resized to ${captureW}x$captureH")
+    }
+
+    /** Full teardown of the capture pipeline AND the VirtualDisplay (keeps the projection token). */
+    private fun releaseTierPipeline() {
+        stopCoordinator()
         runCatching { virtualDisplay?.release() }
         virtualDisplay = null
         runCatching { imageReader?.close() }
