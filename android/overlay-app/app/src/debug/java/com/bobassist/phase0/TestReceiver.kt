@@ -64,6 +64,18 @@ class TestReceiver : BroadcastReceiver() {
                 val label = intent.getStringExtra("label") ?: "mark"
                 recordMark(context, label)
             }
+            "devrec_mark" -> {
+                val s = com.bobassist.phase0.devrec.DevRecorderService.live
+                if (s == null) Log.i(TAG, "devrec_mark: not recording")
+                else { context.startService(Intent(context, s::class.java)
+                    .setAction(com.bobassist.phase0.devrec.DevRecorderService.ACTION_MARK)); Log.i(TAG, "devrec_mark dispatched") }
+            }
+            "devrec_stop" -> {
+                val s = com.bobassist.phase0.devrec.DevRecorderService.live
+                if (s == null) Log.i(TAG, "devrec_stop: not recording")
+                else { context.startService(Intent(context, s::class.java)
+                    .setAction(com.bobassist.phase0.devrec.DevRecorderService.ACTION_STOP)); Log.i(TAG, "devrec_stop dispatched") }
+            }
             "sim_set_snapshot" -> {
                 val json = intent.getStringExtra("json")
                 DebugConnectionCoreOverride.setSnapshot(json)

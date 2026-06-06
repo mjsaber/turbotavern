@@ -24,5 +24,15 @@
                 <action android:name="com.bobassist.phase0.OCR_PROBE" />
             </intent-filter>
         </receiver>
+
+        <!-- DevRecorder (debug-only): session recorder with on-screen MARK button + screenshots. -->
+        <activity
+            android:name="com.bobassist.phase0.devrec.DevRecorderActivity"
+            android:exported="true"
+            android:label="DevRecorder" />
+        <service
+            android:name="com.bobassist.phase0.devrec.DevRecorderService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
     </application>
 </manifest>
