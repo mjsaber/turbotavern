@@ -117,8 +117,12 @@ class HeroTierCoordinator(
     private fun captureOnce() {
         val frame = grabber.capture() ?: return
         // Isolate a bad OCR/match round so one exception never kills the handler loop.
-        val badges = runCatching { matcher.match(ocr.recognize(frame)) }
-            .getOrElse { breadcrumb("herotier: ocr/match failed: ${it.message}"); emptyList() }
+        val ocrLines = runCatching { ocr.recognize(frame) }
+            .getOrElse { breadcrumb("herotier: ocr failed: ${it.message}"); emptyList() }
+        val badges = runCatching { matcher.match(ocrLines) }
+            .getOrElse { breadcrumb("herotier: match failed: ${it.message}"); emptyList() }
+        if (com.bobassist.phase0.BuildConfig.DEBUG)
+            breadcrumb("herotier: ocr=${ocrLines.size} lines [${ocrLines.take(6).joinToString("|") { it.text }}] matched=${badges.size}")
         runCatching { frame.bitmap.recycle() }            // free the capture bitmap; render needs only transform
         if (badges.isEmpty()) return
         if (currentRotation() != frame.rotationDeg) {     // stale-rotation guard (pre-post)
