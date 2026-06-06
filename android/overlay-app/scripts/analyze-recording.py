@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
-"""Analyze a spike-d recording (timestamped connectionsJson frames).
+"""Analyze a recording (timestamped connectionsJson frames + marks + optional screenshots).
 
-Usage: analyze-recording.py <recording_dir>   # dir containing <epoch_ms>.json + MARK-*.txt
+Usage: analyze-recording.py <recording_dir>   # dir with <epoch_ms>.json + MARK-*.txt [+ SHOT-*.png]
 
 Reusable offline analysis: builds a per-connection lifespan table and a
 change-log (when connections appear/disappear), so we can locate the battle
 socket by correlating socket lifetimes with narrated combat windows — without
 re-playing the game. Identity = host|ip:port (ids rotate; host/ip/port is stable).
+
+Frames are ONLY files whose stem is purely numeric (so meta.json / events.jsonl
+never break parsing). DevRecorder sessions additionally carry SHOT-*.png per mark.
 """
-import sys, os, json, glob
+import sys, os, json, glob, re
+
+NUM_JSON = re.compile(r"^\d+\.json$")
 
 def load(d):
     frames = []
-    for f in sorted(glob.glob(os.path.join(d, "*.json")), key=lambda p: int(os.path.basename(p)[:-5])):
+    files = [p for p in glob.glob(os.path.join(d, "*.json")) if NUM_JSON.match(os.path.basename(p))]
+    for f in sorted(files, key=lambda p: int(os.path.basename(p)[:-5])):
         ts = int(os.path.basename(f)[:-5])
         try:
             conns = json.load(open(f))
@@ -28,66 +34,86 @@ def load(d):
 def key(c):
     return f'{c.get("host","")}|{c.get("destinationIp","")}:{c.get("destinationPort","")}'
 
+def print_marks_with_shots(d, frames, marks, rel):
+    shots = {}  # seq -> filename
+    for p in glob.glob(os.path.join(d, "SHOT-*.png")):
+        b = os.path.basename(p)[5:-4]            # <ts>-<seq>
+        seq = b.split("-", 1)[1] if "-" in b else b
+        shots[seq] = os.path.basename(p)
+    frame_ts = [t for t, _ in frames]
+    nearest = lambda ts: (min(frame_ts, key=lambda x: abs(x - ts)) if frame_ts else None)
+    print("\n=== marks with screenshots ===")
+    for mts, lbl in marks:
+        nf = nearest(mts)
+        nrel = f"+{rel(nf):.1f}s" if nf is not None else "-"
+        print(f"  MARK +{rel(mts):7.1f}s seq={lbl:>3}  shot={shots.get(lbl,'(none)')}  nearest_frame={nrel}")
+    metap = os.path.join(d, "meta.json")
+    if os.path.exists(metap):
+        print("\n=== meta ===\n" + open(metap).read())
+
 def main():
     d = sys.argv[1]
     frames, marks = load(d)
-    if not frames:
-        print("no frames"); return
-    t0 = frames[0][0]
+    if not frames and not marks:
+        print("no frames, no marks"); return
+    t0 = frames[0][0] if frames else marks[0][0]   # fall back to first mark as time origin
     rel = lambda ts: (ts - t0) / 1000.0
-    print(f"frames={len(frames)} span={rel(frames[-1][0]):.1f}s  (t0={t0})")
+    span = rel(frames[-1][0]) if frames else 0.0
+    print(f"frames={len(frames)} span={span:.1f}s  (t0={t0})")
     for mts, lbl in marks:
         print(f"  MARK +{rel(mts):7.1f}s  {lbl}")
 
-    # Per-connection lifespan
-    life = {}  # key -> [first_ts, last_ts, sample_conn]
-    for ts, conns in frames:
-        for c in conns:
-            k = key(c)
-            if k not in life:
-                life[k] = [ts, ts, c]
-            life[k][1] = ts
-    print("\n=== connection lifespans (sorted by first-seen) ===")
-    print(f'{"+start":>8} {"+end":>8} {"dur":>6}  host_empty?  host|ip:port')
-    for k, (a, b, c) in sorted(life.items(), key=lambda kv: kv[1][0]):
-        he = "HOST_EMPTY" if c.get("host", "") == "" else "          "
-        print(f'{rel(a):8.1f} {rel(b):8.1f} {(b-a)/1000.0:6.1f}  {he}   {k}')
-
-    # Fingerprint back-test: replay candidate fingerprints over the recording.
-    # Mirrors BattleConnection.pick: host=="" && network=="tcp" && port matches.
-    def fp_match(c, ports):
-        return (c.get("host", "") == "" and c.get("network", "") == "tcp"
-                and c.get("destinationPort", 0) in ports)
-    for name, ports in (("OLD {3724}", {3724}), ("NEW {1119,3724}", {1119, 3724})):
-        first_ready = None
-        ready_frames = 0
-        last_cand = None
+    if frames:
+        # Per-connection lifespan
+        life = {}  # key -> [first_ts, last_ts, sample_conn]
         for ts, conns in frames:
-            cands = [c for c in conns if fp_match(c, ports)]
-            if cands:
-                ready_frames += 1
-                if first_ready is None:
-                    first_ready = ts
-                last_cand = max(cands, key=lambda c: c.get("createdAt", 0))
-        pct = 100.0 * ready_frames / len(frames)
-        fr = f"+{rel(first_ready):.1f}s" if first_ready else "never"
-        ex = f'{last_cand.get("destinationIp")}:{last_cand.get("destinationPort")}' if last_cand else "-"
-        print(f"\n=== fingerprint {name}: Ready in {ready_frames}/{len(frames)} frames ({pct:.0f}%), first Ready {fr}, e.g. {ex} ===")
+            for c in conns:
+                k = key(c)
+                if k not in life:
+                    life[k] = [ts, ts, c]
+                life[k][1] = ts
+        print("\n=== connection lifespans (sorted by first-seen) ===")
+        print(f'{"+start":>8} {"+end":>8} {"dur":>6}  host_empty?  host|ip:port')
+        for k, (a, b, c) in sorted(life.items(), key=lambda kv: kv[1][0]):
+            he = "HOST_EMPTY" if c.get("host", "") == "" else "          "
+            print(f'{rel(a):8.1f} {rel(b):8.1f} {(b-a)/1000.0:6.1f}  {he}   {k}')
 
-    # Change-log: only frames where the connection SET changes
-    print("\n=== change-log (Δ connection set) ===")
-    prev = set()
-    for ts, conns in frames:
-        cur = {key(c) for c in conns}
-        added, removed = cur - prev, prev - cur
-        if added or removed:
-            for k in sorted(added):
-                tag = "  <-- HOST_EMPTY" if k.startswith("|") else ""
-                print(f'+{rel(ts):8.1f}s  ADD  {k}{tag}')
-            for k in sorted(removed):
-                tag = "  <-- HOST_EMPTY" if k.startswith("|") else ""
-                print(f'+{rel(ts):8.1f}s  DEL  {k}{tag}')
-        prev = cur
+        # Fingerprint back-test: replay candidate fingerprints over the recording.
+        def fp_match(c, ports):
+            return (c.get("host", "") == "" and c.get("network", "") == "tcp"
+                    and c.get("destinationPort", 0) in ports)
+        for name, ports in (("OLD {3724}", {3724}), ("NEW {1119,3724}", {1119, 3724})):
+            first_ready = None
+            ready_frames = 0
+            last_cand = None
+            for ts, conns in frames:
+                cands = [c for c in conns if fp_match(c, ports)]
+                if cands:
+                    ready_frames += 1
+                    if first_ready is None:
+                        first_ready = ts
+                    last_cand = max(cands, key=lambda c: c.get("createdAt", 0))
+            pct = 100.0 * ready_frames / len(frames)
+            fr = f"+{rel(first_ready):.1f}s" if first_ready else "never"
+            ex = f'{last_cand.get("destinationIp")}:{last_cand.get("destinationPort")}' if last_cand else "-"
+            print(f"\n=== fingerprint {name}: Ready in {ready_frames}/{len(frames)} frames ({pct:.0f}%), first Ready {fr}, e.g. {ex} ===")
+
+        # Change-log: only frames where the connection SET changes
+        print("\n=== change-log (Δ connection set) ===")
+        prev = set()
+        for ts, conns in frames:
+            cur = {key(c) for c in conns}
+            added, removed = cur - prev, prev - cur
+            if added or removed:
+                for k in sorted(added):
+                    tag = "  <-- HOST_EMPTY" if k.startswith("|") else ""
+                    print(f'+{rel(ts):8.1f}s  ADD  {k}{tag}')
+                for k in sorted(removed):
+                    tag = "  <-- HOST_EMPTY" if k.startswith("|") else ""
+                    print(f'+{rel(ts):8.1f}s  DEL  {k}{tag}')
+            prev = cur
+
+    print_marks_with_shots(d, frames, marks, rel)
 
 if __name__ == "__main__":
     main()
