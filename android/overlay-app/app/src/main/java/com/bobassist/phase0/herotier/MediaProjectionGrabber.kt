@@ -1,6 +1,5 @@
 package com.bobassist.phase0.herotier
 
-import android.graphics.Bitmap
 import android.media.ImageReader
 import android.util.Log
 
@@ -23,20 +22,7 @@ class MediaProjectionGrabber(
     override fun capture(): Frame? {
         val image = runCatching { reader.acquireLatestImage() }.getOrNull() ?: return null
         return try {
-            val plane = image.planes[0]
-            val pixelStride = plane.pixelStride
-            val rowStride = plane.rowStride
-            val rowPadding = rowStride - pixelStride * captureW
-            val bufferW = captureW + (if (pixelStride > 0) rowPadding / pixelStride else 0)
-            val padded = Bitmap.createBitmap(bufferW, captureH, Bitmap.Config.ARGB_8888)
-            padded.copyPixelsFromBuffer(plane.buffer)
-            val bitmap = if (bufferW != captureW) {
-                val cropped = Bitmap.createBitmap(padded, 0, 0, captureW, captureH)
-                padded.recycle()                          // free the padded intermediate immediately
-                cropped
-            } else {
-                padded
-            }
+            val bitmap = ImagePlaneBitmap.of(image, captureW, captureH)
             val d = displayInfo()
             val t = Transform(
                 scaleX = d.width.toFloat() / captureW,
