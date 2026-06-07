@@ -130,6 +130,8 @@ class DevRecorderService : Service() {
         if (shot.ok) appendEvent("""{"t":$clickTs,"type":"mark","seq":$s,"shot":"${SessionDir.shotName(ts, s)}","shot_w":${shot.w},"shot_h":${shot.h},"shot_age_ms":${clickTs - shot.acquiredEpochMs}}""")
         else appendEvent("""{"t":$clickTs,"type":"mark_noshot","seq":$s}""")
         breadcrumb("devrec: mark $s (shot=${shot.ok})")
+        val toastMsg = if (shot.ok) "✓ MARK #$s 已保存 · 截图 ${shot.w}×${shot.h}" else "⚠ MARK #$s 已记录 · 无截图"
+        main.post { android.widget.Toast.makeText(this, toastMsg, android.widget.Toast.LENGTH_SHORT).show() }
     }
 
     private fun resizeTo() {

@@ -56,7 +56,9 @@ class MarkerPanel(
                 MotionEvent.ACTION_DOWN -> { tx = e.rawX; ty = e.rawY; sx = lp.x; sy = lp.y; return true }
                 MotionEvent.ACTION_MOVE -> {
                     lp.x = sx + (e.rawX - tx).toInt(); lp.y = sy + (e.rawY - ty).toInt()
-                    runCatching { wm.updateViewLayout(v, lp) }; return true   // v is non-null (the touched view)
+                    // Update the ROOT (the WM-managed row), not v (the ≡ handle child): passing a child
+                    // makes updateViewLayout set WindowManager.LayoutParams on it, crashing LinearLayout measure.
+                    view?.let { runCatching { wm.updateViewLayout(it, lp) } }; return true
                 }
             }
             return false
