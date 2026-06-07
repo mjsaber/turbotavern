@@ -170,15 +170,20 @@ stays reset on teardown (`:538`).
   - single-fire (`Enter`/`Exit` once; subsequent same-state probes → `None`);
   - **no double-Exit (Codex N1):** after a natural `Exit`, a further `onProbe(0)` → `None`;
   - `forceClose()` resets so it can re-open; reopen after close works.
-- **`HeroTierCoordinator` (Robolectric, extend existing tests):** add a **`FakeMatcher` returning a
-  scripted `List<Int>` badge-count sequence** (Codex N3 — cleaner than threading counts through OCR
-  lines + a real `HeroMatcher`; the existing `FakeOcr` stays). Assert: `PROBE_MS` cadence while
-  closed → open on the ≥2 round; `CAPTURE_INTERVAL_MS` for the first `MAX_ATTEMPTS` open rounds then
-  drop to `PROBE_MS`; render only when open; `CLOSE_K`-zeros closes a **held** window (post-
-  `MAX_ATTEMPTS`); foreground-lost closes a held window; `forceOpen` opens+bypasses-gate (no
-  `CLOSE_K` close while forced) and closes on the falling edge; `!ocr.isAvailable()` → zero captures.
-  Update the `coordinator()` helper + all existing tests for the new constructor (drop
-  `connectionsJson`/`trigger`).
+- **`HeroTierCoordinator` (Robolectric, extend existing tests):** drive the per-round badge **count**
+  via a **scripted `FakeOcr` (`List<List<OcrLine>>`, one entry per `recognize` call) over a ≥2-hero
+  `TierTable` fed through the real `HeroMatcher`** — `matcher` is a concrete `HeroMatcher` (not an
+  interface), so this avoids an interface-extraction refactor and is deterministic: `HeroMatcher.match`
+  resolves N distinct exact hero-name lines to N badges and `verticalMerge` cannot inflate the count
+  (it skips already-resolved lines). *(This intentionally supersedes the earlier Codex-N3 `FakeMatcher`
+  idea, which assumed `matcher` was injectable.)* Assert: `PROBE_MS` cadence while closed → open on the
+  ≥2 round; `CAPTURE_INTERVAL_MS` for the first `MAX_ATTEMPTS` open rounds then drop to `PROBE_MS`;
+  render only when open; `CLOSE_K`-zeros closes a **held** window (post-`MAX_ATTEMPTS`); foreground-lost
+  closes a held window; `MAX_WINDOW_MS` closes a window held open by a **steady 1-match** stream (≥1
+  but `<OPEN_MATCHES` ⇒ gate returns `None` forever, so only the timeout closes it); `forceOpen`
+  opens+bypasses-gate (no `CLOSE_K` close while forced) and closes on the falling edge;
+  `!ocr.isAvailable()` → zero captures. Update the `coordinator()` helper + all existing tests for the
+  new constructor (drop `connectionsJson`/`trigger`).
 - **Robolectric timing (Codex N4):** use a small `probeMs` (like the existing `pollMs=100`) and
   expect multiple `idleFor`/`idle` drain cycles to deterministically interleave probe→open→capture→
   render across the two intervals; extend the `drain()` helper if needed.
