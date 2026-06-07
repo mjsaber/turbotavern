@@ -6,10 +6,12 @@ import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.net.VpnService
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.View
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -30,7 +32,10 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.i(TAG, "Bobcore.version() = ${RealLifecycleCore.version()}")
-        setContentView(buildLayout())
+        actionBar?.hide()                       // drop the "Bob Phase 0" title bar (it overlapped content on Android 15 edge-to-edge)
+        val root = buildLayout()
+        setContentView(root)
+        applyTopInset(root)                     // pad below the status/nav bars (targetSdk 35 draws edge-to-edge)
 
         // Debug-only: --ez auto_start true lets `adb am start MainActivity`
         // drive the e2e test script without manual taps. Production must
@@ -48,7 +53,7 @@ class MainActivity : Activity() {
             setPadding(40, 20, 40, 20)
         }
         startBtn = Button(this).apply {
-            text = "Start VPN"
+            text = "Start (VPN + Tier Overlay)"
             setOnClickListener { onStartClicked() }
         }
         val stopBtn = Button(this).apply {
@@ -73,13 +78,6 @@ class MainActivity : Activity() {
                 startActivity(intent)
             }
         }
-        val enableTierBtn = Button(this).apply {
-            text = "Enable Tier Overlay (screen capture)"
-            setOnClickListener {
-                val mpm = getSystemService(MediaProjectionManager::class.java)
-                startActivityForResult(mpm.createScreenCaptureIntent(), REQ_PROJECTION)
-            }
-        }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 80, 40, 40)
@@ -88,8 +86,20 @@ class MainActivity : Activity() {
             addView(stopBtn)
             addView(grantOverlayBtn)
             addView(grantUsageBtn)
-            addView(enableTierBtn)
         }
+    }
+
+    /** Inset the content below the status & navigation bars (edge-to-edge under targetSdk 35). */
+    private fun applyTopInset(root: View) {
+        root.setOnApplyWindowInsetsListener { v, insets ->
+            @Suppress("DEPRECATION")
+            val bars = if (Build.VERSION.SDK_INT >= 30)
+                insets.getInsets(WindowInsets.Type.systemBars()).let { it.top to it.bottom }
+            else insets.systemWindowInsetTop to insets.systemWindowInsetBottom
+            v.setPadding(40, bars.first + 40, 40, bars.second + 40)
+            insets
+        }
+        root.requestApplyInsets()
     }
 
     override fun onResume() {
@@ -121,18 +131,28 @@ class MainActivity : Activity() {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    /** One step: ensure the VPN is up, then request screen-capture and enable the tier overlay. */
     private fun onStartClicked() {
         if (!hasOverlayPermission()) {
             statusView.text = "${statusView.text}\nOverlay permission required."
             return
         }
+        if (BobVpnService.liveSession != null) {     // VPN already running -> go straight to tier
+            requestProjection(); return
+        }
         val prepare = VpnService.prepare(this)
         if (prepare != null) {
-            startActivityForResult(prepare, REQ_VPN_AUTHORIZE)
+            startActivityForResult(prepare, REQ_VPN_AUTHORIZE)   // -> on OK: launchService() + requestProjection()
             statusView.text = "${statusView.text}\nasking VPN authorization..."
         } else {
-            launchService()
+            launchService(); requestProjection()
         }
+    }
+
+    /** Screen-capture consent (user may pick "single app" -> Hearthstone); result -> ENABLE_TIER. */
+    private fun requestProjection() {
+        val mpm = getSystemService(MediaProjectionManager::class.java)
+        startActivityForResult(mpm.createScreenCaptureIntent(), REQ_PROJECTION)
     }
 
     private fun onStopClicked() {
@@ -144,7 +164,7 @@ class MainActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_VPN_AUTHORIZE) {
-            if (resultCode == RESULT_OK) launchService()
+            if (resultCode == RESULT_OK) { launchService(); requestProjection() }   // chain into tier
             else statusView.text = "${statusView.text}\nVPN denied"
         } else if (requestCode == REQ_PROJECTION) {
             if (resultCode == RESULT_OK && data != null) {
