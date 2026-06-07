@@ -1,0 +1,68 @@
+frames=858 span=436.2s  (t0=1780864660964)
+  MARK +   22.3s  1
+  MARK +  261.6s  2
+  MARK +  275.0s  3
+  MARK +  310.5s  4
+  MARK +  326.9s  5
+  MARK +  402.7s  6
+  MARK +  414.2s  7
+  MARK +  417.6s  8
+
+=== connection lifespans (sorted by first-seen) ===
+  +start     +end    dur  host_empty?  host|ip:port
+     2.4    436.2  433.9               sdk.iad-03.braze.com|172.64.151.210:443
+     2.4    436.2  433.9               01klrt-launches.appsflyersdk.com|18.164.173.83:443
+     2.4     25.8   23.5               us.actual.battle.net|34.125.159.31:1119
+     3.9    436.2  432.3               telemetry-in.battle.net|137.221.105.232:443
+     3.9    301.0  297.0               oauth.battle.net|44.229.119.110:443
+     4.4    322.9  318.5               api.blizzard.com|75.2.95.102:443
+     5.5    436.2  430.8               01klrt-inapps.appsflyersdk.com|3.169.227.24:443
+     8.5    436.2  427.7               us.api.blizzard.com|99.83.136.34:443
+   258.3    436.2  177.9               us.actual.battle.net|34.125.38.117:1119
+   280.1    436.2  156.1  HOST_EMPTY   |66.40.189.71:3724
+
+=== fingerprint OLD {3724}: Ready in 308/858 frames (36%), first Ready +280.1s, e.g. 66.40.189.71:3724 ===
+
+=== fingerprint NEW {1119,3724}: Ready in 308/858 frames (36%), first Ready +280.1s, e.g. 66.40.189.71:3724 ===
+
+=== change-log (Δ connection set) ===
++     2.4s  ADD  01klrt-launches.appsflyersdk.com|18.164.173.83:443
++     2.4s  ADD  sdk.iad-03.braze.com|172.64.151.210:443
++     2.4s  ADD  us.actual.battle.net|34.125.159.31:1119
++     3.9s  ADD  oauth.battle.net|44.229.119.110:443
++     3.9s  ADD  telemetry-in.battle.net|137.221.105.232:443
++     4.4s  ADD  api.blizzard.com|75.2.95.102:443
++     5.5s  ADD  01klrt-inapps.appsflyersdk.com|3.169.227.24:443
++     8.5s  ADD  us.api.blizzard.com|99.83.136.34:443
++    26.3s  DEL  01klrt-inapps.appsflyersdk.com|3.169.227.24:443
++    26.3s  DEL  01klrt-launches.appsflyersdk.com|18.164.173.83:443
++    26.3s  DEL  api.blizzard.com|75.2.95.102:443
++    26.3s  DEL  oauth.battle.net|44.229.119.110:443
++    26.3s  DEL  sdk.iad-03.braze.com|172.64.151.210:443
++    26.3s  DEL  telemetry-in.battle.net|137.221.105.232:443
++    26.3s  DEL  us.actual.battle.net|34.125.159.31:1119
++    26.3s  DEL  us.api.blizzard.com|99.83.136.34:443
++   258.3s  ADD  01klrt-launches.appsflyersdk.com|18.164.173.83:443
++   258.3s  ADD  sdk.iad-03.braze.com|172.64.151.210:443
++   258.3s  ADD  us.actual.battle.net|34.125.38.117:1119
++   260.4s  ADD  oauth.battle.net|44.229.119.110:443
++   260.4s  ADD  telemetry-in.battle.net|137.221.105.232:443
++   260.9s  ADD  api.blizzard.com|75.2.95.102:443
++   261.6s  ADD  01klrt-inapps.appsflyersdk.com|3.169.227.24:443
++   264.4s  ADD  us.api.blizzard.com|99.83.136.34:443
++   280.1s  ADD  |66.40.189.71:3724  <-- HOST_EMPTY
++   301.5s  DEL  oauth.battle.net|44.229.119.110:443
++   323.4s  DEL  api.blizzard.com|75.2.95.102:443
+
+=== marks with screenshots ===
+  MARK +   22.3s seq=  1  shot=SHOT-1780864683292-1.png  nearest_frame=+22.3s
+  MARK +  261.6s seq=  2  shot=SHOT-1780864922551-2.png  nearest_frame=+261.6s
+  MARK +  275.0s seq=  3  shot=SHOT-1780864935926-3.png  nearest_frame=+275.0s
+  MARK +  310.5s seq=  4  shot=SHOT-1780864971487-4.png  nearest_frame=+310.5s
+  MARK +  326.9s seq=  5  shot=SHOT-1780864987898-5.png  nearest_frame=+326.9s
+  MARK +  402.7s seq=  6  shot=SHOT-1780865063618-6.png  nearest_frame=+402.7s
+  MARK +  414.2s seq=  7  shot=SHOT-1780865075176-7.png  nearest_frame=+414.2s
+  MARK +  417.6s seq=  8  shot=SHOT-1780865078607-8.png  nearest_frame=+417.6s
+
+=== meta ===
+{"schemaVersion":1,"app_version":"0.0.1-prototype","device_model":"CPH2451","started_at_ms":1780864660963,"stopped_at_ms":1780865097727,"mark_count":8}
