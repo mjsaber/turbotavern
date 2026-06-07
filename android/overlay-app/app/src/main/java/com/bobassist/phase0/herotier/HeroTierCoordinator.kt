@@ -86,6 +86,10 @@ class HeroTierCoordinator(
             gate.forceClose(); wasForced = false
             return
         }
+        if (wasForced && !fo) {                         // force-open falling edge: close without a wasted capture
+            wasForced = false; closeWindow(); gate.forceClose()
+            return
+        }
         if (!ocr.isAvailable()) {                       // inert: never capture (spec §8.2)
             if (!loggedInert) { loggedInert = true; breadcrumb("herotier: OCR unavailable -> inert") }
             return
@@ -99,15 +103,14 @@ class HeroTierCoordinator(
         if (com.bobassist.phase0.BuildConfig.DEBUG)
             breadcrumb("herotier: ocr=${ocrLines.size} lines [${ocrLines.take(6).joinToString("|") { it.text }}] matched=$count open=$open")
 
-        // Open/close decision — force-open (DEBUG) bypasses the gate (spec §4.5).
-        when {
-            wasForced && !fo -> { wasForced = false; closeWindow(); gate.forceClose() }   // falling edge
-            fo -> { wasForced = true; if (!open) openWindow() }                            // forced: skip gate
-            else -> when (gate.onProbe(count)) {
-                Transition.Enter -> openWindow()
-                Transition.Exit -> closeWindow()
-                Transition.None -> {}
-            }
+        // Open/close decision — force-open (DEBUG) bypasses the gate (spec §4.5); the falling edge
+        // is handled before capture above.
+        if (fo) {
+            wasForced = true; if (!open) openWindow()
+        } else when (gate.onProbe(count)) {
+            Transition.Enter -> openWindow()
+            Transition.Exit -> closeWindow()
+            Transition.None -> {}
         }
 
         val rotationDeg = frame.rotationDeg
