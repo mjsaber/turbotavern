@@ -15,6 +15,17 @@ class HeroMatcherTest {
     @Test fun fuzzyRecoversOneOff() =                                  // "Pircte" d=1 from "pirate"
         assertEquals("BG_HERO_002", m.match(listOf(ln("Patches the Pircte"))).single().cardId)
 
+    // Regression: a short CJK name with ONE OCR slip + a distance-2 decoy present. cap==1 here, so
+    // the runner-up saturates at cap+1=2 and the old "(b2-b1)>=ambigMargin(2)" could never hold ->
+    // used to miss. "b2 > cap" (only one key within the 1-edit budget) now accepts the real hero.
+    @Test fun cjkOneCharErrorMatchesDespiteRunnerUp() {
+        val t = TierTable.fromJson(
+            """{"heroes":[
+                {"cardId":"BG_BIG","tier":"B","names":{"zhTW":"畢勾沃斯先生"}},
+                {"cardId":"BG_DECOY","tier":"C","names":{"zhTW":"畢勾沃斯太太"}}]}""")
+        assertEquals("BG_BIG", HeroMatcher(t).match(listOf(ln("畢匀沃斯先生"))).single().cardId)
+    }
+
     @Test fun shortNameNoFuzzy() =                                    // "米羅" 2-char, not exact
         assertTrue(m.match(listOf(ln("米羅"))).isEmpty())
 
