@@ -20,7 +20,7 @@ class HeroMatcher(
         val out = LinkedHashMap<String, HeroBadge>()
         // 1) per-line (exact + short-exact + fuzzy). Originals first so their tighter box wins dedup.
         for (ln in lines) {
-            val k = NameKey.of(ln.text)
+            val k = NameKey.of(stripEdgeNoise(ln.text))
             if (k.isEmpty()) continue
             val ht = resolve(k) ?: continue
             out.getOrPut(ht.cardId) { HeroBadge(ht.cardId, ht.tier, ln.box) }
@@ -63,13 +63,20 @@ class HeroMatcher(
     private fun union(a: BoxPx, b: BoxPx) =
         BoxPx(minOf(a.left, b.left), minOf(a.top, b.top), maxOf(a.right, b.right), maxOf(a.bottom, b.bottom))
 
+    /** Trim card-frame strokes OCR reads as a leading/trailing vertical bar (`| 丨 ｜`) + whitespace.
+     *  Edge-only and bar-only: real hero names never start/end with a bare vertical stroke, and
+     *  NameKey (parity with data-pipeline) must NOT strip punctuation, so this lives here instead. */
+    private fun stripEdgeNoise(s: String) = s.trim { it == '|' || it == '丨' || it == '｜' || it.isWhitespace() }
+
     private fun resolve(k: String): HeroTier? {
         table.lookup(k)?.let { return it }                 // exact (ambiguity-safe)
         if (k.length <= shortLen) return null              // short -> exact-only
-        // Allow a 1-edit budget for names just past shortLen — CJK hero names are short and a single
-        // OCR slip (勾/匀, a dropped 爾, 復/複) is one edit on a 5–7 char name. floor(ratio*len) alone
-        // gives 0 for len 4 and 1 for len 5–9, so clamp the floor up to 1.
-        val cap = minOf(fuzzyCap, maxOf(1, Math.floor(fuzzyRatio * k.length).toInt()))
+        // Tolerance scales with name length (not a fixed 1): floor(ratio*len), bounded by fuzzyCap.
+        // A single OCR slip (勾/匀, dropped 爾, 復/複) is one edit; longer names absorb proportionally
+        // more. Card-frame strokes that OCR reads as a leading "|" are stripped upstream
+        // (stripEdgeNoise) so they don't eat the budget.
+        val cap = minOf(fuzzyCap, Math.floor(fuzzyRatio * k.length).toInt())
+        if (cap <= 0) return null
         var b1 = Int.MAX_VALUE
         var b2 = Int.MAX_VALUE
         var best: String? = null

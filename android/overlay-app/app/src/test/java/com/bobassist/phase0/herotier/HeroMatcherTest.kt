@@ -26,6 +26,14 @@ class HeroMatcherTest {
         assertEquals("BG_BIG", HeroMatcher(t).match(listOf(ln("畢匀沃斯先生"))).single().cardId)
     }
 
+    // A card-frame stroke OCR reads as a leading "|" used to push the name to distance 2 (miss at
+    // cap 1). It's stripped at the edge before matching (NameKey can't, it must keep parity).
+    @Test fun stripsLeadingFrameStrokeBeforeMatching() {
+        val t = TierTable.fromJson(
+            """{"heroes":[{"cardId":"BG_BIG","tier":"B","names":{"zhTW":"畢勾沃斯先生"}}]}""")
+        assertEquals("BG_BIG", HeroMatcher(t).match(listOf(ln("|畢匀沃斯先生"))).single().cardId)
+    }
+
     @Test fun shortNameNoFuzzy() =                                    // "米羅" 2-char, not exact
         assertTrue(m.match(listOf(ln("米羅"))).isEmpty())
 
