@@ -3,19 +3,22 @@ package com.bobassist.phase0.herotier
 import android.os.Handler
 
 /**
- * Owns the hero-tier runtime (spec §4/§6/§9). Runs on its OWN [handler] (a dedicated
- * HandlerThread in production) so it never shares the kill-button's exclusively-owned pollHandler.
+ * Owns the hero-tier runtime (spec §4/§6/§9) with the §8.2 visual-probe trigger. Runs on its OWN
+ * [handler] (a dedicated HandlerThread in production) so it never shares the kill-button's
+ * exclusively-owned pollHandler.
  *
- * Loop: poll [connectionsJson] -> [trigger]. On Enter, run a bounded capture loop
- * (capture -> ocr -> match -> render) while Hearthstone is strictly foreground; hold the badges
- * until the window closes (trigger Exit / foreground lost / timeout / projection stop), then clear.
+ * ONE always-on tick (spec §4.2): while Hearthstone is strictly foreground it captures → OCR →
+ * match every round and feeds the [gate] (or, in DEBUG, [forceOpen] bypasses the gate). The window
+ * OPENS on Enter and renders; it stays open and re-renders to track rerolls. Interval is adaptive:
+ * [probeMs] while closed; [captureIntervalMs] for the first [maxAttempts] open rounds (snappy first
+ * render as art settles) then back to [probeMs] (cheap hold). The gate's CLOSE_K-zeros, foreground
+ * loss, [maxWindowMs] and projection-stop each close the window — a single tick means there is no
+ * second loop to race and the foreground guard + gate feed stay reachable on a held window.
  *
  * Threading: every state mutation is confined to [handler]; render calls post to [mainHandler].
  * [stop] clears [handler]; a `started` guard makes any in-flight runnable a no-op.
  */
 class HeroTierCoordinator(
-    private val connectionsJson: () -> String,
-    private val trigger: SelectPhaseTrigger,
     private val grabber: ScreenGrabber,
     private val ocr: HeroOcr,
     private val matcher: HeroMatcher,
@@ -24,7 +27,9 @@ class HeroTierCoordinator(
     private val currentRotation: () -> Int,
     private val handler: Handler,
     private val mainHandler: Handler,
-    private val pollMs: Long = 800,
+    private val gate: VisualProbeGate = VisualProbeGate(),
+    private val forceOpen: () -> Boolean = { false },
+    private val probeMs: Long = 2000,
     private val captureIntervalMs: Long = 700,
     private val maxAttempts: Int = 8,
     private val maxWindowMs: Long = 15_000,
@@ -33,38 +38,26 @@ class HeroTierCoordinator(
     @Volatile private var started = false
     @Volatile private var open = false     // @Volatile so the main-thread render runnable can re-check it
     private var attempts = 0
+    private var wasForced = false
+    private var loggedInert = false
 
-    private val pollTick = object : Runnable {
+    private val tick = object : Runnable {
         override fun run() {
             if (!started) return
-            poll()
-            handler.postDelayed(this, pollMs)
-        }
-    }
-
-    private val captureTick = object : Runnable {
-        override fun run() {
-            if (!started || !open) return
-            if (foreground() != Foreground.TRUE) {        // strict gate (UNKNOWN/FALSE -> no capture)
-                breadcrumb("herotier: foreground not TRUE -> close")
-                closeWindow()
-                return
-            }
-            attempts++
-            captureOnce()
-            if (open && attempts < maxAttempts) handler.postDelayed(this, captureIntervalMs)
+            step()
+            if (started) handler.postDelayed(this, nextIntervalMs())
         }
     }
 
     private val windowTimeout = Runnable {
-        if (started && open) { breadcrumb("herotier: window timeout"); closeWindow() }
+        if (started && open) { breadcrumb("herotier: window timeout"); closeWindow(); gate.forceClose() }
     }
 
     fun start() {
         if (started) return
         started = true
         breadcrumb("HeroTierCoordinator.start")
-        handler.post(pollTick)
+        handler.post(tick)
     }
 
     fun stop() {
@@ -72,28 +65,67 @@ class HeroTierCoordinator(
         started = false
         breadcrumb("HeroTierCoordinator.stop")
         handler.removeCallbacksAndMessages(null)
-        open = false
+        open = false; attempts = 0; wasForced = false
+        gate.forceClose()
         mainHandler.post { runCatching { renderer.clear() } }
     }
 
     /** MediaProjection.Callback.onStop -> tear down the current window on our handler. */
     fun onProjectionStopped() {
-        handler.post { if (started) closeWindow() }
+        handler.post { if (started) { closeWindow(); gate.forceClose() } }
     }
 
-    private fun poll() {
-        val json = runCatching { connectionsJson() }.getOrElse { "" }
-        when (trigger.update(json)) {
-            Transition.Enter -> openWindow()
-            Transition.Exit -> closeWindow()
-            Transition.None -> {}
+    private fun nextIntervalMs(): Long =
+        if (open && attempts < maxAttempts) captureIntervalMs else probeMs
+
+    private fun step() {
+        val fo = forceOpen()
+        // Strict foreground gate FIRST — also guards the held/open window (subsumes the old poll loop).
+        if (foreground() != Foreground.TRUE) {
+            if (open) { breadcrumb("herotier: foreground not TRUE -> close"); closeWindow() }
+            gate.forceClose(); wasForced = false
+            return
         }
-        // Foreground-lost guard while the window holds badges: the capture loop stops after
-        // maxAttempts, so this continuous poll is what notices HS leaving the foreground and
-        // clears the badges (also covers usage-access being revoked -> UNKNOWN).
-        if (open && foreground() != Foreground.TRUE) {
-            breadcrumb("herotier: foreground not TRUE during open window -> close")
-            closeWindow()
+        if (!ocr.isAvailable()) {                       // inert: never capture (spec §8.2)
+            if (!loggedInert) { loggedInert = true; breadcrumb("herotier: OCR unavailable -> inert") }
+            return
+        }
+        val frame = grabber.capture() ?: return
+        val ocrLines = runCatching { ocr.recognize(frame) }
+            .getOrElse { breadcrumb("herotier: ocr failed: ${it.message}"); emptyList() }
+        val badges = runCatching { matcher.match(ocrLines) }
+            .getOrElse { breadcrumb("herotier: match failed: ${it.message}"); emptyList() }
+        val count = badges.size
+        if (com.bobassist.phase0.BuildConfig.DEBUG)
+            breadcrumb("herotier: ocr=${ocrLines.size} lines [${ocrLines.take(6).joinToString("|") { it.text }}] matched=$count open=$open")
+
+        // Open/close decision — force-open (DEBUG) bypasses the gate (spec §4.5).
+        when {
+            wasForced && !fo -> { wasForced = false; closeWindow(); gate.forceClose() }   // falling edge
+            fo -> { wasForced = true; if (!open) openWindow() }                            // forced: skip gate
+            else -> when (gate.onProbe(count)) {
+                Transition.Enter -> openWindow()
+                Transition.Exit -> closeWindow()
+                Transition.None -> {}
+            }
+        }
+
+        val rotationDeg = frame.rotationDeg
+        val transform = frame.transform
+        runCatching { frame.bitmap.recycle() }          // free the capture bitmap; render needs only transform
+        if (!open) return
+        if (attempts < maxAttempts) attempts++          // drives the cadence drop after the snappy phase
+        if (count == 0) return
+        if (currentRotation() != rotationDeg) {         // stale-rotation guard (pre-post)
+            breadcrumb("herotier: dropped stale-rotation frame")
+            return
+        }
+        // Re-check at render time: the window may have closed or the display rotated while this
+        // render runnable sat on the (possibly delayed) main queue.
+        mainHandler.post {
+            if (started && open && currentRotation() == rotationDeg) {
+                runCatching { renderer.render(badges, transform) }
+            }
         }
     }
 
@@ -102,39 +134,14 @@ class HeroTierCoordinator(
         open = true
         attempts = 0
         breadcrumb("herotier: window open")
-        handler.post(captureTick)
         handler.postDelayed(windowTimeout, maxWindowMs)
     }
 
     private fun closeWindow() {
-        handler.removeCallbacks(captureTick)
         handler.removeCallbacks(windowTimeout)
         if (open) breadcrumb("herotier: window close")
         open = false
+        attempts = 0
         mainHandler.post { runCatching { renderer.clear() } }
-    }
-
-    private fun captureOnce() {
-        val frame = grabber.capture() ?: return
-        // Isolate a bad OCR/match round so one exception never kills the handler loop.
-        val ocrLines = runCatching { ocr.recognize(frame) }
-            .getOrElse { breadcrumb("herotier: ocr failed: ${it.message}"); emptyList() }
-        val badges = runCatching { matcher.match(ocrLines) }
-            .getOrElse { breadcrumb("herotier: match failed: ${it.message}"); emptyList() }
-        if (com.bobassist.phase0.BuildConfig.DEBUG)
-            breadcrumb("herotier: ocr=${ocrLines.size} lines [${ocrLines.take(6).joinToString("|") { it.text }}] matched=${badges.size}")
-        runCatching { frame.bitmap.recycle() }            // free the capture bitmap; render needs only transform
-        if (badges.isEmpty()) return
-        if (currentRotation() != frame.rotationDeg) {     // stale-rotation guard (pre-post)
-            breadcrumb("herotier: dropped stale-rotation frame")
-            return
-        }
-        // Re-check at render time: the window may have closed or the display rotated while this
-        // render runnable sat on the (possibly delayed) main queue.
-        mainHandler.post {
-            if (started && open && currentRotation() == frame.rotationDeg) {
-                runCatching { renderer.render(badges, frame.transform) }
-            }
-        }
     }
 }

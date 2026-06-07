@@ -40,10 +40,10 @@ import com.bobassist.phase0.herotier.MediaProjectionGrabber
 import com.bobassist.phase0.herotier.MlKitHeroOcr
 import com.bobassist.phase0.herotier.OpacityCap
 import com.bobassist.phase0.herotier.OverlayBadgeRenderer
-import com.bobassist.phase0.herotier.SelectPhaseTrigger
 import com.bobassist.phase0.herotier.StrictForeground
 import com.bobassist.phase0.herotier.TierOverlay
 import com.bobassist.phase0.herotier.TierTable
+import com.bobassist.phase0.herotier.VisualProbeGate
 import com.bobassist.phase0.overlay.OverlayPoller
 import com.bobassist.phase0.overlay.OverlayWindow
 import com.bobassist.phase0.session.OverlaySession
@@ -457,12 +457,6 @@ class BobVpnService : VpnService() {
         val ht = HandlerThread("herotier").apply { start() }
         tierThread = ht
         val coordinator = HeroTierCoordinator(
-            connectionsJson = {
-                runCatching { ConnectionCoreProvider.get().connectionsJson() }.getOrDefault("")
-            },
-            // Stage 9.4 (post-Spike B) replaces this with the real select-phase predicate /
-            // visual-probe path. Until then a debug flag drives the window.
-            trigger = SelectPhaseTrigger(isOpen = { tierForceOpen }),
             grabber = grabber,
             ocr = MlKitHeroOcr(),
             matcher = HeroMatcher(loadTierTable()),
@@ -471,6 +465,9 @@ class BobVpnService : VpnService() {
             currentRotation = { displayInfoNow().rotationDeg },
             handler = Handler(ht.looper),
             mainHandler = mainHandler,
+            // §8.2 visual probe is the production trigger (Spike B: no select connection signature).
+            gate = VisualProbeGate(),
+            forceOpen = { BuildConfig.DEBUG && tierForceOpen },   // debug-only manual override (bypasses the gate)
             breadcrumb = { msg -> breadcrumb(msg) },
         )
         tierCoordinator = coordinator
