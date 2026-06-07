@@ -7,4 +7,7 @@ package com.bobassist.phase0.herotier
  */
 interface HeroOcr {
     fun recognize(frame: Frame): List<OcrLine>
+
+    /** False when the engine/model can't initialize → the coordinator stays inert (spec §8.2). */
+    fun isAvailable(): Boolean = true
 }

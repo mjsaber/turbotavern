@@ -18,13 +18,19 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
  * coordinator runs it on its own HandlerThread).
  */
 class MlKitHeroOcr(
-    private val recognizers: List<TextRecognizer> = listOf(
-        TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS),
-        TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build()),
-    ),
+    // Lazy-safe so unavailability is observable via isAvailable() rather than throwing at construction.
+    private val recognizers: List<TextRecognizer>? = runCatching {
+        listOf(
+            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS),
+            TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build()),
+        )
+    }.getOrElse { Log.w(TAG, "recognizer init failed: ${it.message}"); null },
 ) : HeroOcr {
 
+    override fun isAvailable(): Boolean = recognizers != null
+
     override fun recognize(frame: Frame): List<OcrLine> {
+        val recognizers = recognizers ?: return emptyList()
         val image = InputImage.fromBitmap(frame.bitmap, 0)   // capture buffer is already upright
         val out = ArrayList<OcrLine>()
         for (r in recognizers) {
