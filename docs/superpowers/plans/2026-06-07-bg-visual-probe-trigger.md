@@ -1,7 +1,7 @@
 # Plan — BG Hero-Select Visual-Probe Trigger (§8.2 / "B5")
 
 **Spec:** [`../specs/2026-06-07-bg-visual-probe-trigger-design.md`](../specs/2026-06-07-bg-visual-probe-trigger-design.md) (Rev 1, Codex-reviewed)
-**Status:** READY-TO-IMPLEMENT (Codex plan review incorporated — B1–B3 resolved; N1/N2/N3/N6 folded in)
+**Status:** IMPLEMENTED — Codex review SHIP; full `:app:testDebugUnitTest` green; assembleDebug ok. On-device tier auto-open still pending real hero-select (real-frame OCR validated separately).
 **Module:** `android/overlay-app` — run gradle from there.
 
 Strict TDD: pure gate first (red→green), then the OCR seam, then the coordinator refactor (with its
