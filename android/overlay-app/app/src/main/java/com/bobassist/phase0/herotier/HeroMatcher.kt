@@ -66,8 +66,10 @@ class HeroMatcher(
     private fun resolve(k: String): HeroTier? {
         table.lookup(k)?.let { return it }                 // exact (ambiguity-safe)
         if (k.length <= shortLen) return null              // short -> exact-only
-        val cap = minOf(fuzzyCap, Math.floor(fuzzyRatio * k.length).toInt())
-        if (cap <= 0) return null
+        // Allow a 1-edit budget for names just past shortLen — CJK hero names are short and a single
+        // OCR slip (勾/匀, a dropped 爾, 復/複) is one edit on a 5–7 char name. floor(ratio*len) alone
+        // gives 0 for len 4 and 1 for len 5–9, so clamp the floor up to 1.
+        val cap = minOf(fuzzyCap, maxOf(1, Math.floor(fuzzyRatio * k.length).toInt()))
         var b1 = Int.MAX_VALUE
         var b2 = Int.MAX_VALUE
         var best: String? = null
@@ -75,7 +77,10 @@ class HeroMatcher(
             val d = Levenshtein.distance(k, key, cap)
             if (d < b1) { b2 = b1; b1 = d; best = key } else if (d < b2) b2 = d
         }
-        if (best != null && b1 <= cap && (b2 - b1) >= ambigMargin) return table.lookup(best)
+        // Accept the unique best within tolerance. Levenshtein saturates the runner-up at cap+1, so
+        // "(b2 - b1) >= ambigMargin" can never hold when cap == 1; "b2 > cap" (only ONE key within
+        // tolerance) is the cap-independent ambiguity guard that also makes the 1-edit budget usable.
+        if (best != null && b1 <= cap && (b2 > cap || (b2 - b1) >= ambigMargin)) return table.lookup(best)
         return null                                        // table.lookup(best) is null if that key is ambiguous
     }
 }

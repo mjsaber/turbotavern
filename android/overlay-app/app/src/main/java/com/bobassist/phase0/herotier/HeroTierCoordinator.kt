@@ -101,7 +101,7 @@ class HeroTierCoordinator(
             .getOrElse { breadcrumb("herotier: match failed: ${it.message}"); emptyList() }
         val count = badges.size
         if (com.bobassist.phase0.BuildConfig.DEBUG)
-            breadcrumb("herotier: ocr=${ocrLines.size} lines [${ocrLines.take(6).joinToString("|") { it.text }}] matched=$count open=$open")
+            breadcrumb("herotier: ocr=${ocrLines.size} matched=$count${badges.joinToString(prefix = "{", postfix = "}") { it.cardId }} open=$open lines=[${ocrLines.joinToString("|") { it.text }}]")
 
         // Open/close decision — force-open (DEBUG) bypasses the gate (spec §4.5); the falling edge
         // is handled before capture above.
