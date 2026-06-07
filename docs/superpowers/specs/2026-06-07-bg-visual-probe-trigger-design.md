@@ -1,6 +1,6 @@
 # BG Hero-Select Visual-Probe Trigger (§8.2) — Design
 
-**Status:** READY-TO-PLAN (pending Codex review)
+**Status:** READY-TO-PLAN (Codex review 1 incorporated — B1–B4 resolved, N1–N4 folded in)
 **Parent:** [`2026-06-01-bg-hero-tier-overlay-design.md`](2026-06-01-bg-hero-tier-overlay-design.md) §8.2
 **Unblocked by:** Spike-B result (real recording, see §2)
 
@@ -81,35 +81,59 @@ class VisualProbeGate(
 Reuses the existing `Transition { Enter, Exit, None }` enum. **Pure → fully unit-testable** by
 feeding match-count sequences.
 
-### 4.2 `HeroTierCoordinator` integration
+### 4.2 `HeroTierCoordinator` integration — ONE always-on tick
 
-The coordinator changes its **trigger source** from `connectionsJson` to a visual probe. Today it
-has two cadences (slow `pollTick` for triggering; fast `captureTick` for the §9 render loop). B5
-unifies them into one capture→OCR→match step at two cadences:
+> **Revision 1 (Codex B1–B3):** the original "two cadences / two ticks" design was unsound — once
+> the §9 render loop stops at `MAX_ATTEMPTS` it no longer feeds the gate (so `CLOSE_K`-zeros could
+> never fire on a held window) and the held-window foreground guard was dropped, and two ticks race
+> at the open edge (double capture). Resolved by collapsing to a **single capture tick**.
 
-- **Closed** → probe at `PROBE_MS` (2000 ms): `capture → ocr → match`, **do not render**, feed
-  `gate.onProbe(badges.size)`. On `Enter` → `openWindow()`.
-- **Open** → existing §9 loop at `CAPTURE_INTERVAL_MS` (700 ms), `MAX_ATTEMPTS`: `capture → ocr →
-  match → render`, **also** feed `gate.onProbe(badges.size)` so `CLOSE_K` consecutive 0-match
-  rounds close the window (heroes locked in / left the screen). This is the spec's "post-open
-  capture loop supersedes probing until close".
-- **Orthogonal closes (unchanged):** foreground-lost guard, `windowTimeout` (`MAX_WINDOW_MS`),
-  `onProjectionStopped()` → each calls `closeWindow()` **and** `gate.forceClose()`.
+The coordinator collapses `pollTick` + `captureTick` into **one tick** that runs while `started`, so
+there is exactly **one capture source at any instant** (no double capture) and the gate + foreground
+check are fed continuously in **both** states. Each tick:
 
-Refactor: extract the capture→OCR→match body so probe (no render) and §9 (render) share it and both
-return the match count. **Strict foreground gate is unchanged** — no capture (probe or §9) unless
-`foreground() == Foreground.TRUE`.
+1. **Strict foreground gate (unchanged):** if `foreground() != Foreground.TRUE` → `closeWindow()` +
+   `gate.forceClose()`, repost, return. *This now also guards the held/open window* — subsuming the
+   role the continuous `pollTick` used to play (fixes B2).
+2. **`capture() → ocr → match`** → `count = badges.size` (skip entirely if `!ocr.isAvailable()`, §4.3).
+3. **Decide open/close:** if `forceOpen()` (debug) → force open, **bypass the gate** (§4.5); else
+   `gate.onProbe(count)` → `Enter` → `openWindow()` / `Exit` → `closeWindow()` / `None`.
+4. **Render** if `open && count > 0`, posted to `mainHandler` with the existing stale-rotation +
+   `started && open && rotation` re-checks. (Re-rendering each round keeps badges fresh across
+   rerolls.)
+5. **Repost at an adaptive interval:**
+   - **closed** → `PROBE_MS` (2000 ms);
+   - **open**, first `MAX_ATTEMPTS` rounds → `CAPTURE_INTERVAL_MS` (700 ms): snappy first render +
+     stabilize as art animates in (preserves the §9 capture-window intent);
+   - **open**, after `MAX_ATTEMPTS` rounds → `PROBE_MS`: hold + monitor cheaply. The tick stays
+     alive, so `CLOSE_K`-zeros **and** the foreground check remain reachable on a held window
+     (fixes B1).
 
-**OCR/model unavailable** → the feature is inert: log once, never probe (spec §8.2). Detect via a
-constructor flag or a guarded first `recognize`; do not spin a 2 s capture loop that always fails.
+`openWindow()` resets `attempts=0` + arms `windowTimeout(MAX_WINDOW_MS)`; `closeWindow()` clears
+badges + cancels the timeout; `onProjectionStopped()`/`stop()` → `closeWindow()` + `gate.forceClose()`.
+A single tick means there is **no** `probeTick`/`captureTick` interleaving to cancel (fixes B3).
 
-### 4.3 Trigger abstraction & optional forced-close
+Preserved invariants: `started` no-op guard, single-fire `Enter`/`Exit` (now owned by the gate),
+stale-rotation guard, render-on-`mainHandler` re-check, `MAX_WINDOW_MS`, `onProjectionStopped`,
+`removeCallbacksAndMessages(null)` on stop.
 
-- Replace the `trigger: SelectPhaseTrigger` constructor param with `gate: VisualProbeGate` +
-  `probeMs: Long = 2000`. `connectionsJson` is **no longer needed for triggering**.
-- **Optional (deferred):** keep `connectionsJson` + `CombatFingerprint.present(json)` as a
-  forced-close (combat started ⇒ select is over). Not required for B5 — the `CLOSE_K`-zeros close
-  already covers heroes-gone. Flagged here so the plan can decide; default = omit.
+### 4.3 Constructor change (surgical) + OCR availability
+
+> **Revision 1 (Codex N2/N3).**
+
+- Replace `trigger: SelectPhaseTrigger` with `gate: VisualProbeGate`, `forceOpen: () -> Boolean = { false }`,
+  `probeMs: Long = 2000`.
+- **Drop `connectionsJson` from the coordinator constructor entirely** (no dead param): triggering no
+  longer reads connections, and the `CombatFingerprint` forced-close is **deferred** (the
+  `CLOSE_K`-zeros close already covers heroes-gone). The kill path's own `CombatFingerprint`/
+  connection use is untouched; only the tier coordinator stops taking `connectionsJson`.
+- `SelectPhaseTrigger` (§8.1) file is **retained but unwired** (cheap, tested; future
+  combat-fingerprint forced-close).
+- **OCR availability seam:** add `HeroOcr.isAvailable(): Boolean` (default `true`; `MlKitHeroOcr`
+  returns `false` if the recognizer/model can't initialize). If `!ocr.isAvailable()`, the coordinator
+  logs once and **never captures** (feature inert) — honors §8.2 "if OCR/model unavailable, fallback
+  disabled" without spinning a 2 s loop that always throws (a "guarded first recognize" would still
+  cost one capture + consent, so prefer the explicit flag).
 
 ### 4.4 Constants (explicit)
 
@@ -126,14 +150,16 @@ Replace:
 ```kotlin
 trigger = SelectPhaseTrigger(isOpen = { tierForceOpen }),
 ```
-with the gate, and pass a **debug force-open** hook so manual `ACTION_TIER_FORCE_OPEN/CLOSE`
-(`:118–119`) still works for on-device testing:
+with:
 ```kotlin
 gate = VisualProbeGate(),
-forceOpen = { BuildConfig.DEBUG && tierForceOpen },   // honored as an unconditional open in the loop
+forceOpen = { BuildConfig.DEBUG && tierForceOpen },
 ```
-When `forceOpen()` is true the coordinator opens (and renders) regardless of probe count — preserves
-the current manual debug workflow. `tierForceOpen` stays reset on teardown (`:538`).
+**Force-open precedence (Codex B4):** while `forceOpen()` is true the tick **bypasses the gate** —
+opens (if not already), renders whatever badges it gets, and does **not** call `gate.onProbe` (so
+`CLOSE_K`-zeros cannot close a forced window on a non-hero screen — the regression B4 flagged). On
+the `forceOpen()` **true→false falling edge** → `closeWindow()` + `gate.forceClose()`. `tierForceOpen`
+stays reset on teardown (`:538`).
 
 ## 5. Testing
 
@@ -142,11 +168,20 @@ the current manual debug workflow. `tierForceOpen` stays reset on teardown (`:53
   - while open: `1,2,3` consecutive zeros → `Exit` exactly on the `CLOSE_K`-th;
   - a non-zero between zeros **resets** the counter (no premature close);
   - single-fire (`Enter`/`Exit` once; subsequent same-state probes → `None`);
+  - **no double-Exit (Codex N1):** after a natural `Exit`, a further `onProbe(0)` → `None`;
   - `forceClose()` resets so it can re-open; reopen after close works.
-- **`HeroTierCoordinator` (Robolectric, extend existing tests):** scripted fake `grabber/ocr/matcher`
-  returning a match-count sequence — assert probe cadence while closed, switch to capture cadence on
-  open, render only when open, `CLOSE_K`-zeros closes, foreground-lost closes mid-window,
-  OCR-unavailable stays inert (no captures).
+- **`HeroTierCoordinator` (Robolectric, extend existing tests):** add a **`FakeMatcher` returning a
+  scripted `List<Int>` badge-count sequence** (Codex N3 — cleaner than threading counts through OCR
+  lines + a real `HeroMatcher`; the existing `FakeOcr` stays). Assert: `PROBE_MS` cadence while
+  closed → open on the ≥2 round; `CAPTURE_INTERVAL_MS` for the first `MAX_ATTEMPTS` open rounds then
+  drop to `PROBE_MS`; render only when open; `CLOSE_K`-zeros closes a **held** window (post-
+  `MAX_ATTEMPTS`); foreground-lost closes a held window; `forceOpen` opens+bypasses-gate (no
+  `CLOSE_K` close while forced) and closes on the falling edge; `!ocr.isAvailable()` → zero captures.
+  Update the `coordinator()` helper + all existing tests for the new constructor (drop
+  `connectionsJson`/`trigger`).
+- **Robolectric timing (Codex N4):** use a small `probeMs` (like the existing `pollMs=100`) and
+  expect multiple `idleFor`/`idle` drain cycles to deterministically interleave probe→open→capture→
+  render across the two intervals; extend the `drain()` helper if needed.
 - **No new device dependency.** Real-frame OCR is already covered by `OcrProbeReceiver`; the
   emu-smoke harness is unaffected.
 
@@ -159,9 +194,9 @@ the current manual debug workflow. `tierForceOpen` stays reset on teardown (`:53
   `OPEN_MATCHES=2` over the **tier-table membership** (only real hero names match). Tunable; revisit
   if observed.
 - **Battery:** ~300 ms OCR per 2 s ⇒ light; acceptable.
-- **Decisions for the plan:** (a) keep §8.1 `SelectPhaseTrigger` file unwired vs delete — recommend
-  keep; (b) add `CombatFingerprint` forced-close now vs defer — recommend defer; (c) `PROBE_MS`
-  fixed 2000 vs adaptive — recommend fixed.
+- **Decisions (resolved in Rev 1):** (a) `SelectPhaseTrigger` file **kept, unwired**; (b)
+  `CombatFingerprint` forced-close **deferred**; (c) `PROBE_MS` **fixed 2000**; (d) `connectionsJson`
+  **dropped** from the coordinator constructor; (e) OCR availability via **`HeroOcr.isAvailable()`**.
 
 ---
 *Next: Codex review of this spec → plan (`docs/superpowers/plans/2026-06-07-bg-visual-probe-trigger.md`) → TDD implement (gate first, red→green).*
