@@ -27,3 +27,7 @@ def load_fetch_tasks(path: str) -> list[FetchTask]:
 def hsjson_locale_config(path: str) -> tuple[str, str, list[str]]:
     h = _read(path)["hsjson"]
     return h["cards_url_template"], h["default_locale"], list(h["locales"])
+
+
+def hsjson_art_template(path: str) -> str:
+    return _read(path)["hsjson"]["art_url_template"]

@@ -7,7 +7,7 @@ import sys
 
 import httpx
 
-from . import db, config, fetch, normalize, entities, load
+from . import db, config, fetch, normalize, entities, load, card_renders
 from .runlock import run_lock, AlreadyRunning
 
 
@@ -108,6 +108,18 @@ def _do_fetch_stats(args):
         sys.exit(1)
 
 
+def cmd_fetch_card_renders(args):
+    """Layer-2 OCR corpus: download {cardId}__{locale}.png renders for the shipped heroes."""
+    art = config.hsjson_art_template(args.sources)
+    _, default_locale, locales = config.hsjson_locale_config(args.sources)
+    card_ids = card_renders.read_card_ids(args.asset)
+    with httpx.Client(timeout=30, follow_redirects=True) as client:
+        res = card_renders.fetch_card_renders(
+            client, art, card_ids, _ordered_locales(default_locale, locales), args.out)
+    print(f"renders: downloaded={len(res['downloaded'])} skipped={len(res['skipped'])} "
+          f"missing={len(res['missing'])} -> {args.out}")
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="bgtiers")
     p.add_argument("--db", default="bgtiers.db")
@@ -118,6 +130,10 @@ def build_parser():
     fp = sub.add_parser("fetch-stats")
     fp.add_argument("--lock", default=".fetch.lock")
     fp.set_defaults(func=cmd_fetch_stats)
+    rp = sub.add_parser("fetch-card-renders")
+    rp.add_argument("--asset", default="../android/overlay-app/app/src/main/assets/herotier_v1.json")
+    rp.add_argument("--out", default="build/card-renders")
+    rp.set_defaults(func=cmd_fetch_card_renders)
     return p
 
 
