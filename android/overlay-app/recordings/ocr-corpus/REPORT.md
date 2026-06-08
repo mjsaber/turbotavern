@@ -1,10 +1,12 @@
 # OCR card-corpus report (Layer 2)
 
-Per-locale OCR→match on clean HearthstoneJSON **512x card renders** (card-name-banner font), via the app's ML Kit on an emulator. **This is a PROXY with locale-dependent bias — read the numbers accordingly:**
+Per-locale OCR→match on clean HearthstoneJSON **512x card renders** (card-name-banner font), via the app's ML Kit on an **emulator**. A PROXY with locale-dependent bias:
 
-- **enUS (Latin) ≈ representative** — Latin reads fine even in the small name band.
+- **enUS (Latin) ≈ representative.**
 
-- **zhCN/zhTW (CJK) are a PESSIMISTIC LOWER BOUND, not an upper bound.** The card name-band is small at 512x and ML Kit mangles dense CJK glyphs (e.g. BG20_HERO_102 薩魯法爾霸王 → '福魯法霸文'), beyond fuzzy tolerance. This UNDERSTATES real select-screen accuracy: the in-game select banner renders names much larger — a real zhTW select frame matched **4/4**. So CJK ground truth = accumulate real select frames, NOT card renders; a name-band crop+upscale could raise these card numbers (future refinement).
+- **zhCN/zhTW (CJK) are LOW — and this is NOT primarily a band-size artifact** (a tested hypothesis that failed): cropping+upscaling 10 failing zhTW names to large, clearly-legible text recovered only ~2/10 (e.g. 餅乾大廚→餅敦大廚, 鉤牙船長→釣牙船長 — one wrong glyph even on big crisp text). Two **measured** causes: (1) ML Kit CJK recognition quality **on this emulator (SwiftShader)** — may differ on a real device, **unverified**; (2) the matcher's fuzzy cap `floor(0.2·len)` is **0 for ≤4-char names** (the most common CJK hero-name length), so a single mis-glyph is unrecoverable.
+
+- **Don't over-read these:** a single real zhTW select frame matched 4/4, but one anecdote can't make this corpus a 'lower/upper bound'. To quantify real CJK accuracy: re-run on a **real device** + accumulate real select frames. The short-name zero-cap is a separate matcher tunable (out of this measure-only layer's scope).
 
 15 newer BG heroes have no render (listed at bottom) — not covered here.
 
