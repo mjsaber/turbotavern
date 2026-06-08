@@ -11,8 +11,16 @@ production engine w/ ML Kit fallback; debug `OcrProbe` runs both for the on-devi
 **Stage 4 DONE (port validated):** on-device `OcrProbe` on a real zhCN hero-select frame →
 PP-OCRv5 **4/4 heroes, 0 wrong badges** (Bitmap+ORT glue confirmed). Two follow-ups surfaced:
 (1) need a real **zhTW** frame to show the CJK win on-device (this clean zhCN frame ties ML Kit);
-(2) **latency 1885 ms vs ML Kit 392 ms** — det runs full-res (short side 1086 > 736 ⇒ no downscale);
-fix = cap det long side. See `recordings/ocr-corpus/PPOCRV5-OFFLINE.md` §Stage 4.
+(2) latency — **FIXED**: det long-side cap 1280 + batched rec → **1885 → ~1340 ms** (det ~260 + rec
+~1080), 4/4 preserved. rec on all boxes is now ~80%; a name-band box filter would cut it further but
+needs more real frames to tune safely (deferred). See `recordings/ocr-corpus/PPOCRV5-OFFLINE.md` §Stage 4.
+
+**Remaining (all need real game / device data, not speculative):**
+- **Live end-to-end test** — play a BG match; overlay should auto-open tier badges (PP-OCRv5).
+- **Real zhTW frame** — to see the CJK win on-device + decide if normalization is even needed (the
+  real zhCN frame matched with *zero* normalization, so don't build TC→SC speculatively).
+- **TC→SC + punct normalization** (NameKey + data-pipeline parity + golden no-confusable re-check) —
+  only if a real zhTW frame shows it's needed.
 
 **Runtime decision (Stage 1):** **ONNXRuntime-Android `1.22.0`** — the official AAR runs the *exact*
 `.onnx` models validated in Stage 0 from Kotlin (no model conversion, no custom JNI). Models vendored
