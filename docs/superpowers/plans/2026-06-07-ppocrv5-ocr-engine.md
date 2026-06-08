@@ -7,8 +7,12 @@ are already designed there; this plan only **executes** Spike A).
 models vendored, `assembleDebug` green). Stage 2 CODE COMPLETE (pure stages `PpRecCtc`/`PpImageGeom`/
 `PpDetPost` TDD-green; `PaddleHeroOcr` ORT glue compiles; models+pipeline validated on a real frame
 via the Python reference — `WechatIMG48.jpg`, all heroes ~1.0). Stage 3 COMPLETE (PP-OCRv5 wired as
-production engine w/ ML Kit fallback; debug `OcrProbe` runs both for the on-device bake-off). Stage 4
-(device accuracy run) is the only remaining step — **needs the user's phone**.
+production engine w/ ML Kit fallback; debug `OcrProbe` runs both for the on-device bake-off).
+**Stage 4 DONE (port validated):** on-device `OcrProbe` on a real zhCN hero-select frame →
+PP-OCRv5 **4/4 heroes, 0 wrong badges** (Bitmap+ORT glue confirmed). Two follow-ups surfaced:
+(1) need a real **zhTW** frame to show the CJK win on-device (this clean zhCN frame ties ML Kit);
+(2) **latency 1885 ms vs ML Kit 392 ms** — det runs full-res (short side 1086 > 736 ⇒ no downscale);
+fix = cap det long side. See `recordings/ocr-corpus/PPOCRV5-OFFLINE.md` §Stage 4.
 
 **Runtime decision (Stage 1):** **ONNXRuntime-Android `1.22.0`** — the official AAR runs the *exact*
 `.onnx` models validated in Stage 0 from Kotlin (no model conversion, no custom JNI). Models vendored

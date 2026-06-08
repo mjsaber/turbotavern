@@ -112,3 +112,26 @@ is recombined by the existing `HeroMatcher.verticalMerge`. This validates the **
 via the Python reference; the Android glue (Bitmap sampling + ORT native call) still needs the
 on-device run (plan Stage 4). Repro: `uv run --no-project --with rapidocr --python 3.12 python -c`
 RapidOCR(PP-OCRv5) on the jpg.
+
+## Stage 4 — ON-DEVICE run (OnePlus, `e85c3473`) — port validated
+
+`OcrProbe` bake-off (both engines, same frame) on `WechatIMG48.png` (real zhCN hero-select),
+via `scripts/stage4-probe.sh`:
+
+| engine | matched heroes | wrong badges | latency |
+|---|---|---|---|
+| ML Kit | 4/4 | 0 | **392 ms** |
+| **PP-OCRv5 (PaddleHeroOcr)** | **4/4** | **0** | **1885 ms** |
+
+Both resolved the same 4 cardIds (欧穆 / 洛 / 乔治 / 克劳沃斯 — the wrapped `钟表先生克劳沃`+`斯`
+recombined by `verticalMerge`); Bob (`调酒师鲍勃`) correctly produced no badge. **The Android
+Bitmap+ORT glue is validated** (reads ≈0.93–1.00 conf, matches the Python reference).
+
+**Two honest notes:**
+1. This is a *clean zhCN* frame → both engines tie 4/4. It does **not** showcase PP-OCRv5's CJK
+   advantage (that's on zhTW / stylized text — offline .26→.87). A real **zhTW** frame is still
+   needed to see the win on-device.
+2. **Latency regression: 1885 ms vs ML Kit's 392 ms (~5×)**, dominated by det on the full-res frame
+   (short side 1086 > limit 736 ⇒ *no* downscale ⇒ det runs at ~2400×1088). Easy fix: cap the det
+   long side (downscale before det); PP-OCR det is robust to it. Fits the bounded capture loop today
+   but should be optimized.
