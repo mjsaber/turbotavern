@@ -15,6 +15,7 @@ import com.bobassist.phase0.herotier.HeroMatcher
 import com.bobassist.phase0.herotier.HeroOcr
 import com.bobassist.phase0.herotier.MlKitHeroOcr
 import com.bobassist.phase0.herotier.OcrLine
+import com.bobassist.phase0.herotier.PaddleHeroOcr
 import com.bobassist.phase0.herotier.TierTable
 import com.bobassist.phase0.herotier.Transform
 import org.json.JSONArray
@@ -59,8 +60,11 @@ class OcrProbeReceiver : BroadcastReceiver() {
         }
         val table = loadTable(context)
         val matcher = HeroMatcher(table)
-        // PP-OCRv5 (PaddleHeroOcr) is added here for the bake-off once/if ML Kit fails the gate.
-        val engines: List<Pair<String, HeroOcr>> = listOf("mlkit" to MlKitHeroOcr())
+        // On-device bake-off: ML Kit vs PP-OCRv5 on the same pushed frames (Stage 4).
+        val engines: List<Pair<String, HeroOcr>> = listOfNotNull(
+            "mlkit" to MlKitHeroOcr(),
+            PaddleHeroOcr.create(context)?.let { "ppocr" to it },
+        )
         Log.i(TAG, "probe start: ${pngs.size} images, ${engines.size} engine(s), table=${table.size} keys")
 
         for (png in pngs) {

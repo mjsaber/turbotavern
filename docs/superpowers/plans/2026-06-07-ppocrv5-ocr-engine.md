@@ -6,8 +6,9 @@ are already designed there; this plan only **executes** Spike A).
 **Status:** Stage 0 COMPLETE → **GO**. Stage 1 COMPLETE (runtime=ONNXRuntime-Android 1.22.0,
 models vendored, `assembleDebug` green). Stage 2 CODE COMPLETE (pure stages `PpRecCtc`/`PpImageGeom`/
 `PpDetPost` TDD-green; `PaddleHeroOcr` ORT glue compiles; models+pipeline validated on a real frame
-via the Python reference — `WechatIMG48.jpg`, all heroes ~1.0). Stage 3 (wiring) + Stage 4 (device)
-not started.
+via the Python reference — `WechatIMG48.jpg`, all heroes ~1.0). Stage 3 COMPLETE (PP-OCRv5 wired as
+production engine w/ ML Kit fallback; debug `OcrProbe` runs both for the on-device bake-off). Stage 4
+(device accuracy run) is the only remaining step — **needs the user's phone**.
 
 **Runtime decision (Stage 1):** **ONNXRuntime-Android `1.22.0`** — the official AAR runs the *exact*
 `.onnx` models validated in Stage 0 from Kotlin (no model conversion, no custom JNI). Models vendored

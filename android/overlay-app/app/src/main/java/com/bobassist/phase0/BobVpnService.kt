@@ -40,6 +40,7 @@ import com.bobassist.phase0.herotier.MediaProjectionGrabber
 import com.bobassist.phase0.herotier.MlKitHeroOcr
 import com.bobassist.phase0.herotier.OpacityCap
 import com.bobassist.phase0.herotier.OverlayBadgeRenderer
+import com.bobassist.phase0.herotier.PaddleHeroOcr
 import com.bobassist.phase0.herotier.StrictForeground
 import com.bobassist.phase0.herotier.TierOverlay
 import com.bobassist.phase0.herotier.TierTable
@@ -458,7 +459,7 @@ class BobVpnService : VpnService() {
         tierThread = ht
         val coordinator = HeroTierCoordinator(
             grabber = grabber,
-            ocr = MlKitHeroOcr(),
+            ocr = PaddleHeroOcr.create(this) ?: MlKitHeroOcr(),   // PP-OCRv5 primary; ML Kit fallback if load fails
             matcher = HeroMatcher(loadTierTable()),
             renderer = renderer,
             foreground = { StrictForeground.of(queryForegroundPackage(), HS_PACKAGE) },
