@@ -72,25 +72,28 @@ class HeroTableGoldenTest {
         assertTrue("noise -> wrong-hero matches (${wrong.size}):\n${wrong.joinToString("\n")}", wrong.isEmpty())
     }
 
-    // T3 — fuzzy recall on single-char deletions stays above a conservative floor (regression guard).
-    @Test fun fuzzyRecallAboveFloor() {
-        var total = 0; var ok = 0
+    // T3 — fuzzy recall on single-char deletions stays above a conservative floor, asserted PER LOCALE.
+    // Per-locale (not overall) is deliberate: enUS (~.99, half the trials) would otherwise mask a
+    // CJK-only collapse — which is exactly the zhTW-only blind spot this whole effort came from.
+    @Test fun fuzzyRecallAboveFloorPerLocale() {
         val per = HashMap<String, IntArray>()
         for ((cid, loc, name) in corpus) {
             if (NameKey.of(name).length <= SHORT_LEN + 1) continue
             for (i in name.indices) {
                 val recovered = matcher.match(listOf(ln(name.removeRange(i, i + 1)))).any { it.cardId == cid }
-                total++; if (recovered) ok++
                 val a = per.getOrPut(loc) { intArrayOf(0, 0) }; a[1]++; if (recovered) a[0]++
             }
         }
-        per.forEach { (loc, a) -> println("recall[$loc] = ${a[0]}/${a[1]} = ${"%.3f".format(a[0].toDouble() / a[1])}") }
-        val recall = ok.toDouble() / total
-        println("recall overall = ${"%.3f".format(recall)} ($ok/$total)")
-        assertTrue("fuzzy recall $recall below floor $RECALL_FLOOR", recall >= RECALL_FLOOR)
+        per.toSortedMap().forEach { (loc, a) -> println("recall[$loc] = ${a[0]}/${a[1]} = ${"%.3f".format(a[0].toDouble() / a[1])}") }
+        val below = per.filterValues { it[0].toDouble() / it[1] < RECALL_FLOOR }
+            .map { (loc, a) -> "$loc=${"%.3f".format(a[0].toDouble() / a[1])}" }
+        assertTrue("per-locale fuzzy recall below floor $RECALL_FLOOR: $below", below.isEmpty())
     }
 
-    // Ambiguity audit — no two DISTINCT heroes' names are within the fuzzy cap in the same locale.
+    // Data-drift canary (NOT a matcher-safety proof — T2 is that): flags two DISTINCT heroes whose
+    // names sit within the fuzzy cap in one locale, so a data update that introduces such a collision
+    // is noticed. It approximates resolve()'s cap and ignores the ambiguity guard, so it is neither
+    // sound nor complete vs the matcher — its job is just to surface new same-locale near-duplicates.
     @Test fun noConfusableDistinctHeroPairs() {
         val confus = ArrayList<String>()
         for ((loc, items) in corpus.groupBy { it.second }) {
@@ -129,7 +132,9 @@ class HeroTableGoldenTest {
     }
 
     private companion object {
-        // Mirror HeroMatcher production defaults (the audit replicates its cap; match() uses the real ones).
+        // The matcher under test uses its real (private) defaults; these mirror them ONLY for the
+        // data-drift canary's cap approximation. DRIFT HAZARD: if HeroMatcher's defaults change, update
+        // these too (T1/T2/T3 still track production since they call match() with no overrides).
         const val SHORT_LEN = 3; const val FUZZY_CAP = 2; const val FUZZY_RATIO = 0.2; const val RECALL_FLOOR = 0.60
     }
 }
