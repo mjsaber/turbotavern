@@ -12,19 +12,34 @@ package com.bobassist.phase0.herotier
 class PpRecCtc(private val character: List<String>) {
 
     /** `logits[t]` = class scores at timestep t (already softmaxed by the rec head). */
-    fun decode(logits: Array<FloatArray>): Result {
+    fun decode(logits: Array<FloatArray>): Result =
+        decodeArgmax(logits.size) { t ->
+            val row = logits[t]; var best = 0; var bestV = row[0]
+            for (c in 1 until row.size) if (row[c] > bestV) { bestV = row[c]; best = c }
+            best.toLong() shl 32 or (bestV.toRawBits().toLong() and 0xffffffffL)
+        }
+
+    /** Flat rec output: `flat` is row-major `[timeSteps][classes]` (ORT FloatBuffer, no [T][C] alloc). */
+    fun decode(flat: FloatArray, timeSteps: Int, classes: Int): Result =
+        decodeArgmax(timeSteps) { t ->
+            val off = t * classes; var best = 0; var bestV = flat[off]
+            for (c in 1 until classes) if (flat[off + c] > bestV) { bestV = flat[off + c]; best = c }
+            best.toLong() shl 32 or (bestV.toRawBits().toLong() and 0xffffffffL)
+        }
+
+    /** [argmaxAt] returns, per timestep, the packed `(index<<32 | floatBits(maxProb))`. */
+    private inline fun decodeArgmax(timeSteps: Int, argmaxAt: (Int) -> Long): Result {
         val sb = StringBuilder()
         var confSum = 0f
         var kept = 0
         var prev = -1
-        for (row in logits) {
-            var best = 0
-            var bestV = row[0]
-            for (c in 1 until row.size) if (row[c] > bestV) { bestV = row[c]; best = c }
+        for (t in 0 until timeSteps) {
+            val packed = argmaxAt(t)
+            val best = (packed ushr 32).toInt()
             if (best != prev) {                       // first index of a run (repeats collapsed)
                 if (best != BLANK) {                  // blank is a separator, never emitted
                     sb.append(character[best])
-                    confSum += bestV
+                    confSum += Float.fromBits(packed.toInt())
                     kept++
                 }
                 prev = best

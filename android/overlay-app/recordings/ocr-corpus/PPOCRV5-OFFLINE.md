@@ -90,3 +90,25 @@ _Reproduce: `cd data-pipeline && uv run --no-project --with rapidocr --with pill
 | TB_BaconShop_HERO_59 | 艾蘭娜‧尋星者 | 文蘭娜·尋星香 | 2 |
 | TB_BaconShop_HERO_60 | 凱爾薩斯‧逐日者 | 凱蘭薩斯·逐日香 | 2 |
 | TB_BaconShop_HERO_92 | 亞煞拉懼 | C亞煞拉/ | 2 |
+
+## Real-frame validation — full det+rec (de-risks the on-device path)
+
+The numbers above are **rec-only on a cropped band** (isolating recognition; full-card det misses the
+stylized card-render banner). The on-device `PaddleHeroOcr` instead runs **full-frame det+rec**, so
+that path needed a real hero-select frame to validate. Run on `recordings/WechatIMG48.jpg` (a real
+zhCN BG hero-select, PP-OCRv5 full det+rec, no crop):
+
+| on-screen hero | OCR read | conf |
+|---|---|---|
+| 林地守护者欧穆 | `林地守护者欧穆` | 1.00 |
+| 洛，在世传奇 | `洛，在世传奇` | 0.98 |
+| 堕落的乔治 | `堕落的乔治` | 0.99 |
+| 钟表先生克劳沃斯 | `钟表先生克劳沃` + `斯` (name wraps to 2 lines) | 1.00 / 1.00 |
+| 调酒师鲍勃 (Bob, non-selectable) | `调酒师鲍勃` | 1.00 |
+
+**Detection works on the real screen** (it only failed on the hard card-render banner), and reads are
+~1.0 conf — real frames are *easier* than the corpus, as predicted. The wrapped name (`…克劳沃`+`斯`)
+is recombined by the existing `HeroMatcher.verticalMerge`. This validates the **models + pipeline**
+via the Python reference; the Android glue (Bitmap sampling + ORT native call) still needs the
+on-device run (plan Stage 4). Repro: `uv run --no-project --with rapidocr --python 3.12 python -c`
+RapidOCR(PP-OCRv5) on the jpg.
