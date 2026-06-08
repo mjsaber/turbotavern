@@ -21,8 +21,12 @@ class PpRecCtc(private val character: List<String>) {
 
     /** Flat rec output: `flat` is row-major `[timeSteps][classes]` (ORT FloatBuffer, no [T][C] alloc). */
     fun decode(flat: FloatArray, timeSteps: Int, classes: Int): Result =
+        decode(flat, 0, timeSteps, classes)
+
+    /** Decode one image at `base` within a **batched** rec output `[N][timeSteps][classes]`. */
+    fun decode(flat: FloatArray, base: Int, timeSteps: Int, classes: Int): Result =
         decodeArgmax(timeSteps) { t ->
-            val off = t * classes; var best = 0; var bestV = flat[off]
+            val off = base + t * classes; var best = 0; var bestV = flat[off]
             for (c in 1 until classes) if (flat[off + c] > bestV) { bestV = flat[off + c]; best = c }
             best.toLong() shl 32 or (bestV.toRawBits().toLong() and 0xffffffffL)
         }

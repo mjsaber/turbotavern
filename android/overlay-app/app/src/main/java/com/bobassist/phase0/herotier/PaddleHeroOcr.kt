@@ -37,11 +37,13 @@ class PaddleHeroOcr private constructor(
 
     override fun recognize(frame: Frame): List<OcrLine> = runCatching {
         val bmp = frame.bitmap
+        val t0 = System.nanoTime()
         val boxes = detect(bmp, frame.captureW, frame.captureH)
-        boxes.mapNotNull { box ->
-            val text = recognizeCrop(bmp, box) ?: return@mapNotNull null
-            if (text.first.isBlank()) null else OcrLine(text.first, box, text.second)
-        }
+        val detMs = (System.nanoTime() - t0) / 1_000_000
+        val lines = recognizeBatch(bmp, boxes)
+        val recMs = (System.nanoTime() - t0) / 1_000_000 - detMs
+        Log.i(TAG, "timing det=${detMs}ms rec=${recMs}ms (boxes=${boxes.size}, lines=${lines.size})")
+        lines
     }.getOrElse { Log.w(TAG, "recognize failed: ${it.message}"); emptyList() }
 
     /** Run DBNet det on the whole frame → name-line boxes in capture px. */
@@ -49,32 +51,57 @@ class PaddleHeroOcr private constructor(
         val (tW, tH) = PpImageGeom.detResizeTarget(capW, capH)
         val scaled = Bitmap.createScaledBitmap(bmp, tW, tH, true)
         val prob = try {
-            runSession(det, detIn, chwNorm(scaled, tW, tH, tW), longArrayOf(1, 3, tH.toLong(), tW.toLong()))
+            runSession(det, detIn, singleChw(scaled, tW, tH), longArrayOf(1, 3, tH.toLong(), tW.toLong()))
         } finally {
             if (scaled !== bmp) scaled.recycle()
         }
         return detPost.boxes(prob, tW, tH, capW, capH)
     }
 
-    /** Crop the box from the capture bitmap, run rec, CTC-decode → (text, confidence). */
-    private fun recognizeCrop(bmp: Bitmap, box: BoxPx): Pair<String, Float>? {
-        val x = box.left.coerceIn(0, bmp.width - 1)
-        val y = box.top.coerceIn(0, bmp.height - 1)
-        val w = box.width.coerceIn(1, bmp.width - x)
-        val h = box.height.coerceIn(1, bmp.height - y)
-        val plan = PpImageGeom.recResizePlan(w, h)
-        val crop = Bitmap.createBitmap(bmp, x, y, w, h)
-        val line = Bitmap.createScaledBitmap(crop, plan.resizedW, plan.imgH, true)
-        return try {
-            val buf = chwNorm(line, plan.resizedW, plan.imgH, plan.paddedW)   // pad cols stay 0.0
-            val flat = runSession(rec, recIn, buf, longArrayOf(1, 3, plan.imgH.toLong(), plan.paddedW.toLong()))
-            val classes = chars.size
-            val steps = flat.size / classes
-            val r = ctc.decode(flat, steps, classes)
-            r.text to r.confidence
-        } finally {
-            crop.recycle(); if (line !== crop) line.recycle()
+    /**
+     * Rec all boxes in **width-sorted batches** (PP-OCR `rec_batch_num`): one `OrtSession.run` per
+     * batch over `[N,3,48,batchW]` instead of one call per box — rec is ~80% of runtime, dominated by
+     * per-call cost over many boxes. Each crop is scaled to height 48 and right-padded with 0.0 to the
+     * batch's max width; output `[N,T,C]` is CTC-decoded per image.
+     */
+    private fun recognizeBatch(bmp: Bitmap, boxes: List<BoxPx>): List<OcrLine> {
+        if (boxes.isEmpty()) return emptyList()
+        val lineBmps = ArrayList<Bitmap>(boxes.size)
+        val widths = IntArray(boxes.size)
+        for ((i, box) in boxes.withIndex()) {
+            val x = box.left.coerceIn(0, bmp.width - 1)
+            val y = box.top.coerceIn(0, bmp.height - 1)
+            val w = box.width.coerceIn(1, bmp.width - x)
+            val h = box.height.coerceIn(1, bmp.height - y)
+            val plan = PpImageGeom.recResizePlan(w, h)
+            val crop = Bitmap.createBitmap(bmp, x, y, w, h)
+            lineBmps.add(Bitmap.createScaledBitmap(crop, plan.resizedW, REC_H, true).also { crop.recycle() })
+            widths[i] = plan.resizedW
         }
+        val classes = chars.size
+        val results = arrayOfNulls<OcrLine>(boxes.size)
+        try {
+            val order = boxes.indices.sortedBy { widths[it] }     // similar widths batch → minimal pad
+            var p = 0
+            while (p < order.size) {
+                val group = order.subList(p, minOf(p + REC_BATCH, order.size))
+                val batchW = group.maxOf { widths[it] }
+                val plane = REC_H * batchW
+                val buf = FloatBuffer.allocate(group.size * 3 * plane)
+                group.forEachIndexed { gi, idx -> writeChw(buf, gi * 3 * plane, lineBmps[idx], widths[idx], REC_H, batchW) }
+                buf.rewind()
+                val flat = runSession(rec, recIn, buf, longArrayOf(group.size.toLong(), 3, REC_H.toLong(), batchW.toLong()))
+                val steps = flat.size / (group.size * classes)
+                group.forEachIndexed { gi, idx ->
+                    val r = ctc.decode(flat, gi * steps * classes, steps, classes)
+                    if (r.text.isNotBlank()) results[idx] = OcrLine(r.text, boxes[idx], r.confidence)
+                }
+                p += REC_BATCH
+            }
+        } finally {
+            lineBmps.forEach { it.recycle() }
+        }
+        return results.filterNotNull()
     }
 
     /** Run one session with a single float input; return the (single) output flattened to FloatArray. */
@@ -88,30 +115,31 @@ class PaddleHeroOcr private constructor(
         }
     }
 
+    /** A single image → its own zero-filled normalized CHW buffer of width [w] (det path). */
+    private fun singleChw(bmp: Bitmap, w: Int, h: Int): FloatBuffer =
+        FloatBuffer.allocate(3 * h * w).also { writeChw(it, 0, bmp, w, h, w); it.rewind() }
+
     /**
-     * Bitmap (already resized to [w]×[h]) → normalized CHW float buffer of width [dstW] (≥[w]; the
-     * [w]..[dstW] columns stay 0.0 = PP-OCR's zero padding). Per-channel `(px/255-0.5)/0.5`, **RGB
-     * order** (matches the Stage-0 harness, which fed RGB ndarrays). Swap R/B here if a device run
-     * shows worse accuracy than the offline numbers.
+     * Write [bmp] (already resized to [w]×[h]) as normalized CHW into [buf] starting at [base], with
+     * row stride [dstW] (≥[w]; the [w]..[dstW] columns stay 0.0 = PP-OCR's zero padding). Absolute
+     * `put` — caller rewinds before use. Per-channel `(px/255-0.5)/0.5`, **RGB order** (matches the
+     * Stage-0 harness which fed RGB ndarrays). Swap R/B here if a device run regresses vs offline.
      */
-    private fun chwNorm(bmp: Bitmap, w: Int, h: Int, dstW: Int): FloatBuffer {
+    private fun writeChw(buf: FloatBuffer, base: Int, bmp: Bitmap, w: Int, h: Int, dstW: Int) {
         val px = IntArray(w * h)
         bmp.getPixels(px, 0, w, 0, 0, w, h)
-        val buf = FloatBuffer.allocate(3 * h * dstW)   // allocate() backs an array zero-filled
         val plane = h * dstW
         for (yy in 0 until h) {
             val rowSrc = yy * w
             val rowDst = yy * dstW
             for (xx in 0 until w) {
                 val p = px[rowSrc + xx]
-                val idx = rowDst + xx
+                val idx = base + rowDst + xx
                 buf.put(idx, norm((p ushr 16) and 0xFF))
                 buf.put(plane + idx, norm((p ushr 8) and 0xFF))
                 buf.put(2 * plane + idx, norm(p and 0xFF))
             }
         }
-        buf.rewind()
-        return buf
     }
 
     private fun norm(c: Int) = (c / 255f - 0.5f) / 0.5f
@@ -119,6 +147,8 @@ class PaddleHeroOcr private constructor(
     companion object {
         private const val TAG = "PaddleHeroOcr"
         private const val DIR = "ppocr"
+        private const val REC_H = 48        // PP-OCR rec input height
+        private const val REC_BATCH = 6     // rec_batch_num
 
         /** Load models+dict from assets. Returns null (→ coordinator inert) if anything fails. */
         fun create(context: Context): PaddleHeroOcr? = runCatching {

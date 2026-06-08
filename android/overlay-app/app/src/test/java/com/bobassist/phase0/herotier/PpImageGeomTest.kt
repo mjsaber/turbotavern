@@ -16,6 +16,9 @@ class PpImageGeomTest {
         assertEquals(0, w % 32); assertEquals(0, h % 32)
     }
 
+    @Test fun detDownscalesLargeCaptureToMaxSide() =                       // long side 2412 > 1280
+        assertEquals(1280 to 576, PpImageGeom.detResizeTarget(2412, 1086))
+
     @Test fun recPadsToBandFor48HighCrop() =                               // ratio 2 < 320/48
         assertEquals(PpImageGeom.RecPlan(96, 320, 48), PpImageGeom.recResizePlan(96, 48))
 

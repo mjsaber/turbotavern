@@ -41,6 +41,16 @@ class PpRecCtcTest {
         assertEquals(0.6f, r.confidence, 1e-6f)
     }
 
+    @Test fun decodesImageAtBatchOffset() {
+        // batched [2][T=2][C=5]: image0 = "a","b"; image1 = "c"," ".
+        val C = 5; val T = 2
+        val flat = FloatArray(2 * T * C)
+        flat[0 * C + 1] = 1f; flat[1 * C + 2] = 1f               // image0: a, b
+        flat[(T + 0) * C + 3] = 1f; flat[(T + 1) * C + 4] = 1f   // image1: c, space
+        assertEquals("ab", ctc.decode(flat, 0, T, C).text)
+        assertEquals("c ", ctc.decode(flat, T * C, T, C).text)
+    }
+
     @Test fun charTableHasBlankFirstAndSpaceLast() {
         val t = PpRecCtc.charTableFromDict(listOf("x", "y"))
         assertEquals(listOf("blank", "x", "y", " "), t)

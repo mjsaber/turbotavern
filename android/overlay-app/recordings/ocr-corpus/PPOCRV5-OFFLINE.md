@@ -135,3 +135,24 @@ Bitmap+ORT glue is validated** (reads ≈0.93–1.00 conf, matches the Python re
    (short side 1086 > limit 736 ⇒ *no* downscale ⇒ det runs at ~2400×1088). Easy fix: cap the det
    long side (downscale before det); PP-OCR det is robust to it. Fits the bounded capture loop today
    but should be optimized.
+
+### Latency fix (det downscale + batched rec)
+
+Per-stage timing showed rec on **all 24 detected boxes** was the bottleneck (81%), not det. Two fixes:
+- **det long-side cap 1280** (`PpImageGeom`): downscale the full-res capture before det (boxes scale
+  back to capture px) → det **~1500 ms → ~260 ms**.
+- **batched rec** (`rec_batch_num`=6, width-sorted): one `OrtSession.run` per batch instead of one
+  per box.
+
+Steady-state on-device (cooled), same real frame, **4/4 heroes / 0 wrong preserved**:
+
+| | before | after |
+|---|---|---|
+| det | ~1500 ms | ~260 ms |
+| rec (24 boxes) | (bulk) | ~1080 ms |
+| **total ppocr** | **1885 ms** | **~1340 ms** |
+
+rec is now ~80% of the time; further cuts need rec on fewer boxes (filter to the name band) — deferred
+(needs more real frames + a cooled device to tune safely). Note: under sustained **gaming thermal
+load** both engines throttle ~10× (measured ML Kit 0.4→3.8 s, PP-OCRv5 1.9→18 s in the same state);
+the bounded capture loop tolerates it but it's the realistic worst case to keep optimizing for.

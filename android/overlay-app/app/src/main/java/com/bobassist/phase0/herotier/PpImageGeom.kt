@@ -10,9 +10,15 @@ import kotlin.math.roundToInt
  */
 object PpImageGeom {
 
-    /** Det input size: scale so the short side ≥ [limitSide], then round each dim to a /32 multiple. */
-    fun detResizeTarget(w: Int, h: Int, limitSide: Int = 736): Pair<Int, Int> {
-        val ratio = if (minOf(w, h) < limitSide) limitSide.toFloat() / minOf(w, h) else 1f
+    /**
+     * Det input size: scale the short side up to ≥ [minSide] (rapidocr "min" rule), but also **cap the
+     * long side at [maxSide]** so full-res screen captures are downscaled before det (the dominant
+     * cost) — detected boxes are scaled back to capture px in [PpDetPost], so this only trades a little
+     * det resolution for speed. Each dim is rounded to a /32 multiple.
+     */
+    fun detResizeTarget(w: Int, h: Int, minSide: Int = 736, maxSide: Int = 1280): Pair<Int, Int> {
+        var ratio = if (minOf(w, h) < minSide) minSide.toFloat() / minOf(w, h) else 1f
+        if (maxOf(w, h) * ratio > maxSide) ratio = maxSide.toFloat() / maxOf(w, h)   // downscale wins
         fun snap(v: Int) = ((v * ratio).toInt() / 32f).roundToInt().times(32).coerceAtLeast(32)
         return snap(w) to snap(h)
     }
