@@ -3,7 +3,15 @@
 **Spec:** §6.1 + "Spike A" of [`../specs/2026-06-01-bg-hero-tier-overlay-design.md`](../specs/2026-06-01-bg-hero-tier-overlay-design.md)
 (engine choice, the zero-wrong-badge gate, runtime candidates, and the capture-px box-mapping rule
 are already designed there; this plan only **executes** Spike A).
-**Status:** Stage 0 COMPLETE → **GO**. Stages 1–4 not started.
+**Status:** Stage 0 COMPLETE → **GO**. Stage 1 COMPLETE (runtime=ONNXRuntime-Android 1.22.0,
+models vendored, `assembleDebug` green). Stage 2 IN PROGRESS (CTC decoder done+tested). Stages 3–4
+not started.
+
+**Runtime decision (Stage 1):** **ONNXRuntime-Android `1.22.0`** — the official AAR runs the *exact*
+`.onnx` models validated in Stage 0 from Kotlin (no model conversion, no custom JNI). Models vendored
+to `app/src/main/assets/ppocr/` with provenance in `NOTICE.md`. APK delta ≈ +40 MB (18 MB
+`libonnxruntime.so` + 21.5 MB models); dropping ML Kit later recovers ≈13.6 MB → ≈26 MB net. Size
+levers (tracked, not blocking): int8-quantize the 16.6 MB rec model, reduced-op ORT build.
 **Module:** `data-pipeline` (Stage 0, Python/uv) → `android/overlay-app` (Stages 1–4).
 
 ### Stage 0 result (2026-06-07) — see [`recordings/ocr-corpus/PPOCRV5-OFFLINE.md`](../../../android/overlay-app/recordings/ocr-corpus/PPOCRV5-OFFLINE.md)
