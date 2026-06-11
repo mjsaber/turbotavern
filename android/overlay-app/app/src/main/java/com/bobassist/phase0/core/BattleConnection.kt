@@ -64,4 +64,36 @@ object BattleConnection {
         }
         return candidates.maxByOrNull { it.createdAt } to candidates.size
     }
+
+    /**
+     * Diagnostic verdict line for a raw connections snapshot: one entry per
+     * connection with the FIRST reason production would reject it (mirrors
+     * [pickWithCount]'s check order: host, network, port) or OK if it matches.
+     *
+     * Used by the post-kill table dumps (debt #9 — the post-kill reconnect
+     * fingerprint has never been observed) and the zero-candidate near-miss
+     * trace. Debug-trace only; never on the production decision path.
+     */
+    fun explain(connectionsJson: String): String {
+        val arr = runCatching { JSONArray(connectionsJson) }.getOrElse { return "conns=? parse_error" }
+        val sb = StringBuilder("conns=").append(arr.length())
+        for (i in 0 until arr.length()) {
+            val o = arr.optJSONObject(i) ?: continue
+            val host = o.optString("host")
+            val network = o.optString("network")
+            val port = o.optInt("destinationPort")
+            val verdict = when {
+                host != "" -> "HOST($host)"
+                network != "tcp" -> "NET($network)"
+                port !in BATTLE_PORTS -> "PORT"
+                else -> "OK"
+            }
+            sb.append(" | ").append(verdict)
+                .append(' ').append(network)
+                .append(' ').append(o.optString("destinationIp")).append(':').append(port)
+                .append(" id=").append(o.optString("id").take(8))
+                .append(" created=").append(o.optLong("createdAt"))
+        }
+        return sb.toString()
+    }
 }

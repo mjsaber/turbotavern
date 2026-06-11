@@ -82,6 +82,63 @@ class BattleCandidateCacheTest {
         assertEquals(0, c.current().count)
     }
 
+    // --- zero-candidate near-miss logging (debt #9 diagnostics) ---
+
+    private class TracedCache(json: () -> String) {
+        val lines = mutableListOf<String>()
+        var json = json
+        val cache = BattleCandidateCache(
+            snapshot = { json() },
+            clock = ManualClock(0L),
+            trace = com.bobassist.phase0.util.TraceSink(
+                enabled = true, clock = ManualClock(0L), output = { lines.add(it) },
+            ),
+        )
+        fun zeroTableLines() = lines.filter { it.contains("phase=zero_candidate_table") }
+    }
+
+    @Test
+    fun `zero-candidate refresh emits the explained table once`() {
+        val t = TracedCache({ NON_CANDIDATE })
+        t.cache.refresh()
+        val emitted = t.zeroTableLines()
+        assertEquals(1, emitted.size)
+        assertEquals(true, emitted[0].contains("HOST(battle.net)"))
+    }
+
+    @Test
+    fun `identical zero-candidate tables are not re-emitted`() {
+        val t = TracedCache({ NON_CANDIDATE })
+        t.cache.refresh()
+        t.cache.refresh()
+        t.cache.refresh()
+        assertEquals(1, t.zeroTableLines().size)
+    }
+
+    @Test
+    fun `changed zero-candidate table is re-emitted`() {
+        var current = NON_CANDIDATE
+        val t = TracedCache({ current })
+        t.cache.refresh()
+        current = "[]"
+        t.cache.refresh()
+        val emitted = t.zeroTableLines()
+        assertEquals(2, emitted.size)
+        assertEquals(true, emitted[1].contains("conns=0"))
+    }
+
+    @Test
+    fun `candidate-found resets the signature so the next zero window re-emits`() {
+        var current = NON_CANDIDATE
+        val t = TracedCache({ current })
+        t.cache.refresh()                 // zero → emit
+        current = ONE
+        t.cache.refresh()                 // candidate found → reset
+        current = NON_CANDIDATE
+        t.cache.refresh()                 // same zero table again → must re-emit
+        assertEquals(2, t.zeroTableLines().size)
+    }
+
     companion object {
         private const val ONE =
             """[{"id":"abc-1","host":"","network":"tcp","destinationIp":"1.2.3.4","destinationPort":3724,"createdAt":1000}]"""

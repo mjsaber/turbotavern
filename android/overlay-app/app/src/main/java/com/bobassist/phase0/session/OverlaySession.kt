@@ -145,6 +145,7 @@ class OverlaySession(
                     if (result is BattleConnectionController.KillResult.Success) {
                         Log.i(TAG, "overlay kill success: id=${result.closedId}")
                         poller.enterCooldown()
+                        schedulePostKillDumps(result.closedId)
                     } else {
                         Log.i(TAG, "overlay kill non-success: $result")
                     }
@@ -160,6 +161,30 @@ class OverlaySession(
             }
         }
         pollHandler.post(tapRunnable)
+    }
+
+    /**
+     * Debt #9 diagnostics: after a Success kill, sample the raw connection table on
+     * a burst schedule denser than the 800ms poll, so short-lived reconnect attempts
+     * are captured. Each dump logs every connection with the reason the production
+     * fingerprint rejects it (or OK). Debug-trace gated: in release builds the
+     * runnables exit before taking a snapshot. Runs on pollHandler, so stop()'s
+     * removeCallbacksAndMessages cancels any pending dumps.
+     */
+    private fun schedulePostKillDumps(killedId: String) {
+        for (delayMs in POST_KILL_DUMP_DELAYS_MS) {
+            pollHandler.postDelayed({
+                if (!started) return@postDelayed
+                val cycle = trace.beginCycle()
+                if (!cycle.enabled) return@postDelayed
+                cycle.emit(
+                    "postkill_table", "t+${delayMs}ms",
+                    "killed" to killedId,
+                    "state" to poller.currentState(),
+                    "table" to com.bobassist.phase0.core.BattleConnection.explain(candidateCache.rawJson()),
+                )
+            }, delayMs)
+        }
     }
 
     /**
@@ -214,5 +239,10 @@ class OverlaySession(
 
     companion object {
         private const val TAG = "OverlaySession"
+
+        /** Post-kill table sampling offsets — front-loaded to catch reconnect attempts
+         *  shorter than one poll interval, tailing off to catch the steady state. */
+        internal val POST_KILL_DUMP_DELAYS_MS =
+            longArrayOf(0, 200, 500, 1_000, 2_000, 3_000, 5_000, 8_000)
     }
 }

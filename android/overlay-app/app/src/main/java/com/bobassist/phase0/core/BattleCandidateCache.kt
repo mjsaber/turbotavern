@@ -27,6 +27,9 @@ class BattleCandidateCache(
 ) {
     @Volatile private var cached: CachedReadiness = CachedReadiness(null, 0, 0L)
 
+    /** Last explained table emitted while zero-candidate; poll-thread confined. */
+    private var lastZeroTable: String? = null
+
     /**
      * Poll-thread: take a fresh snapshot, pick the candidate, atomically publish the
      * cache, and return the candidate count for the state machine. Readiness is keyed
@@ -40,9 +43,25 @@ class BattleCandidateCache(
         val snapshotMs = clock.nowMillis() - t0
         val (cand, n) = BattleConnection.pickWithCount(json)
         cached = CachedReadiness(cand, n, t0)
+        // Debt #9 diagnostics: while grey, trace WHY each connection is rejected —
+        // but only when the table actually changed, so the 800ms poll doesn't spam.
+        if (cand == null) {
+            if (cycle != null && cycle.enabled) {
+                val explained = BattleConnection.explain(json)
+                if (explained != lastZeroTable) {
+                    lastZeroTable = explained
+                    cycle.emit("zero_candidate_table", "changed", "table" to explained)
+                }
+            }
+        } else {
+            lastZeroTable = null
+        }
         cycle?.emit("poll_snapshot", "exit", "snapshot_ms" to snapshotMs, "count" to n, "picked_id" to cand?.id)
         return if (cand != null) n else 0
     }
+
+    /** Diagnostics only: raw connections JSON from the same source the picker reads. */
+    fun rawJson(): String = snapshot()
 
     /** Latest published readiness. Safe to read from the pollHandler thread. */
     fun current(): CachedReadiness = cached
