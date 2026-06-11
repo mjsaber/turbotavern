@@ -69,7 +69,10 @@ def build(conn, *, generated_at: str | None = None) -> dict:
             for loc, name in sorted(names_by_eid.get(r["eid"], {}).items()):
                 if loc != "enUS":
                     names[loc] = name
-            trinkets.append({"cardId": r["card_id"], "trinketClass": cls, "tier": _tier(p), "names": names})
+            # avgPlacement is kept (not just the coarse tier) so the Android side can rank the 2-3
+            # trinkets ACTUALLY offered against each other — two offered trinkets can share a tier.
+            trinkets.append({"cardId": r["card_id"], "trinketClass": cls, "tier": _tier(p),
+                             "avgPlacement": round(r["avg"], 4), "names": names})
 
     return {"schemaVersion": 1, "bracket": "100", "period": "last-patch",
             "generatedAt": generated_at or dt.datetime.now(dt.timezone.utc)

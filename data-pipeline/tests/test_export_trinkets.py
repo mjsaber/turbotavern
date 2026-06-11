@@ -40,11 +40,13 @@ def test_per_class_percentile_tiers_are_independent():
     assert sum(1 for t in out["trinkets"] if t["trinketClass"] == "greater" and t["tier"] == "S") == 1
 
 
-def test_all_three_locales_present_per_trinket():
+def test_all_three_locales_and_avg_placement_present_per_trinket():
     conn = db.connect(":memory:")
     _seed(conn, [("L0", "lesser", "Welcome Inn", {"zhTW": "歡迎客棧", "zhCN": "欢迎客栈"}, 3.5)])
     out = export_trinkets.build(conn)
-    assert out["trinkets"][0]["names"] == {"enUS": "Welcome Inn", "zhTW": "歡迎客棧", "zhCN": "欢迎客栈"}
+    t = out["trinkets"][0]
+    assert t["names"] == {"enUS": "Welcome Inn", "zhTW": "歡迎客棧", "zhCN": "欢迎客栈"}
+    assert t["avgPlacement"] == 3.5   # kept for ranking the offered set
     assert out["schemaVersion"] == 1 and out["bracket"] == "100" and out["period"] == "last-patch"
 
 
