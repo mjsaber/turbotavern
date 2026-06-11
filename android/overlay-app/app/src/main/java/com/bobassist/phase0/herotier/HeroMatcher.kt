@@ -15,6 +15,14 @@ class HeroMatcher(
     private val fuzzyRatio: Double = 0.2,
     private val ambigMargin: Int = 2,
     private val verticalMerge: Boolean = true,
+    /**
+     * Optional floor for the FUZZY path only. A low-confidence OCR read of UI chrome can land within
+     * the fuzzy budget of a real hero name and emit a wrong badge; below this floor we require an EXACT
+     * match instead. null (default) = off — exact matches are always unconditional. Pick the threshold
+     * from on-device probe data; landing it after the alias fixes means real names match exactly and do
+     * not depend on the confidence/fuzzy interplay.
+     */
+    private val minFuzzyConfidence: Float? = null,
 ) {
     fun match(lines: List<OcrLine>): List<HeroBadge> {
         val out = LinkedHashMap<String, HeroBadge>()
@@ -22,7 +30,7 @@ class HeroMatcher(
         for (ln in lines) {
             val k = NameKey.of(stripEdgeNoise(ln.text))
             if (k.isEmpty()) continue
-            val ht = resolve(k) ?: continue
+            val ht = resolve(k, ln.confidence) ?: continue
             out.getOrPut(ht.cardId) { HeroBadge(ht.cardId, ht.tier, ln.box) }
         }
         // 2) vertically-wrapped names: concatenate stacked, x-overlapping line pairs and accept
@@ -68,9 +76,11 @@ class HeroMatcher(
      *  NameKey (parity with data-pipeline) must NOT strip punctuation, so this lives here instead. */
     private fun stripEdgeNoise(s: String) = s.trim { it == '|' || it == '丨' || it == '｜' || it.isWhitespace() }
 
-    private fun resolve(k: String): HeroTier? {
-        table.lookup(k)?.let { return it }                 // exact (ambiguity-safe)
+    private fun resolve(k: String, confidence: Float? = null): HeroTier? {
+        table.lookup(k)?.let { return it }                 // exact (ambiguity-safe) — always unconditional
         if (k.length <= shortLen) return null              // short -> exact-only
+        // Below the confidence floor, do not let a shaky read fuzzy-match into a real hero.
+        if (minFuzzyConfidence != null && confidence != null && confidence < minFuzzyConfidence) return null
         // Tolerance scales with name length (not a fixed 1): floor(ratio*len), bounded by fuzzyCap.
         // A single OCR slip (勾/匀, dropped 爾, 復/複) is one edit; longer names absorb proportionally
         // more. Card-frame strokes that OCR reads as a leading "|" are stripped upstream

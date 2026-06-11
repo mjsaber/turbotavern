@@ -115,4 +115,23 @@ class HeroMatcherTest {
                           {"cardId":"BG_C","tier":"A","names":{"enUS":"Zephrys"}}]}""")
         assertTrue(HeroMatcher(t).match(listOf(OcrLine("Grommashbr", BoxPx(0, 0, 10, 10)))).isEmpty())
     }
+
+    // --- optional minFuzzyConfidence: gate the FUZZY path, never the exact path ---
+    private fun lnc(s: String, c: Float?) = OcrLine(s, BoxPx(0, 0, 10, 10), c)
+
+    @Test fun fuzzyBelowConfidenceFloorIsRejected() =
+        assertTrue("a low-confidence fuzzy read must not produce a badge",
+            HeroMatcher(table, minFuzzyConfidence = 0.5f).match(listOf(lnc("Patches the Pircte", 0.3f))).isEmpty())
+
+    @Test fun fuzzyAtOrAboveConfidenceFloorMatches() =
+        assertEquals("BG_HERO_002",
+            HeroMatcher(table, minFuzzyConfidence = 0.5f).match(listOf(lnc("Patches the Pircte", 0.9f))).single().cardId)
+
+    @Test fun exactMatchIgnoresConfidenceFloor() =                    // exact stays unconditional even at very low conf
+        assertEquals("BG_HERO_001",
+            HeroMatcher(table, minFuzzyConfidence = 0.5f).match(listOf(lnc("Sneed", 0.01f))).single().cardId)
+
+    @Test fun nullConfidenceLeavesFuzzyEnabled() =                    // unknown confidence != low confidence
+        assertEquals("BG_HERO_002",
+            HeroMatcher(table, minFuzzyConfidence = 0.5f).match(listOf(lnc("Patches the Pircte", null))).single().cardId)
 }
