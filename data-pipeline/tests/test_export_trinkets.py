@@ -77,6 +77,32 @@ def test_card_id_tiebreak_on_equal_avg_within_class():
     assert [t["cardId"] for t in out["trinkets"]] == ["L2", "L5", "L9"]
 
 
+def test_low_data_point_trinkets_are_excluded():
+    conn = db.connect(":memory:")
+    db.init_db(conn)
+    conn.execute("BEGIN IMMEDIATE")
+    snap = conn.execute(
+        "INSERT INTO snapshot (source, entity_type, mmr_bracket, time_period, mode, region,"
+        " content_hash, fetched_at, raw_url) VALUES"
+        " ('firestone','trinket','100','last-patch','solo','global','h','t','u')").lastrowid
+
+    def ins(cid, avg, dp):
+        eid = conn.execute(
+            "INSERT INTO entity (entity_type, card_id, name, trinket_class, first_seen_at, last_seen_at)"
+            " VALUES ('trinket',?,?,'lesser','t','t')", (cid, cid)).lastrowid
+        conn.execute("INSERT INTO entity_stats (snapshot_id, entity_id, avg_placement, data_points)"
+                     " VALUES (?,?,?,?)", (snap, eid, avg, dp))
+
+    ins("REAL", 4.2, 5000)      # plenty of games
+    ins("NOISE", 1.0, 1)        # one game -> avg 1.0 would be a bogus 'S' if not filtered
+    ins("LOW", 3.5, 50)         # below the 100 floor
+    conn.execute("COMMIT")
+
+    out = export_trinkets.build(conn)
+    cids = {t["cardId"] for t in out["trinkets"]}
+    assert cids == {"REAL"}     # only the well-sampled trinket survives
+
+
 def test_rejects_multiple_region():
     conn = db.connect(":memory:")
     _seed(conn, [("L0", "lesser", "E0", {}, 3.5)])

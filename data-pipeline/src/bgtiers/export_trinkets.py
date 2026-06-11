@@ -13,6 +13,11 @@ import json
 # Same percentile cut points as heroes; applied independently per trinket class.
 _CUTS = (("S", 0.12), ("A", 0.35), ("B", 0.68), ("C", 1.01))
 
+# Drop trinkets with too few games to tier honestly. Real trinkets have thousands of data points
+# (median ~4k); a handful of duos-origin / brand-new cards leak into solo data with 1-76 games and
+# would otherwise show an avg-placement-of-one-game "S". A paid recommendation must not be noise.
+_MIN_DATA_POINTS = 100
+
 
 def _tier(p: float) -> str:
     for name, hi in _CUTS:
@@ -37,7 +42,8 @@ def build(conn, *, generated_at: str | None = None) -> dict:
         " JOIN entity e ON e.card_id=v.card_id AND e.entity_type=v.entity_type"
         " WHERE v.entity_type='trinket' AND v.source='firestone' AND v.mmr_bracket='100'"
         "   AND v.time_period='last-patch' AND v.mode='solo' AND v.region='global'"
-        " ORDER BY v.avg_placement ASC, v.card_id ASC").fetchall()
+        "   AND v.data_points >= ?"
+        " ORDER BY v.avg_placement ASC, v.card_id ASC", (_MIN_DATA_POINTS,)).fetchall()
     if not rows:                     # defensive: empty-result already caught by the distinct guard
         raise ValueError("no trinket rows for bracket=100 last-patch")
 

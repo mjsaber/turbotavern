@@ -1,0 +1,2307 @@
+{
+  "schemaVersion": 1,
+  "bracket": "100",
+  "period": "last-patch",
+  "generatedAt": "2026-06-11T17:49:45Z",
+  "trinkets": [
+    {
+      "cardId": "BG35_MagicItem_309",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.3659,
+      "names": {
+        "enUS": "Errgl Sticker",
+        "zhCN": "厄戈尔标签",
+        "zhTW": "厄格貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_170",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.402,
+      "names": {
+        "enUS": "Spell-powered Wrench",
+        "zhCN": "法术扳手",
+        "zhTW": "法術扳手"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_301",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.4046,
+      "names": {
+        "enUS": "Eternal Portrait",
+        "zhCN": "永恒肖像",
+        "zhTW": "永恆頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_930",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.4127,
+      "names": {
+        "enUS": "Archaic Scroll",
+        "zhCN": "古风卷轴",
+        "zhTW": "遠古卷軸"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_890",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.5048,
+      "names": {
+        "enUS": "Sunken Anchor",
+        "zhCN": "沉没的船锚",
+        "zhTW": "沉船的船錨"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_300",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.5935,
+      "names": {
+        "enUS": "Copper Coil",
+        "zhCN": "铜制线圈",
+        "zhTW": "銅線圈"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_842",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.635,
+      "names": {
+        "enUS": "Egg of the Endtimes Portrait",
+        "zhCN": "末世龙蛋肖像",
+        "zhTW": "終焉時刻之蛋頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_305",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.6831,
+      "names": {
+        "enUS": "Conch Portrait",
+        "zhCN": "螺号肖像",
+        "zhTW": "海螺頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_893",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.7032,
+      "names": {
+        "enUS": "Bluegill Flippers",
+        "zhCN": "蓝鳃脚蹼",
+        "zhTW": "藍鰓腳蹼"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_301",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.7181,
+      "names": {
+        "enUS": "Scraper Sticker",
+        "zhCN": "废铁回收机标签",
+        "zhTW": "搜刮者貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_900",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.7376,
+      "names": {
+        "enUS": "Dragonwing Glider",
+        "zhCN": "滑翔龙翼",
+        "zhTW": "滑翔龍翼"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_924",
+      "trinketClass": "lesser",
+      "tier": "S",
+      "avgPlacement": 3.7509,
+      "names": {
+        "enUS": "Booty Bay Brew",
+        "zhCN": "藏宝海湾美酒",
+        "zhTW": "藏寶海灣精釀"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_860",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.7667,
+      "names": {
+        "enUS": "Beetle Band",
+        "zhCN": "甲虫之戒",
+        "zhTW": "甲蟲樂團"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_931",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.7794,
+      "names": {
+        "enUS": "Azsharan Statuette",
+        "zhCN": "艾萨拉的雕像",
+        "zhTW": "艾薩拉雕像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_814",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.7803,
+      "names": {
+        "enUS": "Stuffed Coin Purse",
+        "zhCN": "满当当的钱包",
+        "zhTW": "塞滿的錢包"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_303",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8028,
+      "names": {
+        "enUS": "Automaton Portrait",
+        "zhCN": "自动机肖像",
+        "zhTW": "自動機頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_302",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8157,
+      "names": {
+        "enUS": "Stormcoil Sticker",
+        "zhCN": "积雷标签",
+        "zhTW": "風暴線圈貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_920",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8183,
+      "names": {
+        "enUS": "Bubble Crown",
+        "zhCN": "泡泡王冠",
+        "zhTW": "泡泡皇冠"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_917",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8257,
+      "names": {
+        "enUS": "Rusty Trident",
+        "zhCN": "锈蚀的三叉戟",
+        "zhTW": "生鏽三叉戟"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_872",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8305,
+      "names": {
+        "enUS": "Ophidian Staff",
+        "zhCN": "蛇首之杖",
+        "zhTW": "爬蛇法杖"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_914",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.835,
+      "names": {
+        "enUS": "Nerglish Phrasebook",
+        "zhCN": "鱼人语实用手册",
+        "zhTW": "魚人語片語手冊"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_894",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8363,
+      "names": {
+        "enUS": "Blessing Portrait",
+        "zhCN": "祝福肖像",
+        "zhTW": "祝福頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_831",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8402,
+      "names": {
+        "enUS": "Sellemental Portrait",
+        "zhCN": "商贩元素肖像",
+        "zhTW": "資本元素頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_801",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8464,
+      "names": {
+        "enUS": "Sous Chef Sticker",
+        "zhCN": "副厨师长标签",
+        "zhTW": "副主廚貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_422",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8487,
+      "names": {
+        "enUS": "Lorewalker Scroll",
+        "zhCN": "游学者卷轴",
+        "zhTW": "博學行者卷軸"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_703",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8782,
+      "names": {
+        "enUS": "Mystery Cube",
+        "zhCN": "神秘魔方",
+        "zhTW": "神秘立方體"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_271",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8816,
+      "names": {
+        "enUS": "Ornate Clock",
+        "zhCN": "华丽的时钟",
+        "zhTW": "華麗的時鐘"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_957",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8819,
+      "names": {
+        "enUS": "Grifter Portrait",
+        "zhCN": "诈骗犯肖像",
+        "zhTW": "騙徒頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_360",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8914,
+      "names": {
+        "enUS": "Baleful Incense",
+        "zhCN": "怨毒熏香",
+        "zhTW": "怨惡薰香"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_851",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.8931,
+      "names": {
+        "enUS": "Water Wheel",
+        "zhCN": "水车",
+        "zhTW": "水車"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_426",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.896,
+      "names": {
+        "enUS": "Colorful Compass",
+        "zhCN": "多彩罗盘",
+        "zhTW": "多彩羅盤"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_818",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.9077,
+      "names": {
+        "enUS": "Mysterious Orb",
+        "zhCN": "神秘宝珠",
+        "zhTW": "神秘的寶珠"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_821",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.9239,
+      "names": {
+        "enUS": "Fish Portrait",
+        "zhCN": "鱼的肖像",
+        "zhTW": "恩若司之魚頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_922",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.926,
+      "names": {
+        "enUS": "Tide Raiser Portrait",
+        "zhCN": "赶潮纳迦肖像",
+        "zhTW": "潮汐呼喚者頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_420",
+      "trinketClass": "lesser",
+      "tier": "A",
+      "avgPlacement": 3.9397,
+      "names": {
+        "enUS": "Book of Medivh",
+        "zhCN": "麦迪文之书",
+        "zhTW": "麥迪文之書"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_816",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9472,
+      "names": {
+        "enUS": "Orb of the Unknown",
+        "zhCN": "未知宝珠",
+        "zhTW": "未知寶珠"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_411",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9518,
+      "names": {
+        "enUS": "Hoggy Bank",
+        "zhCN": "猪猪储蓄罐",
+        "zhTW": "豬豬撲滿"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_830",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9534,
+      "names": {
+        "enUS": "Felemental Portrait",
+        "zhCN": "邪能元素肖像",
+        "zhTW": "魔化元素頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_425",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9557,
+      "names": {
+        "enUS": "Azeroth Model Globe",
+        "zhCN": "艾泽拉斯星球仪",
+        "zhTW": "艾澤拉斯模型球"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_844",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9577,
+      "names": {
+        "enUS": "Sacrificial Altar",
+        "zhCN": "牺牲祭坛",
+        "zhTW": "獻祭祭壇"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_804",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9678,
+      "names": {
+        "enUS": "Ancient Wishbone",
+        "zhCN": "古老的许愿叉骨",
+        "zhTW": "遠古許願骨"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_544",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.975,
+      "names": {
+        "enUS": "Nomi Sticker",
+        "zhCN": "诺米标签",
+        "zhTW": "糯米貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_276",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9807,
+      "names": {
+        "enUS": "Enigmatic Headstone",
+        "zhCN": "神秘墓碑",
+        "zhTW": "謎團墓碑"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_430",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9821,
+      "names": {
+        "enUS": "Scrapsmith Portrait",
+        "zhCN": "废料铁匠肖像",
+        "zhTW": "廢料鐵匠頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_931",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9838,
+      "names": {
+        "enUS": "Transcribing Typewriter",
+        "zhCN": "转录打字机",
+        "zhTW": "抄錄打字機"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_998",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 3.9959,
+      "names": {
+        "enUS": "Bob-blehead",
+        "zhCN": "鲍勃摇头玩偶",
+        "zhTW": "鮑伯搖頭娃娃"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_931",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0053,
+      "names": {
+        "enUS": "Lucky Tabby",
+        "zhCN": "幸运猫咪",
+        "zhTW": "幸運虎斑貓"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_808",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0071,
+      "names": {
+        "enUS": "Bloodbound Earrings",
+        "zhCN": "血缚耳环",
+        "zhTW": "血縛耳環"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_891",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0154,
+      "names": {
+        "enUS": "Trip Vouchers",
+        "zhCN": "旅途兑换券",
+        "zhTW": "旅遊兌換券"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_437",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0187,
+      "names": {
+        "enUS": "Staff of the Scourge",
+        "zhCN": "天灾之杖",
+        "zhTW": "天譴軍團法杖"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_706",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0195,
+      "names": {
+        "enUS": "Reflective Pendant",
+        "zhCN": "映像吊坠",
+        "zhTW": "反光墜飾"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_350",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0225,
+      "names": {
+        "enUS": "Splinter of Aurum",
+        "zhCN": "黄金残片",
+        "zhTW": "奧盧姆的碎片"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_361",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0227,
+      "names": {
+        "enUS": "Portable Factory",
+        "zhCN": "口袋工厂",
+        "zhTW": "可攜式工廠"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_870",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0306,
+      "names": {
+        "enUS": "Leapfrogger Portrait",
+        "zhCN": "跳蛙骑士肖像",
+        "zhTW": "跳躍蛙頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_815",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0318,
+      "names": {
+        "enUS": "Magician's Top Hat",
+        "zhCN": "魔术师的高帽",
+        "zhTW": "魔法師的禮帽"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_707",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0372,
+      "names": {
+        "enUS": "Tickatus Sticker",
+        "zhCN": "提克特斯标签",
+        "zhTW": "提卡特斯貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_427",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0415,
+      "names": {
+        "enUS": "Tiger Carving",
+        "zhCN": "猛虎雕像",
+        "zhTW": "猛虎雕刻"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_817",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0428,
+      "names": {
+        "enUS": "Lens Case",
+        "zhCN": "镜匣",
+        "zhTW": "鏡片盒"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_951",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0488,
+      "names": {
+        "enUS": "Gold Pendant",
+        "zhCN": "黄金吊坠",
+        "zhTW": "黃金墜飾"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_871",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0505,
+      "names": {
+        "enUS": "Mama Bear Sticker",
+        "zhCN": "熊妈妈标签",
+        "zhTW": "熊媽媽貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_416",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0509,
+      "names": {
+        "enUS": "War Drum",
+        "zhCN": "战鼓",
+        "zhTW": "戰鼓"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_300",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.056,
+      "names": {
+        "enUS": "Putricide Sticker",
+        "zhCN": "普崔塞德标签",
+        "zhTW": "普崔希德貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_847",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0614,
+      "names": {
+        "enUS": "Goblin Wallet",
+        "zhCN": "地精钱包",
+        "zhTW": "哥布林錢包"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_428",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0615,
+      "names": {
+        "enUS": "Worn Treasure Map",
+        "zhCN": "磨损的藏宝图",
+        "zhTW": "磨損的藏寶圖"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_834",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.066,
+      "names": {
+        "enUS": "Rylak Portrait",
+        "zhCN": "双头飞龙肖像",
+        "zhTW": "萊拉克頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_434",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.074,
+      "names": {
+        "enUS": "Replica Cathedral",
+        "zhCN": "大教堂模型",
+        "zhTW": "複製大教堂"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_306",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0816,
+      "names": {
+        "enUS": "Jailer Sticker",
+        "zhCN": "典狱长标签",
+        "zhTW": "閻獄之主貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_902",
+      "trinketClass": "lesser",
+      "tier": "B",
+      "avgPlacement": 4.0821,
+      "names": {
+        "enUS": "Holy Mallet",
+        "zhCN": "神圣重槌",
+        "zhTW": "神聖大槌"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_713",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.0827,
+      "names": {
+        "enUS": "Bleeding Heart",
+        "zhCN": "泣血之心",
+        "zhTW": "淌血之心"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_988",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.0894,
+      "names": {
+        "enUS": "Great Boar Sticker",
+        "zhCN": "野猪之神标签",
+        "zhTW": "巨豬貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_973",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.0906,
+      "names": {
+        "enUS": "Minion Bait",
+        "zhCN": "随从诱饵",
+        "zhTW": "手下誘餌"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_888",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.0913,
+      "names": {
+        "enUS": "Souvenir Stand",
+        "zhCN": "纪念品货架",
+        "zhTW": "紀念品支架"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_850",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.0918,
+      "names": {
+        "enUS": "Pocket Cyclone",
+        "zhCN": "袋中旋风",
+        "zhTW": "口袋颶風"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_151",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.0979,
+      "names": {
+        "enUS": "Defiler Portrait",
+        "zhCN": "亵渎者肖像",
+        "zhTW": "褻瀆者頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_994",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.0981,
+      "names": {
+        "enUS": "Yogg-Tastic Pastry",
+        "zhCN": "尤格糕点",
+        "zhTW": "超尤味點心"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_841",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.114,
+      "names": {
+        "enUS": "Glowing Gauntlet",
+        "zhCN": "辐光护手",
+        "zhTW": "發光護手"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_435",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1242,
+      "names": {
+        "enUS": "Goldenizer Supply",
+        "zhCN": "点金补给",
+        "zhTW": "金卡轉化術補給"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_416",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1273,
+      "names": {
+        "enUS": "Token of the Old Gods",
+        "zhCN": "古神信物",
+        "zhTW": "古神的印記"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_434",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1286,
+      "names": {
+        "enUS": "Jewelry Box",
+        "zhCN": "珠宝盒",
+        "zhTW": "珠寶盒"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_921",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1535,
+      "names": {
+        "enUS": "Cowrie Necklace",
+        "zhCN": "贝壳项链",
+        "zhTW": "寶螺項鍊"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_700",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1646,
+      "names": {
+        "enUS": "Deathly Phylactery",
+        "zhCN": "死亡护命匣",
+        "zhTW": "死亡骨匣"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_858",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1675,
+      "names": {
+        "enUS": "Explorer's Binoculars",
+        "zhCN": "探险者的望远镜",
+        "zhTW": "探險者望遠鏡"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_150",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1695,
+      "names": {
+        "enUS": "Cursed Crystal",
+        "zhCN": "被诅咒的水晶",
+        "zhTW": "詛咒水晶"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_803",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1721,
+      "names": {
+        "enUS": "Macaw Portrait",
+        "zhCN": "金刚鹦鹉肖像",
+        "zhTW": "鸚鵡頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_547",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1743,
+      "names": {
+        "enUS": "Comfy Coffin",
+        "zhCN": "舒适的棺椁",
+        "zhTW": "舒適棺材"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_868",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1914,
+      "names": {
+        "enUS": "Rewinder Portrait",
+        "zhCN": "回溯者肖像",
+        "zhTW": "倒帶手頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_423",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.1933,
+      "names": {
+        "enUS": "Innkeeper's Stein",
+        "zhCN": "旅店老板的酒杯",
+        "zhTW": "旅店老闆的酒杯"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_823",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.2072,
+      "names": {
+        "enUS": "Timeworn Candelabra",
+        "zhCN": "老旧的烛台",
+        "zhTW": "古舊燭臺"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_817",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.221,
+      "names": {
+        "enUS": "Rendle Sticker",
+        "zhCN": "伦德尔标签",
+        "zhTW": "倫德貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_821",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.2238,
+      "names": {
+        "enUS": "Kaleidoscope",
+        "zhCN": "万花筒",
+        "zhTW": "萬花筒"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_705",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.2277,
+      "names": {
+        "enUS": "Bartend-o-Tron's Oilcan",
+        "zhCN": "调酒机器人的油壶",
+        "zhTW": "酒保機器人的油罐"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_962",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.2575,
+      "names": {
+        "enUS": "Training Certificate",
+        "zhCN": "参训证书",
+        "zhTW": "訓練證書"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_400",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.2655,
+      "names": {
+        "enUS": "Shrine of Evolution",
+        "zhCN": "异变神龛",
+        "zhTW": "進化聖壇"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_821",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.279,
+      "names": {
+        "enUS": "Pilgrimp Sticker",
+        "zhCN": "朝圣小鬼标签",
+        "zhTW": "朝聖小鬼貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_822",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.286,
+      "names": {
+        "enUS": "Bazaar Sticker",
+        "zhCN": "集市标签",
+        "zhTW": "市集貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_410",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.3174,
+      "names": {
+        "enUS": "Quilligraphy Set",
+        "zhCN": "鬃尖笔墨套装",
+        "zhTW": "書寫套組"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_430",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.3282,
+      "names": {
+        "enUS": "Rockin' Music Box",
+        "zhCN": "摇滚音乐盒",
+        "zhTW": "搖滾音樂盒"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_433",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.3359,
+      "names": {
+        "enUS": "Alliance Keychain",
+        "zhCN": "联盟钥匙链",
+        "zhTW": "聯盟鑰匙圈"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_803",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.3851,
+      "names": {
+        "enUS": "Maxwell Sticker",
+        "zhCN": "麦克斯韦标签",
+        "zhTW": "麥斯威爾貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_152",
+      "trinketClass": "lesser",
+      "tier": "C",
+      "avgPlacement": 4.509,
+      "names": {
+        "enUS": "Demonic Tapestry",
+        "zhCN": "恶魔挂毯",
+        "zhTW": "惡魔掛毯"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_403",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 2.9377,
+      "names": {
+        "enUS": "Ironforge Anvil",
+        "zhCN": "铁炉堡锻砧",
+        "zhTW": "鐵爐堡鐵砧"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_740",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.1125,
+      "names": {
+        "enUS": "Sky Golem Portrait",
+        "zhCN": "飞天魔像肖像",
+        "zhTW": "飛天魔像頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_861",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.2867,
+      "names": {
+        "enUS": "Baller Portrait",
+        "zhCN": "投球手肖像",
+        "zhTW": "球手頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_741",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.296,
+      "names": {
+        "enUS": "Beatboxer Portrait",
+        "zhCN": "B-Box拳手肖像",
+        "zhTW": "節奏口技手頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_711",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.3573,
+      "names": {
+        "enUS": "Protective Ring",
+        "zhCN": "防护戒指",
+        "zhTW": "防護戒指"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_828",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.3629,
+      "names": {
+        "enUS": "Shaker Portrait",
+        "zhCN": "沙锤手肖像",
+        "zhTW": "沙鈴手頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_860t",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.4078,
+      "names": {
+        "enUS": "Beetle Band",
+        "zhCN": "甲虫之戒",
+        "zhTW": "甲蟲樂團"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_710",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.4159,
+      "names": {
+        "enUS": "Miniature Ship",
+        "zhCN": "迷你船模",
+        "zhTW": "微縮船隻"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_923",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.4336,
+      "names": {
+        "enUS": "Bewitched Ribbon",
+        "zhCN": "魔力丝带",
+        "zhTW": "魔咒彩帶"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_920",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.4393,
+      "names": {
+        "enUS": "Spitescale Sushi Roll",
+        "zhCN": "恶鳞寿司卷",
+        "zhTW": "惡鱗壽司卷"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_439",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.4553,
+      "names": {
+        "enUS": "Designer Eyepatch",
+        "zhCN": "新潮眼罩",
+        "zhTW": "設計師眼罩"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_742",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.4561,
+      "names": {
+        "enUS": "Accord-o-Tron Portrait",
+        "zhCN": "手风琴机器人肖像",
+        "zhTW": "手風琴機器人頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_801t",
+      "trinketClass": "greater",
+      "tier": "S",
+      "avgPlacement": 3.462,
+      "names": {
+        "enUS": "Heart of the Forest",
+        "zhCN": "森林之心",
+        "zhTW": "森林之心"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_712",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.4973,
+      "names": {
+        "enUS": "Privateer Portrait",
+        "zhCN": "私掠者肖像",
+        "zhTW": "私掠者頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_713",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5012,
+      "names": {
+        "enUS": "Trusty Crowbar",
+        "zhCN": "结实的撬棍",
+        "zhTW": "可靠的鐵撬"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_714",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5035,
+      "names": {
+        "enUS": "Powder Keg",
+        "zhCN": "火药桶",
+        "zhTW": "火藥桶"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_300t",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5118,
+      "names": {
+        "enUS": "Copper Coil",
+        "zhCN": "铜制线圈",
+        "zhTW": "銅線圈"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_156",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5232,
+      "names": {
+        "enUS": "Flaming Portrait",
+        "zhCN": "魔焰肖像",
+        "zhTW": "燃焰頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_172",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5528,
+      "names": {
+        "enUS": "Boom's Monster Portrait",
+        "zhCN": "砰砰的怪物肖像",
+        "zhTW": "爆爆怪物頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_232",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5603,
+      "names": {
+        "enUS": "Shark Cannon",
+        "zhCN": "鲨鱼火炮",
+        "zhTW": "鯊魚砲"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_848t",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5684,
+      "names": {
+        "enUS": "Egg of the Endtimes Portrait",
+        "zhCN": "末世龙蛋肖像",
+        "zhTW": "終焉時刻之蛋頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_732",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5691,
+      "names": {
+        "enUS": "Soul Fermenter",
+        "zhCN": "灵魂酵罐",
+        "zhTW": "靈魂發酵器"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_862",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5837,
+      "names": {
+        "enUS": "Upstart Embers",
+        "zhCN": "爆燃余烬",
+        "zhTW": "猛燃餘燼"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_743",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5851,
+      "names": {
+        "enUS": "Electrode Attractor",
+        "zhCN": "电极吸附器",
+        "zhTW": "電極吸引器"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_925",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.5907,
+      "names": {
+        "enUS": "Coral Spear",
+        "zhCN": "珊瑚长矛",
+        "zhTW": "珊瑚長矛"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_701",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.595,
+      "names": {
+        "enUS": "Fang Anklet",
+        "zhCN": "獠牙脚链",
+        "zhTW": "尖牙足環"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_919",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6109,
+      "names": {
+        "enUS": "Nazjatar Postcard",
+        "zhCN": "纳沙塔尔明信片",
+        "zhTW": "納沙塔爾明信片"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_924",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6184,
+      "names": {
+        "enUS": "Groundbreaker Portrait",
+        "zhCN": "碎地者肖像",
+        "zhTW": "破土者頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_999",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6297,
+      "names": {
+        "enUS": "Fancy Spellbook",
+        "zhCN": "玄奥的法术书",
+        "zhTW": "花俏法術書"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_754",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6343,
+      "names": {
+        "enUS": "Dramaloc Sticker",
+        "zhCN": "戏剧鱼人标签",
+        "zhTW": "戲魚人貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_545",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6378,
+      "names": {
+        "enUS": "Fridge Magnet",
+        "zhCN": "冰箱磁贴",
+        "zhTW": "冰箱磁鐵"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_924t",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6402,
+      "names": {
+        "enUS": "Booty Bay Brew",
+        "zhCN": "藏宝海湾美酒",
+        "zhTW": "藏寶海灣精釀"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_731",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6474,
+      "names": {
+        "enUS": "Deathtouch Apple",
+        "zhCN": "死亡之触苹果",
+        "zhTW": "死觸蘋果"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_922",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6482,
+      "names": {
+        "enUS": "Charming Panpipes",
+        "zhCN": "魅音排箫",
+        "zhTW": "魅惑牧笛"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_283",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.6856,
+      "names": {
+        "enUS": "Czarina Portrait",
+        "zhCN": "女沙皇肖像",
+        "zhTW": "女皇頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_942",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.697,
+      "names": {
+        "enUS": "Mecha-Jaraxxus Sticker",
+        "zhCN": "机械加拉克苏斯标签",
+        "zhTW": "機甲拉克瑟斯貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_540",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.7087,
+      "names": {
+        "enUS": "Slamma Sticker",
+        "zhCN": "猛猿标签",
+        "zhTW": "蕉流猩貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_840t",
+      "trinketClass": "greater",
+      "tier": "A",
+      "avgPlacement": 3.7259,
+      "names": {
+        "enUS": "Chromatic Tear",
+        "zhCN": "多彩之泪",
+        "zhTW": "炫彩之淚"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_442",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.727,
+      "names": {
+        "enUS": "Blood Golem Sticker",
+        "zhCN": "鲜血魔像标签",
+        "zhTW": "鮮血魔像貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_914t",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7317,
+      "names": {
+        "enUS": "Nerglish Phrasebook",
+        "zhCN": "鱼人语实用手册",
+        "zhTW": "魚人語片語手冊"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_987",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7456,
+      "names": {
+        "enUS": "Balladist Portrait",
+        "zhCN": "民谣歌手肖像",
+        "zhTW": "情歌手頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_951",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.746,
+      "names": {
+        "enUS": "Lava Lamp",
+        "zhCN": "熔岩提灯",
+        "zhTW": "熔岩燈"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_998",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7478,
+      "names": {
+        "enUS": "Behemoth Portrait",
+        "zhCN": "巨怪肖像",
+        "zhTW": "巨獸頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_886",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7557,
+      "names": {
+        "enUS": "Reinforced Shield",
+        "zhCN": "强固之盾",
+        "zhTW": "強化護盾"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_418",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7663,
+      "names": {
+        "enUS": "Bronzebeard Portrait",
+        "zhCN": "铜须肖像",
+        "zhTW": "銅鬚頭像"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_367",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7684,
+      "names": {
+        "enUS": "Ghastly Sticker",
+        "zhCN": "鬼魅标签",
+        "zhTW": "恐怖貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_901",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7712,
+      "names": {
+        "enUS": "Gold-plated Compass",
+        "zhCN": "镀金罗盘",
+        "zhTW": "鍍金羅盤"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_995",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7746,
+      "names": {
+        "enUS": "Bronze Timepiece",
+        "zhCN": "青铜龙时钟",
+        "zhTW": "青銅計時器"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_752",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7805,
+      "names": {
+        "enUS": "Young Murk-Eye Sticker",
+        "zhCN": "小瞎眼标签",
+        "zhTW": "小瞎眼貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_753",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.7938,
+      "names": {
+        "enUS": "Murky Sticker",
+        "zhCN": "奔波尔霸标签",
+        "zhTW": "莫奇貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_864",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.795,
+      "names": {
+        "enUS": "Gilnean Thorned Rose",
+        "zhCN": "吉尔尼斯带刺玫瑰",
+        "zhTW": "吉爾尼斯荊棘玫瑰"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_944",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8089,
+      "names": {
+        "enUS": "Redeemer Portrait",
+        "zhCN": "救赎者肖像",
+        "zhTW": "救贖者頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_544t",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8131,
+      "names": {
+        "enUS": "Nomi Sticker",
+        "zhCN": "诺米标签",
+        "zhTW": "糯米貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_988t",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8194,
+      "names": {
+        "enUS": "Great Boar Sticker",
+        "zhCN": "野猪之神标签",
+        "zhTW": "巨豬貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_926",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8216,
+      "names": {
+        "enUS": "Morgl Portrait",
+        "zhCN": "摩戈尔肖像",
+        "zhTW": "莫哥頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_930",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8323,
+      "names": {
+        "enUS": "Warband Whistle",
+        "zhCN": "战队口哨",
+        "zhTW": "陣容哨子"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_363",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8324,
+      "names": {
+        "enUS": "Faerie Dragon Scale",
+        "zhCN": "精灵龙鳞",
+        "zhTW": "精靈龍鱗片"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_301",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8371,
+      "names": {
+        "enUS": "Bassgill Portrait",
+        "zhCN": "低音提琴鱼人肖像",
+        "zhTW": "貝斯魚人頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_863",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8372,
+      "names": {
+        "enUS": "Avalanche Sticker",
+        "zhCN": "雪崩标签",
+        "zhTW": "雪崩貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_876",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8599,
+      "names": {
+        "enUS": "Manipulator Portrait",
+        "zhCN": "操纵者肖像",
+        "zhTW": "操縱者頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_426t",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8618,
+      "names": {
+        "enUS": "Colorful Compass",
+        "zhCN": "多彩罗盘",
+        "zhTW": "多彩羅盤"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_755",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8662,
+      "names": {
+        "enUS": "Chillmere Mosaic",
+        "zhCN": "切米尔拼贴画",
+        "zhTW": "寒凜鑲嵌畫"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_812",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8666,
+      "names": {
+        "enUS": "Corrupted Tome",
+        "zhCN": "腐蚀秘典",
+        "zhTW": "腐化秘典"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_888",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8679,
+      "names": {
+        "enUS": "Recycling Sticker",
+        "zhCN": "回收标签",
+        "zhTW": "回收貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_427t",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8718,
+      "names": {
+        "enUS": "Tiger Carving",
+        "zhCN": "猛虎雕像",
+        "zhTW": "猛虎雕刻"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_306",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8732,
+      "names": {
+        "enUS": "Herald Sticker",
+        "zhCN": "先锋标签",
+        "zhTW": "先驅貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_838",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8757,
+      "names": {
+        "enUS": "Double Stitch Needle",
+        "zhCN": "双线缝针",
+        "zhTW": "雙重縫針"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_555",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8759,
+      "names": {
+        "enUS": "Surprise Portrait",
+        "zhCN": "惊喜肖像",
+        "zhTW": "驚喜頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_422t",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8769,
+      "names": {
+        "enUS": "Lorewalker Scroll",
+        "zhCN": "游学者卷轴",
+        "zhTW": "博學行者卷軸"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_808t",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.891,
+      "names": {
+        "enUS": "Bloodbound Earrings",
+        "zhCN": "血缚耳环",
+        "zhTW": "血縛耳環"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_284",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8925,
+      "names": {
+        "enUS": "Aggem Sticker",
+        "zhCN": "阿格姆标签",
+        "zhTW": "阿葛金貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_432",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.8964,
+      "names": {
+        "enUS": "Blood Amulet",
+        "zhCN": "鲜血坠饰",
+        "zhTW": "鮮血護符"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_541",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.9028,
+      "names": {
+        "enUS": "Nether Pendant",
+        "zhCN": "虚空坠饰",
+        "zhTW": "虛空墜飾"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_996",
+      "trinketClass": "greater",
+      "tier": "B",
+      "avgPlacement": 3.9043,
+      "names": {
+        "enUS": "Bob's Tip Jar",
+        "zhCN": "鲍勃的小费罐",
+        "zhTW": "鮑伯的小費罐"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_816t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9045,
+      "names": {
+        "enUS": "Orb of the Unknown",
+        "zhCN": "未知宝珠",
+        "zhTW": "未知寶珠"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_931t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9069,
+      "names": {
+        "enUS": "Transcribing Typewriter",
+        "zhCN": "转录打字机",
+        "zhTW": "抄錄打字機"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_807",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9152,
+      "names": {
+        "enUS": "Curator Sticker",
+        "zhCN": "馆长标签",
+        "zhTW": "館長貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_154",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9321,
+      "names": {
+        "enUS": "Ur'zul Sticker",
+        "zhCN": "乌祖尔标签",
+        "zhTW": "厄祖獸貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_850t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9322,
+      "names": {
+        "enUS": "Pocket Cyclone",
+        "zhCN": "袋中旋风",
+        "zhTW": "口袋颶風"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_879t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9325,
+      "names": {
+        "enUS": "Dalaran Cheese Wheel",
+        "zhCN": "达拉然奶酪轮",
+        "zhTW": "達拉然乳酪輪"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_547t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9348,
+      "names": {
+        "enUS": "Comfy Coffin",
+        "zhCN": "舒适的棺椁",
+        "zhTW": "舒適棺材"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_750",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.945,
+      "names": {
+        "enUS": "Magicfin Sticker",
+        "zhCN": "魔鳍标签",
+        "zhTW": "魔術魚貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_200",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9464,
+      "names": {
+        "enUS": "All-Purpose Kibble",
+        "zhCN": "全能辅食",
+        "zhTW": "萬用飼料"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_420t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9542,
+      "names": {
+        "enUS": "Book of Medivh",
+        "zhCN": "麦迪文之书",
+        "zhTW": "麥迪文之書"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_270t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9559,
+      "names": {
+        "enUS": "Wicked Tome",
+        "zhCN": "邪恶魔典",
+        "zhTW": "惡毒秘典"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_364",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9568,
+      "names": {
+        "enUS": "Poet Portrait",
+        "zhCN": "诗心龙肖像",
+        "zhTW": "詩人頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_801",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9637,
+      "names": {
+        "enUS": "Sinstone Sticker",
+        "zhCN": "罪碑标签",
+        "zhTW": "罪孽石貼紙"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_821t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9778,
+      "names": {
+        "enUS": "Kaleidoscope",
+        "zhCN": "万花筒",
+        "zhTW": "萬花筒"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_823t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 3.9979,
+      "names": {
+        "enUS": "Timeworn Candelabra",
+        "zhCN": "老旧的烛台",
+        "zhTW": "古舊燭臺"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_820",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0088,
+      "names": {
+        "enUS": "Safety Patch",
+        "zhCN": "安全徽章",
+        "zhTW": "安全補丁"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_151t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0161,
+      "names": {
+        "enUS": "Defiler Portrait",
+        "zhCN": "亵渎者肖像",
+        "zhTW": "褻瀆者頭像"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_700",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0173,
+      "names": {
+        "enUS": "Wildfeather Duster",
+        "zhCN": "荒羽尘掸",
+        "zhTW": "野羽撣子"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_733",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.022,
+      "names": {
+        "enUS": "Jailer Sticker",
+        "zhCN": "典狱长标签",
+        "zhTW": "閻獄之主貼紙"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_406",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0344,
+      "names": {
+        "enUS": "Butcher's Sickle",
+        "zhCN": "屠夫钩镰",
+        "zhTW": "屠夫鐮刀"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_310",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0374,
+      "names": {
+        "enUS": "Rivendare Portrait",
+        "zhCN": "瑞文戴尔肖像",
+        "zhTW": "瑞文戴爾頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_943",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0453,
+      "names": {
+        "enUS": "Surveyor Portrait",
+        "zhCN": "测绘员肖像",
+        "zhTW": "勘測員頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_993",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0582,
+      "names": {
+        "enUS": "Pagle's Fishing Rod",
+        "zhCN": "帕格的鱼竿",
+        "zhTW": "帕格的釣竿"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_362t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0601,
+      "names": {
+        "enUS": "Innkeeper's Hearth",
+        "zhCN": "旅店老板的炉火",
+        "zhTW": "旅店老闆的爐火"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_431t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0645,
+      "names": {
+        "enUS": "Thornspike Pauldron",
+        "zhCN": "棘刺肩铠",
+        "zhTW": "棘刺肩鎧"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_989t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0747,
+      "names": {
+        "enUS": "Artisanal Urn",
+        "zhCN": "艺匠之瓮",
+        "zhTW": "匠心之甕"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_433",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0809,
+      "names": {
+        "enUS": "Vinespeaker Portrait",
+        "zhCN": "藤语野猪人肖像",
+        "zhTW": "藤蔓語者頭像"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_701",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0811,
+      "names": {
+        "enUS": "The Eye of Sargeras",
+        "zhCN": "萨格拉斯之眼",
+        "zhTW": "薩格拉斯之眼"
+      }
+    },
+    {
+      "cardId": "BG31_MagicItem_903",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.0814,
+      "names": {
+        "enUS": "Wisdomball Supply",
+        "zhCN": "智慧之球补给",
+        "zhTW": "智慧球補給"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_366",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.1052,
+      "names": {
+        "enUS": "Guiding Candle",
+        "zhCN": "引路蜡烛",
+        "zhTW": "引路蠟燭"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_435",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.1471,
+      "names": {
+        "enUS": "Bloodbound Ring",
+        "zhCN": "血缚之戒",
+        "zhTW": "血縛戒指"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_546",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.1908,
+      "names": {
+        "enUS": "Jar o' Gems",
+        "zhCN": "罐装宝石",
+        "zhTW": "一罐寶石"
+      }
+    },
+    {
+      "cardId": "BG35_MagicItem_803t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.202,
+      "names": {
+        "enUS": "Maxwell Sticker",
+        "zhCN": "麦克斯韦标签",
+        "zhTW": "麥斯威爾貼紙"
+      }
+    },
+    {
+      "cardId": "BG32_MagicItem_361t",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.2476,
+      "names": {
+        "enUS": "Portable Factory",
+        "zhCN": "口袋工厂",
+        "zhTW": "可攜式工廠"
+      }
+    },
+    {
+      "cardId": "BG30_MagicItem_410t2",
+      "trinketClass": "greater",
+      "tier": "C",
+      "avgPlacement": 4.3753,
+      "names": {
+        "enUS": "Quilligraphy Set",
+        "zhCN": "鬃尖笔墨套装",
+        "zhTW": "書寫套組"
+      }
+    }
+  ]
+}
