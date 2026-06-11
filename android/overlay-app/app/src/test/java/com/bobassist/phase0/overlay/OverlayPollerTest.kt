@@ -170,12 +170,14 @@ class OverlayPollerTest {
         poller.start()
         count = 1
         poller.tick()                   // → Ready
-        poller.pause()
-        count = 0
-        poller.tick()                   // suppressed
-        assertEquals(OverlayState.Ready, poller.currentState())
-        poller.resume()
-        poller.tick()                   // now runs; count=0 → Waiting
+        poller.pause()                  // pause now drops to Waiting (no lying-green button)
         assertEquals(OverlayState.WaitingForBattle, poller.currentState())
+        count = 0
+        poller.tick()                   // suppressed (still paused)
+        assertEquals(OverlayState.WaitingForBattle, poller.currentState())
+        poller.resume()
+        count = 1
+        poller.tick()                   // now runs; count=1 → re-arms to Ready
+        assertEquals(OverlayState.Ready, poller.currentState())
     }
 }

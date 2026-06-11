@@ -211,6 +211,7 @@ class OverlaySession(
             if (!started) return@post
             if (isHsForeground) {
                 poller.resume()
+                poller.tick()   // re-arm immediately instead of waiting up to one poll interval (pause dropped to grey)
             } else {
                 poller.pause()
                 // codex gate-3 P2: while paused the cache can't refresh, so it would go

@@ -87,7 +87,7 @@ class OverlaySessionForegroundTest {
     }
 
     @Test
-    fun `Hide and re-show preserves lastState (Ready stays Ready)`() {
+    fun `Hide drops to Waiting (no lying-green button) and re-show re-arms to Ready`() {
         factory.fakeConn.snapshotJson = oneCandidateJson("c1")
         factory.session.start()
         drainBoth()
@@ -97,22 +97,17 @@ class OverlaySessionForegroundTest {
         assertEquals(OverlayState.Ready, factory.poller.currentState())
         assertEquals(OverlayState.Ready, factory.fakeOverlay.lastState)
 
-        // Hide via fg change false
+        // Hide via fg change false → pause stops claiming Ready (a frozen green button would be a dead tap).
         factory.hsForegroundOverride = false
         factory.detector.tick()
         drainBoth()
+        assertEquals(OverlayState.WaitingForBattle, factory.poller.currentState())
+        assertEquals(OverlayState.WaitingForBattle, factory.fakeOverlay.lastState)
 
-        // OverlayPoller.currentState() should still report Ready (pause does not reset state)
-        assertEquals(OverlayState.Ready, factory.poller.currentState())
-        // FakeOverlay's lastState should still be Ready (no applyState(Waiting) fired)
-        assertEquals(OverlayState.Ready, factory.fakeOverlay.lastState)
-
-        // Re-show
+        // Re-show → resume() does an immediate tick, re-arming to Ready with NO time advance (no dead window).
         factory.hsForegroundOverride = true
         factory.detector.tick()
         drainBoth()
-
-        // After re-show, lastState is still Ready (the snapshot still has the candidate)
         assertEquals(OverlayState.Ready, factory.poller.currentState())
         assertEquals(OverlayState.Ready, factory.fakeOverlay.lastState)
     }

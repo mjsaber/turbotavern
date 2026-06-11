@@ -188,27 +188,46 @@ class OverlaySessionCacheTest {
         assertEquals(OverlayState.Ready, f().poller.currentState())
     }
 
-    // --- T10: pause clears the cache → stale-after-resume tap is a safe no-op (codex gate-3 P2) ---
+    // --- T10: pause clears the cache AND drops to WaitingForBattle so the button never lies green
+    //          during the ≤1-poll window after resume (codex gate-3 P2 + green-button-lies fix) ---
     @Test
-    fun `T10 pausing clears cache so a stale Ready tap does not close or cooldown`() {
+    fun `T10 pausing clears cache and shows WaitingForBattle so a stale tap is a safe no-op`() {
         startAndSettle(oneCandidateJson(id = "pause-1"))
         assertEquals(OverlayState.Ready, f().poller.currentState())
         assertNotNull(f().candidateCache.current().candidate)
 
-        // HS goes background → poller pauses and the cache is cleared.
+        // HS goes background → poller pauses, clears the cache, and stops claiming Ready.
         f().session.handleForegroundChange(false)
         drainBoth()
         assertNull("pause must clear the cache", f().candidateCache.current().candidate)
-        // State is still Ready (pause freezes it) — this is the stale window.
-        assertEquals(OverlayState.Ready, f().poller.currentState())
+        // The button must NOT stay green while we are no longer polling — it would be a dead tap.
+        assertEquals("pause must drop to WaitingForBattle (no lying-green button)",
+            OverlayState.WaitingForBattle, f().poller.currentState())
 
         f().session.handleTap()
         drainBoth()
 
-        assertTrue("stale Ready tap must not close anything",
+        assertTrue("stale tap must not close anything",
             f().fakeConn.closeCallLog.isEmpty())
         assertEquals("must not falsely enter cooldown",
-            OverlayState.Ready, f().poller.currentState())
+            OverlayState.WaitingForBattle, f().poller.currentState())
+    }
+
+    // --- T10b: after resume, the next poll re-arms the button to Ready (no permanent grey) ---
+    @Test
+    fun `T10b resume re-arms to Ready on the next poll`() {
+        startAndSettle(oneCandidateJson(id = "resume-1"))
+        assertEquals(OverlayState.Ready, f().poller.currentState())
+
+        f().session.handleForegroundChange(false)   // pause -> WaitingForBattle
+        drainBoth()
+        assertEquals(OverlayState.WaitingForBattle, f().poller.currentState())
+
+        f().session.handleForegroundChange(true)     // resume
+        drainBoth()
+        shadowOf(f().pollThread.looper).idleFor(1_000, TimeUnit.MILLISECONDS)
+        drainBoth()
+        assertEquals("resume + one poll re-arms the live socket", OverlayState.Ready, f().poller.currentState())
     }
 
     // --- T9: INV-5 trace fields are emitted (snapshot_ms + cache_age_ms) ---

@@ -48,8 +48,16 @@ class OverlayPoller(
         cycle?.emit("poll_tick", "exit", "state" to state)
     }
 
+    /**
+     * Host calls this when HS leaves the foreground. We stop polling AND drop to WaitingForBattle:
+     * a frozen Ready would leave the button green after HS returns until the first poll refreshes
+     * (~1 interval), so a tap in that window closes nothing — a button that lies. Going grey here is
+     * honest ("not polling, don't know"); resume()'s next tick re-arms it. A pending Cooldown timer
+     * becomes an inert no-op (exitCooldown guards on state==Cooldown).
+     */
     fun pause() {
         paused = true
+        if (started) emit(OverlayState.WaitingForBattle)
     }
 
     fun resume() {
