@@ -5,6 +5,10 @@ import json
 
 _CUTS = (("S", 0.12), ("A", 0.35), ("B", 0.68), ("C", 1.01))
 
+# Drop entities with too few games to tier honestly (a brand-new or rarely-seen hero would otherwise
+# get an avg-placement-of-a-handful-of-games tier). Real heroes have thousands of games.
+_MIN_DATA_POINTS = 100
+
 
 def _tier(p: float) -> str:
     for name, hi in _CUTS:
@@ -29,7 +33,8 @@ def build(conn, *, generated_at: str | None = None) -> dict:
         " JOIN entity e ON e.card_id=v.card_id AND e.entity_type=v.entity_type"
         " WHERE v.entity_type='hero' AND v.source='firestone' AND v.mmr_bracket='100'"
         "   AND v.time_period='last-patch' AND v.mode='solo' AND v.region='global'"
-        " ORDER BY v.avg_placement ASC, v.card_id ASC").fetchall()
+        "   AND v.data_points >= ?"
+        " ORDER BY v.avg_placement ASC, v.card_id ASC", (_MIN_DATA_POINTS,)).fetchall()
     n = len(rows)
     if n == 0:                       # defensive: empty-result already caught by the distinct guard
         raise ValueError("no hero rows for bracket=100 last-patch")

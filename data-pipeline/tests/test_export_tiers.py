@@ -40,6 +40,29 @@ def test_percentile_and_multilocale_names():
     assert sum(1 for h in out["heroes"] if h["tier"] == "S") == 1
 
 
+def test_low_data_point_heroes_are_excluded():
+    conn = db.connect(":memory:")
+    db.init_db(conn)
+    conn.execute("BEGIN IMMEDIATE")
+    snap = conn.execute(
+        "INSERT INTO snapshot (source, entity_type, mmr_bracket, time_period, mode, region,"
+        " content_hash, fetched_at, raw_url) VALUES"
+        " ('firestone','hero','100','last-patch','solo','global','h','t','u')").lastrowid
+
+    def ins(cid, avg, dp):
+        eid = conn.execute(
+            "INSERT INTO entity (entity_type, card_id, name, first_seen_at, last_seen_at)"
+            " VALUES ('hero',?,?,'t','t')", (cid, cid)).lastrowid
+        conn.execute("INSERT INTO entity_stats (snapshot_id, entity_id, avg_placement, data_points)"
+                     " VALUES (?,?,?,?)", (snap, eid, avg, dp))
+
+    ins("BG_HERO_REAL", 4.2, 5000)
+    ins("BG_HERO_NOISE", 1.0, 3)        # too few games to trust the avg
+    conn.execute("COMMIT")
+    out = export_tiers.build(conn)
+    assert {h["cardId"] for h in out["heroes"]} == {"BG_HERO_REAL"}
+
+
 def test_rejects_multiple_region():
     conn = db.connect(":memory:")
     _seed(conn, [("BG_HERO_001", "En1", {"zhTW": "繁1"}, 3.5)])
