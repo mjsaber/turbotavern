@@ -130,6 +130,59 @@ class BattleConnectionControllerTest {
         )
     }
 
+    // --- killCachedCandidateThenRetry: one bounded fresh-snapshot retry on a stale (NotFound) cached id ---
+
+    @Test
+    fun `retry on NotFound takes ONE fresh snapshot and kills the rotated live socket`() {
+        var snapshots = 0
+        val closed = ArrayList<String>()
+        val ctrl = BattleConnectionController(
+            snapshot = { snapshots++; ONE_CANDIDATE_JSON },          // fresh snapshot has the rotated socket abc-1
+            close = { id ->
+                closed += id
+                if (id == "cached-1") MihomoCore.CloseResult.NotFound else MihomoCore.CloseResult.Success
+            },
+        )
+        val r = ctrl.killCachedCandidateThenRetry(cand, candidatesAtKill = 1)
+        assertTrue("rotated socket should be killed on retry", r is BattleConnectionController.KillResult.Success)
+        assertEquals("exactly one fallback snapshot", 1, snapshots)
+        assertEquals(listOf("cached-1", "abc-1"), closed)            // stale close, then rotated close
+    }
+
+    @Test
+    fun `retry is bounded - a genuinely-absent socket fails cleanly as NoCandidate after one snapshot`() {
+        var snapshots = 0
+        val ctrl = BattleConnectionController(
+            snapshot = { snapshots++; "[]" },                        // socket really gone
+            close = { MihomoCore.CloseResult.NotFound },
+        )
+        val r = ctrl.killCachedCandidateThenRetry(cand, candidatesAtKill = 1)
+        assertTrue(r is BattleConnectionController.KillResult.NoCandidate)
+        assertEquals("retry is bounded to a single snapshot", 1, snapshots)
+    }
+
+    @Test
+    fun `no retry on Success - fast path stays snapshot-free`() {
+        var snapshots = 0
+        val ctrl = BattleConnectionController(
+            snapshot = { snapshots++; "[]" },
+            close = { MihomoCore.CloseResult.Success },
+        )
+        assertTrue(ctrl.killCachedCandidateThenRetry(cand, 1) is BattleConnectionController.KillResult.Success)
+        assertEquals("Success must not trigger a snapshot", 0, snapshots)
+    }
+
+    @Test
+    fun `no retry on AlreadyClosed`() {
+        var snapshots = 0
+        val ctrl = BattleConnectionController(
+            snapshot = { snapshots++; "[]" },
+            close = { MihomoCore.CloseResult.AlreadyClosed },
+        )
+        assertTrue(ctrl.killCachedCandidateThenRetry(cand, 1) is BattleConnectionController.KillResult.AlreadyClosed)
+        assertEquals(0, snapshots)
+    }
+
     companion object {
         private val ONE_CANDIDATE_JSON = """
             [{"id":"abc-1","host":"","network":"tcp","destinationIp":"66.40.189.110",

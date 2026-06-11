@@ -134,7 +134,7 @@ class OverlaySession(
                         breadcrumb("overlay tap ignored (ready but cache miss)")
                         return@Runnable
                     }
-                    val result = runCatching { controller.killCachedCandidate(cand, readiness.count, cycle) }
+                    val result = runCatching { controller.killCachedCandidateThenRetry(cand, readiness.count, cycle) }
                         .getOrElse {
                             breadcrumb("overlay tap kill threw: ${it.message}")
                             cycle.emit("kill", "exit", "result" to "exception", "msg" to it.message)

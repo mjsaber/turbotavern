@@ -86,19 +86,42 @@ class OverlaySessionCacheTest {
         assertNull(f().candidateCache.current().candidate)
     }
 
-    // --- T3: stale cache → close NotFound → graceful failure, no cooldown (INV-3) ---
+    // --- T3: stale cache → close NotFound → ONE bounded retry that also finds nothing → no cooldown ---
     @Test
-    fun `T3 stale cached id NotFound stays Ready and does not cooldown`() {
+    fun `T3 stale cached id NotFound with nothing to retry stays Ready and does not cooldown`() {
         startAndSettle(oneCandidateJson(id = "stale-1"))
         assertEquals(OverlayState.Ready, f().poller.currentState())
         f().fakeConn.closeResults["stale-1"] = MihomoCore.CloseResult.NotFound
+        f().fakeConn.snapshotJson = "[]"   // the socket really rotated away → retry finds nothing
 
         f().session.handleTap()
         drainBoth()
 
-        assertEquals(1, f().fakeConn.closeCallLog.size)
+        // one cached close (NotFound) + one bounded retry snapshot (empty) → NoCandidate, no false cooldown
+        assertEquals("only the cached close fired; retry found nothing to close",
+            1, f().fakeConn.closeCallLog.size)
         assertEquals("must not enter Cooldown on a non-Success kill",
             OverlayState.Ready, f().poller.currentState())
+    }
+
+    // --- T3b: stale cached id, but the socket rotated → ONE retry snapshot finds + kills it → Cooldown ---
+    @Test
+    fun `T3b stale cached id rotated, bounded retry kills the new socket and cooldowns`() {
+        startAndSettle(oneCandidateJson(id = "old-id"))
+        assertEquals(OverlayState.Ready, f().poller.currentState())
+        // cached id is stale (NotFound), but a freshly-rotated socket now exists in the table
+        f().fakeConn.closeResults["old-id"] = MihomoCore.CloseResult.NotFound
+        f().fakeConn.snapshotJson = oneCandidateJson(id = "new-id", createdAt = 200L)
+
+        val before = f().fakeConn.closeCallLog.size
+        f().session.handleTap()
+        drainBoth()
+
+        // cached close (old-id, NotFound) + retry close (new-id, Success) = 2 closes, ending in Cooldown
+        assertEquals(before + 2, f().fakeConn.closeCallLog.size)
+        assertEquals("old-id", f().fakeConn.closeCallLog[before].second)
+        assertEquals("new-id", f().fakeConn.closeCallLog[before + 1].second)
+        assertEquals(OverlayState.Cooldown, f().poller.currentState())
     }
 
     // --- T4: rapid-tap still exactly one close (INV-4) ---

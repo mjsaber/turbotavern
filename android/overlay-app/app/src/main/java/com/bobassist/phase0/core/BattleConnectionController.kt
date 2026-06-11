@@ -91,4 +91,26 @@ class BattleConnectionController(
             else -> KillResult.Failure(r.toString())
         }
     }
+
+    /**
+     * Tap path with a single bounded fallback. Closes the cached id directly (the fast path); if that
+     * id rotated since the last poll the close returns NotFound and nothing would happen — a dead tap.
+     * On exactly that case we take ONE fresh snapshot and kill the current live socket instead.
+     *
+     * Bounded by design: at most one retry, so a genuinely-absent socket fails cleanly as NoCandidate
+     * rather than spinning. Non-NotFound results (Success/AlreadyClosed/other Failure) return as-is with
+     * no snapshot — the fast path stays snapshot-free in the common case.
+     */
+    fun killCachedCandidateThenRetry(
+        cand: BattleConnection.Candidate,
+        candidatesAtKill: Int,
+        cycle: TraceCycle? = null,
+    ): KillResult {
+        val first = killCachedCandidate(cand, candidatesAtKill, cycle)
+        if (first is KillResult.Failure && first.reason == MihomoCore.CloseResult.NotFound.toString()) {
+            cycle?.emit("retry", "entry", "reason" to "stale_cached_id")
+            return killBattleSocket(cycle)
+        }
+        return first
+    }
 }
