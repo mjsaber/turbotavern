@@ -80,7 +80,7 @@ class BobVpnService : VpnService() {
     private var virtualDisplay: VirtualDisplay? = null
     private var imageReader: ImageReader? = null
     private var tierThread: HandlerThread? = null
-    private var tierCoordinator: HeroTierCoordinator? = null
+    private var tierCoordinator: com.bobassist.phase0.trinket.SelectCoordinator? = null
     private var captureW = 0
     private var captureH = 0
     // Stage 9.4 (post-Spike B) wires the real select-phase predicate. Until then the window is
@@ -455,20 +455,31 @@ class BobVpnService : VpnService() {
             opacityCap = { OpacityCap.of(this) },
         )
         val renderer = OverlayBadgeRenderer(overlay, BADGE_PX, GAP_PX)
+        // Trinket overlay shares the SAME capture + OCR (SelectCoordinator OCRs once per round and
+        // feeds both matchers); only the matcher/renderer differ. A SelectWindowArbiter mutually-
+        // excludes the two overlays so the hero and trinket badges never both show.
+        val trinketOverlay = com.bobassist.phase0.trinket.TrinketOverlay(
+            AndroidWindowHost(getSystemService(WindowManager::class.java)), this,
+            opacityCap = { OpacityCap.of(this) },
+        )
+        val trinketRenderer = com.bobassist.phase0.trinket.OverlayTrinketRenderer(
+            trinketOverlay, BADGE_PX, GAP_PX, HIGHLIGHT_INFLATE_PX,
+        )
         val ht = HandlerThread("herotier").apply { start() }
         tierThread = ht
-        val coordinator = HeroTierCoordinator(
+        val coordinator = com.bobassist.phase0.trinket.SelectCoordinator(
             grabber = grabber,
             ocr = PaddleHeroOcr.create(this) ?: MlKitHeroOcr(),   // PP-OCRv5 primary; ML Kit fallback if load fails
-            matcher = HeroMatcher(loadTierTable()),
-            renderer = renderer,
+            heroMatcher = HeroMatcher(loadTierTable()),
+            heroRenderer = renderer,
+            trinketMatcher = com.bobassist.phase0.trinket.TrinketMatcher(loadTrinketTable()),
+            trinketRenderer = trinketRenderer,
             foreground = { StrictForeground.of(queryForegroundPackage(), HS_PACKAGE) },
             currentRotation = { displayInfoNow().rotationDeg },
             handler = Handler(ht.looper),
             mainHandler = mainHandler,
             // §8.2 visual probe is the production trigger (Spike B: no select connection signature).
-            gate = VisualProbeGate(),
-            forceOpen = { BuildConfig.DEBUG && tierForceOpen },   // debug-only manual override (bypasses the gate)
+            arbiter = com.bobassist.phase0.trinket.SelectWindowArbiter(),
             breadcrumb = { msg -> breadcrumb(msg) },
         )
         tierCoordinator = coordinator
@@ -546,6 +557,15 @@ class BobVpnService : VpnService() {
             TierTable.fromJson("""{"heroes":[]}""")
         }
 
+    private fun loadTrinketTable(): com.bobassist.phase0.trinket.TrinketTable =
+        runCatching {
+            com.bobassist.phase0.trinket.TrinketTable.fromJson(
+                assets.open(TRINKET_ASSET).bufferedReader().use { it.readText() })
+        }.getOrElse {
+            breadcrumb("tier: asset $TRINKET_ASSET missing/invalid -> empty trinket table (${it.message})")
+            com.bobassist.phase0.trinket.TrinketTable.fromJson("""{"trinkets":[]}""")
+        }
+
     private fun displayInfoNow(): MediaProjectionGrabber.DisplayInfo {
         // A Service is a non-visual Context, so Context.getDisplay()/currentWindowMetrics throw.
         // Resolve the default Display via DisplayManager, which works from any context.
@@ -591,8 +611,10 @@ class BobVpnService : VpnService() {
         const val EXTRA_RESULT_CODE = "tier_result_code"
         const val EXTRA_RESULT_DATA = "tier_result_data"
         private const val TIER_ASSET = "herotier_v1.json"
+        private const val TRINKET_ASSET = "trinkettier_v1.json"
         private const val BADGE_PX = 64
         private const val GAP_PX = 10
+        private const val HIGHLIGHT_INFLATE_PX = 12   // green ring sits just outside the trinket name
 
         @Volatile var liveSession: OverlaySession? = null
             internal set
