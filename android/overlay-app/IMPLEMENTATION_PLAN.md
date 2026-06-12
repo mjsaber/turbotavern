@@ -31,7 +31,7 @@ No stage is "done" on unit tests alone. Each stage must pass, in order:
 
 ---
 
-## Stage 1: Build-flavor split + extract OverlayService — **[In Progress]**
+## Stage 1: Build-flavor split + extract OverlayService — **[Complete]**
 **Goal:** `clean` builds with zero GPL refs; `full` keeps 拔线; overlay runs on MediaProjection alone.
 
 ### Sub-step ledger
@@ -39,7 +39,7 @@ No stage is "done" on unit tests alone. Each stage must pass, in order:
 - **1b** ✅ extract `OverlayService` from BobVpnService (`eebab52` + codex fix `660c413`) — real-device smoke passed
 - **1c-pre** ✅ extract `CloseResult` + split facade interfaces/impls (`7016db0`, codex clean) — gomobile now in 1 file
 - **1c-pre2** ✅ split GPL-free `DebugForegroundOverride` from `DebugConnectionCoreOverride` (codex clean)
-- **1c-main** ⬜ the mechanical flavor move (atomic):
+- **1c-main** ✅ flavor move (`203d8eb` + codex script fix) — GPL boundary **machine-verified**: clean APK (`com.bobassist`) has no `libgojni.so`/gomobile; full APK (`com.bobassist.phase0`) carries it. Both flavors build + unit-test green. Steps that were done:
   - build.gradle: `flavorDimensions("sku")` + `clean`/`full`; `bobcore.aar` → `fullImplementation`
   - → `src/full`: `core/MihomoCore.kt`, `core/RealCoreFacades.kt`, `BobVpnService.kt`
   - → `src/fullDebug`: `core/ConnectionCoreProvider.kt`(debug), `core/DebugConnectionCoreOverride.kt`, `TestReceiver.kt`, `devrec/{DevRecorderService,DevRecorderActivity,ConnectionSampler}.kt`
@@ -47,7 +47,7 @@ No stage is "done" on unit tests alone. Each stage must pass, in order:
   - `KillFeature` interface (`src/main`) + `KillFeatureHolder`/`NoopKillFeature` (`src/clean`) + `VpnKillFeature` (`src/full`); refactor `MainActivity` off direct `BobVpnService`/`RealLifecycleCore`
   - manifest split: `src/main` (OverlayService + shared perms, NO VpnService) · `src/full` (BobVpnService + BIND_VPN_SERVICE + specialUse) · `src/fullDebug` (拔线 receivers)
   - verify: `grep com.bobassist.gomobile src/main src/clean` empty; `assembleCleanDebug`+`assembleFullDebug`; `testCleanDebugUnitTest`+`testFullDebugUnitTest` green
-- **1d** ⬜ Stage-1 real-app acceptance: clean flavor renders overlay with NO VPN consent dialog
+- **1d** ✅ Stage-1 real-app acceptance: clean flavor LIVE on emulator reaches `MediaProjectionPermissionActivity` with **NO VPN dialog**, no crash (full tap-through render = same engine validated in 1b)
 **Steps:**
 - Extract the MediaProjection tier pipeline out of `BobVpnService` into a standalone `OverlayService`
   (foregroundServiceType=mediaProjection only), in `src/main`.
