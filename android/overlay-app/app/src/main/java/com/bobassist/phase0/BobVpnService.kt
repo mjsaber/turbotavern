@@ -6,12 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.graphics.PixelFormat
-import android.hardware.display.DisplayManager
-import android.hardware.display.VirtualDisplay
-import android.media.ImageReader
-import android.media.projection.MediaProjection
-import android.media.projection.MediaProjectionManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Handler
@@ -19,29 +13,13 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
-import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Display
-import android.view.WindowManager
 import com.bobassist.phase0.core.BattleCandidateCache
 import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.ConnectionCoreProvider
 import com.bobassist.phase0.core.RealLifecycleCore
 import com.bobassist.phase0.foreground.ForegroundDetector
 import com.bobassist.phase0.foreground.ForegroundQuery
-import com.bobassist.phase0.herotier.AndroidWindowHost
-import com.bobassist.phase0.herotier.Foreground
-import com.bobassist.phase0.herotier.HeroMatcher
-import com.bobassist.phase0.herotier.HeroTierCoordinator
-import com.bobassist.phase0.herotier.MediaProjectionGrabber
-import com.bobassist.phase0.herotier.MlKitHeroOcr
-import com.bobassist.phase0.herotier.OpacityCap
-import com.bobassist.phase0.herotier.OverlayBadgeRenderer
-import com.bobassist.phase0.herotier.PaddleHeroOcr
-import com.bobassist.phase0.herotier.StrictForeground
-import com.bobassist.phase0.herotier.TierOverlay
-import com.bobassist.phase0.herotier.TierTable
-import com.bobassist.phase0.herotier.VisualProbeGate
 import com.bobassist.phase0.overlay.OverlayPoller
 import com.bobassist.phase0.overlay.OverlayWindow
 import com.bobassist.phase0.session.OverlaySession
@@ -50,8 +28,9 @@ import com.bobassist.phase0.util.TraceSink
 import java.io.File
 
 /**
- * Phase 0 single foreground VpnService. Owns mihomo lifecycle and the TUN
- * file descriptor; nothing else.
+ * Phase 0 foreground VpnService — owns mihomo lifecycle, the TUN file descriptor, and the 拔线
+ * (battle-socket kill) overlay/poller. The read-only hero/trinket tier overlay lives in the separate
+ * [OverlayService] (no VPN, no GPL core), so this service is the `full`-SKU-only 拔线 half.
  *
  * VPN parameters mirror CMFA's TunService:
  *   TUN_GATEWAY        = 10.99.0.1
@@ -73,24 +52,6 @@ class BobVpnService : VpnService() {
     @Volatile private var overlayRunning = false   // idempotency guard (P1 #4)
     private val foregroundQuery by lazy { ForegroundQuery(this, HS_PACKAGE) }
 
-    // --- hero-tier overlay (additive; independent of the kill-button path above) ---
-    private var projection: MediaProjection? = null
-    private var virtualDisplay: VirtualDisplay? = null
-    private var imageReader: ImageReader? = null
-    private var tierThread: HandlerThread? = null
-    private var tierCoordinator: com.bobassist.phase0.trinket.SelectCoordinator? = null
-    private var captureW = 0
-    private var captureH = 0
-    // Stage 9.4 (post-Spike B) wires the real select-phase predicate. Until then the window is
-    // driven by this debug flag so the live capture->overlay path can be exercised on-device.
-    @Volatile private var tierForceOpen = false
-    private val projectionCallback = object : MediaProjection.Callback() {
-        override fun onStop() {
-            breadcrumb("tier: projection onStop")
-            mainHandler.post { disableTier() }
-        }
-    }
-
     override fun onBind(intent: Intent?): IBinder? = super.onBind(intent)
 
     override fun onCreate() {
@@ -106,16 +67,6 @@ class BobVpnService : VpnService() {
                 stopSelf()
                 return START_NOT_STICKY
             }
-            ACTION_ENABLE_TIER -> {
-                @Suppress("DEPRECATION")
-                val data = intent.getParcelableExtra<Intent>(EXTRA_RESULT_DATA)
-                val code = intent.getIntExtra(EXTRA_RESULT_CODE, 0)   // 0 == RESULT_CANCELED
-                enableTier(code, data)
-                return START_STICKY
-            }
-            ACTION_DISABLE_TIER -> { disableTier(); return START_STICKY }
-            ACTION_TIER_FORCE_OPEN -> { if (BuildConfig.DEBUG) tierForceOpen = true; return START_STICKY }
-            ACTION_TIER_FORCE_CLOSE -> { if (BuildConfig.DEBUG) tierForceOpen = false; return START_STICKY }
             else -> startForegroundNotification()
         }
         bringUp()
@@ -130,7 +81,6 @@ class BobVpnService : VpnService() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
         session?.handleConfigurationChanged()
-        onTierConfigChanged()
     }
 
     private fun bringUp() {
@@ -300,7 +250,6 @@ class BobVpnService : VpnService() {
     private fun queryForegroundPackage(): String? = foregroundQuery.queryForegroundPackage()
 
     private fun tearDown() {
-        disableTier(restoreForeground = false)   // service is stopping; don't re-post foreground
         liveSession = null
         overlayRunning = false
         session?.stop()
@@ -320,7 +269,7 @@ class BobVpnService : VpnService() {
         pfd = null
     }
 
-    private fun startForegroundNotification(withProjection: Boolean = false) {
+    private fun startForegroundNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getSystemService(NotificationManager::class.java).createNotificationChannel(
                 NotificationChannel(CHANNEL_ID, "Bob VPN", NotificationManager.IMPORTANCE_LOW)
@@ -341,199 +290,11 @@ class BobVpnService : VpnService() {
             .setOngoing(true)
             .build()
         if (Build.VERSION.SDK_INT >= 34) {
-            // The mediaProjection type can only be claimed once we hold consent (enableTier).
-            var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            if (withProjection) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            startForeground(NOTIF_ID, notif, type)
+            startForeground(NOTIF_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
             startForeground(NOTIF_ID, notif)
         }
-        breadcrumb("foreground notification posted (projection=$withProjection)")
-    }
-
-    /**
-     * Enable the hero-tier overlay: claim the mediaProjection FGS type, build the projection +
-     * VirtualDisplay/ImageReader, and start a [HeroTierCoordinator] on its own HandlerThread.
-     * Purely additive — the kill-button path and its handler are untouched.
-     */
-    private fun enableTier(resultCode: Int, data: Intent?) {
-        if (resultCode != -1 || data == null) {           // -1 == RESULT_OK
-            breadcrumb("tier: enable without consent; ignoring")
-            return
-        }
-        if (tierCoordinator != null) { breadcrumb("tier: already enabled"); return }
-        // Android 14+ ordering: claim the mediaProjection FGS type FIRST (allowed by the fresh consent
-        // appop), because getMediaProjection() then requires the service to already hold that type.
-        // Wrap the claim so a stale/again-consumed consent fails gracefully instead of crashing.
-        val claimed = runCatching { startForegroundNotification(withProjection = true) }
-            .onFailure { breadcrumb("tier: FGS mediaProjection claim failed: ${it.message}") }
-            .isSuccess
-        if (!claimed) { startForegroundNotification(withProjection = false); return }
-        val mpm = getSystemService(MediaProjectionManager::class.java)
-        val mp = runCatching { mpm.getMediaProjection(resultCode, data) }
-            .getOrElse { breadcrumb("tier: getMediaProjection threw: ${it.message}"); null }
-        if (mp == null) { disableTier(); return }          // disableTier restores the specialUse FGS type
-        mp.registerCallback(projectionCallback, mainHandler)
-        projection = mp
-        if (!startTierPipeline(mp)) disableTier()
-    }
-
-    /**
-     * Build (or rebuild) the VirtualDisplay + ImageReader + coordinator for the current display
-     * size, reusing the existing [projection] token. Returns false on failure (caller cleans up).
-     * Used by [enableTier] and by [onTierConfigChanged] (rotation/size change).
-     */
-    private fun startTierPipeline(mp: MediaProjection): Boolean {
-        val info = displayInfoNow()
-        captureW = info.width
-        captureH = info.height
-        val reader = ImageReader.newInstance(captureW, captureH, PixelFormat.RGBA_8888, 2)
-        imageReader = reader
-        val vd = runCatching {
-            mp.createVirtualDisplay(
-                "herotier", captureW, captureH, resources.displayMetrics.densityDpi,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, reader.surface, null, null,
-            )
-        }.getOrElse { breadcrumb("tier: createVirtualDisplay threw: ${it.message}"); null }
-        if (vd == null) {                                  // createVirtualDisplay can return null too
-            breadcrumb("tier: createVirtualDisplay returned null")
-            runCatching { reader.close() }
-            imageReader = null
-            return false
-        }
-        virtualDisplay = vd
-        startCoordinator(reader)
-        breadcrumb("tier: pipeline up (capture ${captureW}x$captureH)")
-        return true
-    }
-
-    /** Build + start the capture->ocr->match->render coordinator over [reader]. Reused across resizes. */
-    private fun startCoordinator(reader: ImageReader) {
-        val grabber = MediaProjectionGrabber(reader, captureW, captureH) { displayInfoNow() }
-        val overlay = TierOverlay(
-            AndroidWindowHost(getSystemService(WindowManager::class.java)), this,
-            opacityCap = { OpacityCap.of(this) },
-        )
-        val renderer = OverlayBadgeRenderer(overlay, BADGE_PX, GAP_PX)
-        // Trinket overlay shares the SAME capture + OCR (SelectCoordinator OCRs once per round and
-        // feeds both matchers); only the matcher/renderer differ. A SelectWindowArbiter mutually-
-        // excludes the two overlays so the hero and trinket badges never both show.
-        val trinketOverlay = com.bobassist.phase0.trinket.TrinketOverlay(
-            AndroidWindowHost(getSystemService(WindowManager::class.java)), this,
-            opacityCap = { OpacityCap.of(this) },
-        )
-        val trinketRenderer = com.bobassist.phase0.trinket.OverlayTrinketRenderer(
-            trinketOverlay, BADGE_PX, GAP_PX, HIGHLIGHT_INFLATE_PX,
-        )
-        val ht = HandlerThread("herotier").apply { start() }
-        tierThread = ht
-        val coordinator = com.bobassist.phase0.trinket.SelectCoordinator(
-            grabber = grabber,
-            ocr = PaddleHeroOcr.create(this) ?: MlKitHeroOcr(),   // PP-OCRv5 primary; ML Kit fallback if load fails
-            heroMatcher = HeroMatcher(loadTierTable()),
-            heroRenderer = renderer,
-            trinketMatcher = com.bobassist.phase0.trinket.TrinketMatcher(loadTrinketTable()),
-            trinketRenderer = trinketRenderer,
-            foreground = { StrictForeground.of(queryForegroundPackage(), HS_PACKAGE) },
-            currentRotation = { displayInfoNow().rotationDeg },
-            handler = Handler(ht.looper),
-            mainHandler = mainHandler,
-            // §8.2 visual probe is the production trigger (Spike B: no select connection signature).
-            arbiter = com.bobassist.phase0.trinket.SelectWindowArbiter(),
-            forceOpen = { BuildConfig.DEBUG && tierForceOpen },   // debug-only manual override (ACTION_TIER_FORCE_OPEN)
-            breadcrumb = { msg -> breadcrumb(msg) },
-        )
-        tierCoordinator = coordinator
-        coordinator.start()
-    }
-
-    /** Stop + drop the coordinator and its thread, keeping the projection + virtualDisplay alive. */
-    private fun stopCoordinator() {
-        tierCoordinator?.stop()
-        tierCoordinator = null
-        tierThread?.quitSafely()
-        tierThread = null
-    }
-
-    /**
-     * Rotation/size change. Android 14 forbids a SECOND MediaProjection#createVirtualDisplay on the
-     * same projection instance (it throws and kills capture), so we REUSE the existing VirtualDisplay:
-     * resize it and point it at a fresh ImageReader, then rebuild the coordinator around that reader.
-     */
-    private fun onTierConfigChanged() {
-        val vd = virtualDisplay ?: return
-        val info = displayInfoNow()
-        if (info.width == captureW && info.height == captureH) return   // no real size change
-        stopCoordinator()
-        val old = imageReader
-        val newW = info.width
-        val newH = info.height
-        val reader = ImageReader.newInstance(newW, newH, PixelFormat.RGBA_8888, 2)
-        // Transactional: only commit (swap reader, close old, restart) if resize+setSurface succeed.
-        val ok = runCatching {
-            vd.resize(newW, newH, resources.displayMetrics.densityDpi)
-            vd.surface = reader.surface
-        }.onFailure { breadcrumb("tier: vd resize failed: ${it.message}") }.isSuccess
-        if (!ok) {                                         // VD may still point at the old surface
-            runCatching { reader.close() }                 // drop the unused new reader; keep old intact
-            disableTier()
-            return
-        }
-        captureW = newW
-        captureH = newH
-        imageReader = reader
-        runCatching { old?.close() }
-        startCoordinator(reader)
-        breadcrumb("tier: resized to ${captureW}x$captureH")
-    }
-
-    /** Full teardown of the capture pipeline AND the VirtualDisplay (keeps the projection token). */
-    private fun releaseTierPipeline() {
-        stopCoordinator()
-        runCatching { virtualDisplay?.release() }
-        virtualDisplay = null
-        runCatching { imageReader?.close() }
-        imageReader = null
-    }
-
-    /**
-     * Fully disable the tier feature. [restoreForeground] re-claims the SPECIAL_USE-only FGS type
-     * (dropping MEDIA_PROJECTION) when the VPN service keeps running; tearDown passes false.
-     */
-    private fun disableTier(restoreForeground: Boolean = true) {
-        releaseTierPipeline()
-        runCatching { projection?.unregisterCallback(projectionCallback) }
-        runCatching { projection?.stop() }
-        projection = null
-        tierForceOpen = false
-        if (restoreForeground && coreRunning) startForegroundNotification(withProjection = false)
-        breadcrumb("tier: disabled")
-    }
-
-    private fun loadTierTable(): TierTable =
-        runCatching {
-            TierTable.fromJson(assets.open(TIER_ASSET).bufferedReader().use { it.readText() })
-        }.getOrElse {
-            breadcrumb("tier: asset $TIER_ASSET missing/invalid -> empty table (${it.message})")
-            TierTable.fromJson("""{"heroes":[]}""")
-        }
-
-    private fun loadTrinketTable(): com.bobassist.phase0.trinket.TrinketTable =
-        runCatching {
-            com.bobassist.phase0.trinket.TrinketTable.fromJson(
-                assets.open(TRINKET_ASSET).bufferedReader().use { it.readText() })
-        }.getOrElse {
-            breadcrumb("tier: asset $TRINKET_ASSET missing/invalid -> empty trinket table (${it.message})")
-            com.bobassist.phase0.trinket.TrinketTable.fromJson("""{"trinkets":[]}""")
-        }
-
-    private fun displayInfoNow(): MediaProjectionGrabber.DisplayInfo {
-        // A Service is a non-visual Context, so Context.getDisplay()/currentWindowMetrics throw.
-        // Resolve the default Display via DisplayManager, which works from any context.
-        val disp = getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY)
-        val m = DisplayMetrics()
-        @Suppress("DEPRECATION") disp.getRealMetrics(m)        // real (full-screen) pixels
-        return MediaProjectionGrabber.DisplayInfo(m.widthPixels, m.heightPixels, disp.rotation)
+        breadcrumb("foreground notification posted")
     }
 
     private fun breadcrumb(msg: String) {
@@ -559,23 +320,8 @@ class BobVpnService : VpnService() {
         // android/bobcore/PINNED-VERSIONS.md.
         private const val TUN_STACK = "gvisor"
 
-        private const val HS_PACKAGE = "com.blizzard.wtcg.hearthstone"
-
         const val ACTION_START = "com.bobassist.phase0.START"
         const val ACTION_STOP = "com.bobassist.phase0.STOP"
-
-        // hero-tier overlay
-        const val ACTION_ENABLE_TIER = "com.bobassist.phase0.ENABLE_TIER"
-        const val ACTION_DISABLE_TIER = "com.bobassist.phase0.DISABLE_TIER"
-        const val ACTION_TIER_FORCE_OPEN = "com.bobassist.phase0.TIER_FORCE_OPEN"   // debug: Stage 9
-        const val ACTION_TIER_FORCE_CLOSE = "com.bobassist.phase0.TIER_FORCE_CLOSE" // debug: Stage 9
-        const val EXTRA_RESULT_CODE = "tier_result_code"
-        const val EXTRA_RESULT_DATA = "tier_result_data"
-        private const val TIER_ASSET = "herotier_v1.json"
-        private const val TRINKET_ASSET = "trinkettier_v1.json"
-        private const val BADGE_PX = 64
-        private const val GAP_PX = 10
-        private const val HIGHLIGHT_INFLATE_PX = 12   // green ring sits just outside the trinket name
 
         @Volatile var liveSession: OverlaySession? = null
             internal set

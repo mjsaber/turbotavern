@@ -34,7 +34,7 @@
         <service
             android:name=".BobVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
-            android:foregroundServiceType="specialUse|mediaProjection"
+            android:foregroundServiceType="specialUse"
             android:exported="false">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
@@ -43,6 +43,11 @@
                 <action android:name="android.net.VpnService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".OverlayService"
+            android:foregroundServiceType="mediaProjection"
+            android:exported="false" />
 
     </application>
 </manifest>

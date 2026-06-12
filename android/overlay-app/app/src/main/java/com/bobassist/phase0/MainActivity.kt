@@ -157,6 +157,7 @@ class MainActivity : Activity() {
 
     private fun onStopClicked() {
         startService(Intent(this, BobVpnService::class.java).apply { action = BobVpnService.ACTION_STOP })
+        startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_STOP })
         statusView.text = "bobcore ${RealLifecycleCore.version()}\nstatus: stop requested"
     }
 
@@ -169,10 +170,10 @@ class MainActivity : Activity() {
         } else if (requestCode == REQ_PROJECTION) {
             if (resultCode == RESULT_OK && data != null) {
                 startForegroundService(
-                    Intent(this, BobVpnService::class.java).apply {
-                        action = BobVpnService.ACTION_ENABLE_TIER
-                        putExtra(BobVpnService.EXTRA_RESULT_CODE, resultCode)
-                        putExtra(BobVpnService.EXTRA_RESULT_DATA, data)
+                    Intent(this, OverlayService::class.java).apply {
+                        action = OverlayService.ACTION_ENABLE_TIER
+                        putExtra(OverlayService.EXTRA_RESULT_CODE, resultCode)
+                        putExtra(OverlayService.EXTRA_RESULT_DATA, data)
                     }
                 )
                 statusView.text = "${statusView.text}\ntier overlay enabling..."
