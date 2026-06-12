@@ -35,8 +35,8 @@ cmd_start() {
     if [[ "$rebuild" -eq 1 ]]; then
         echo "[start] Rebuild bobcore + APK"
         ( cd ../bobcore && ./build-aar.sh >/dev/null )
-        ./gradlew :app:assembleDebug -q >/dev/null
-        adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null
+        ./gradlew :app:assembleFullDebug -q >/dev/null
+        adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk >/dev/null
     fi
     echo "[start] Force-stop both apps"
     adb shell am force-stop "$BOB_PKG"

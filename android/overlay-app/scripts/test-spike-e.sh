@@ -46,8 +46,8 @@ REBUILD=0
 if [[ "$REBUILD" -eq 1 ]]; then
     echo "[1] Rebuild bobcore + APK"
     ( cd ../bobcore && ./build-aar.sh >/dev/null )
-    ./gradlew :app:assembleDebug -q >/dev/null
-    adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null
+    ./gradlew :app:assembleFullDebug -q >/dev/null
+    adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk >/dev/null
 fi
 
 echo "[2] Force-stop both apps, clear logcat"

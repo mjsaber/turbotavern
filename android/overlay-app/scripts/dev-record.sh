@@ -16,7 +16,7 @@ cd "$(dirname "$0")/.."
 case "${1:-}" in
   start)
     if [[ "${2:-}" == "--rebuild" ]]; then
-        ./gradlew :app:assembleDebug -q && adb $DEV install -r app/build/outputs/apk/debug/app-debug.apk
+        ./gradlew :app:assembleFullDebug -q && adb $DEV install -r app/build/outputs/apk/full/debug/app-full-debug.apk
     fi
     adb $DEV shell am start -n "$BOB/com.bobassist.phase0.devrec.DevRecorderActivity"
     echo "Tap 'Start Recording' + grant full-screen capture. Then play; tap MARK on screen (or: $0 mark)."

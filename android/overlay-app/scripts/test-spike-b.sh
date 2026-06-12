@@ -32,9 +32,9 @@ if [[ "$REBUILD" -eq 1 ]]; then
     echo "[1/8] Rebuild bobcore.aar"
     ( cd "$(dirname "$0")/../../bobcore" && ./build-aar.sh >/dev/null )
     echo "[2/8] Rebuild APK"
-    ( cd "$(dirname "$0")/.." && ./gradlew :app:assembleDebug -q >/dev/null )
+    ( cd "$(dirname "$0")/.." && ./gradlew :app:assembleFullDebug -q >/dev/null )
     echo "[3/8] Reinstall APK"
-    adb install -r "$(dirname "$0")/../app/build/outputs/apk/debug/app-debug.apk" >/dev/null
+    adb install -r "$(dirname "$0")/../app/build/outputs/apk/full/debug/app-full-debug.apk" >/dev/null
 fi
 
 echo "[4/8] Force-stop both apps + reset breadcrumb"

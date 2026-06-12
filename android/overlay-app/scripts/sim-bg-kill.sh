@@ -78,11 +78,11 @@ bootstrap_service() {
         # codex code-review round-2 P2: explicitly guard rebuild + install
         # so a build failure or device error aborts the scenario instead of
         # silently validating the previously-installed (stale) APK.
-        if ! ( cd "$APP_DIR" && ./gradlew :app:assembleDebug -q ) >/dev/null; then
+        if ! ( cd "$APP_DIR" && ./gradlew :app:assembleFullDebug -q ) >/dev/null; then
             echo "FATAL: assembleDebug failed" >&2
             return 1
         fi
-        if ! adb install -r "$APP_DIR/app/build/outputs/apk/debug/app-debug.apk" >/dev/null; then
+        if ! adb install -r "$APP_DIR/app/build/outputs/apk/full/debug/app-full-debug.apk" >/dev/null; then
             echo "FATAL: adb install failed" >&2
             return 1
         fi

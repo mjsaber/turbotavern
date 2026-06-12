@@ -48,8 +48,8 @@ adb -s "$EMU" shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
 echo "[emu] booted."
 
 # --- 3. install + grant overlay ---
-./gradlew :app:assembleDebug -q || fail "assembleDebug"
-adb -s "$EMU" install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null || fail "install"
+./gradlew :app:assembleFullDebug -q || fail "assembleDebug"
+adb -s "$EMU" install -r app/build/outputs/apk/full/debug/app-full-debug.apk >/dev/null || fail "install"
 adb -s "$EMU" shell appops set "$BOB" SYSTEM_ALERT_WINDOW allow >/dev/null 2>&1   # floating panel, no manual grant
 adb -s "$EMU" shell appops set "$BOB" GET_USAGE_STATS allow >/dev/null 2>&1        # foreground query (debug log)
 
