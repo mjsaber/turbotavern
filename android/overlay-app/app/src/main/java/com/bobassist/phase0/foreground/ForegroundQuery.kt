@@ -35,6 +35,15 @@ class ForegroundQuery(
         val fakeFg = ForegroundOverrideHolder.get().foregroundOverride()
         if (fakeFg != null) return if (fakeFg) hsPackage else "com.example.notbob"
 
+        // No trustworthy foreground signal without Usage Access. Never fall back to a stale sticky
+        // package: if the user revokes Usage Access mid-session, queryEvents() returns nothing and we
+        // would otherwise keep reporting the last HS sighting forever, letting the overlay capture over
+        // non-HS screens. Forget the sticky and report unknown. (codex 1a review, P2)
+        if (!hasUsageAccessPermission()) {
+            lastForegroundPkg = null
+            return null
+        }
+
         val usm = context.getSystemService(UsageStatsManager::class.java) ?: return lastForegroundPkg
         val end = now()
         // queryEvents can return null when the user is locked (R+) — keep the last known package.
