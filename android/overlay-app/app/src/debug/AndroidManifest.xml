@@ -1,20 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- debug (both flavors): only the GPL-free OCR probe. 拔线 dev tooling lives in src/fullDebug. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-        <!--
-          Debug-only IPC for test-spike-c.sh. NOT in src/main/ so it never
-          compiles into release builds. exported=true is intentional but
-          guarded by android:enabled=true and only in debug variant.
-        -->
-        <receiver
-            android:name=".TestReceiver"
-            android:exported="true"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="com.bobassist.phase0.TEST" />
-            </intent-filter>
-        </receiver>
-
         <!-- Spike-A OCR probe (debug-only). Trigger: am broadcast -a com.bobassist.phase0.OCR_PROBE -->
         <receiver
             android:name="com.bobassist.phase0.herotier.debug.OcrProbeReceiver"
@@ -24,15 +11,5 @@
                 <action android:name="com.bobassist.phase0.OCR_PROBE" />
             </intent-filter>
         </receiver>
-
-        <!-- DevRecorder (debug-only): session recorder with on-screen MARK button + screenshots. -->
-        <activity
-            android:name="com.bobassist.phase0.devrec.DevRecorderActivity"
-            android:exported="true"
-            android:label="DevRecorder" />
-        <service
-            android:name="com.bobassist.phase0.devrec.DevRecorderService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
     </application>
 </manifest>

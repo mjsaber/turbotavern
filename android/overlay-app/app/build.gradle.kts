@@ -22,6 +22,18 @@ android {
         }
     }
 
+    flavorDimensions += "sku"
+    productFlavors {
+        create("clean") {
+            dimension = "sku"
+            applicationId = "com.bobassist"            // clean Play SKU — no VPN, no GPL core
+        }
+        create("full") {
+            dimension = "sku"
+            applicationId = "com.bobassist.phase0"      // full sideload SKU — 拔线 + GPL; keeps the existing id
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -48,7 +60,7 @@ android {
 }
 
 dependencies {
-    implementation(files("libs/bobcore.aar"))
+    "fullImplementation"(files("libs/bobcore.aar"))
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.22.0")

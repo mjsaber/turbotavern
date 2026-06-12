@@ -31,8 +31,23 @@ No stage is "done" on unit tests alone. Each stage must pass, in order:
 
 ---
 
-## Stage 1: Build-flavor split + extract OverlayService — **[Not Started]**
+## Stage 1: Build-flavor split + extract OverlayService — **[In Progress]**
 **Goal:** `clean` builds with zero GPL refs; `full` keeps 拔线; overlay runs on MediaProjection alone.
+
+### Sub-step ledger
+- **1a** ✅ extract shared `ForegroundQuery` (`017b334` + codex fix `78909c0`)
+- **1b** ✅ extract `OverlayService` from BobVpnService (`eebab52` + codex fix `660c413`) — real-device smoke passed
+- **1c-pre** ✅ extract `CloseResult` + split facade interfaces/impls (`7016db0`, codex clean) — gomobile now in 1 file
+- **1c-pre2** ✅ split GPL-free `DebugForegroundOverride` from `DebugConnectionCoreOverride` (codex clean)
+- **1c-main** ⬜ the mechanical flavor move (atomic):
+  - build.gradle: `flavorDimensions("sku")` + `clean`/`full`; `bobcore.aar` → `fullImplementation`
+  - → `src/full`: `core/MihomoCore.kt`, `core/RealCoreFacades.kt`, `BobVpnService.kt`
+  - → `src/fullDebug`: `core/ConnectionCoreProvider.kt`(debug), `core/DebugConnectionCoreOverride.kt`, `TestReceiver.kt`, `devrec/{DevRecorderService,DevRecorderActivity,ConnectionSampler}.kt`
+  - → `src/fullRelease`: `core/ConnectionCoreProvider.kt`(release)
+  - `KillFeature` interface (`src/main`) + `KillFeatureHolder`/`NoopKillFeature` (`src/clean`) + `VpnKillFeature` (`src/full`); refactor `MainActivity` off direct `BobVpnService`/`RealLifecycleCore`
+  - manifest split: `src/main` (OverlayService + shared perms, NO VpnService) · `src/full` (BobVpnService + BIND_VPN_SERVICE + specialUse) · `src/fullDebug` (拔线 receivers)
+  - verify: `grep com.bobassist.gomobile src/main src/clean` empty; `assembleCleanDebug`+`assembleFullDebug`; `testCleanDebugUnitTest`+`testFullDebugUnitTest` green
+- **1d** ⬜ Stage-1 real-app acceptance: clean flavor renders overlay with NO VPN consent dialog
 **Steps:**
 - Extract the MediaProjection tier pipeline out of `BobVpnService` into a standalone `OverlayService`
   (foregroundServiceType=mediaProjection only), in `src/main`.

@@ -5,7 +5,6 @@ import android.app.AppOpsManager
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
-import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -16,7 +15,6 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.bobassist.phase0.BuildConfig
-import com.bobassist.phase0.core.RealLifecycleCore
 
 /**
  * Phase 0 verifier UI: two buttons (Start/Stop VPN). Spike B verifies HS
@@ -28,10 +26,11 @@ class MainActivity : Activity() {
     private lateinit var startBtn: Button
     private lateinit var grantOverlayBtn: Button
     private lateinit var grantUsageBtn: Button
+    private val kill = KillFeatureHolder.get()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i(TAG, "Bobcore.version() = ${RealLifecycleCore.version()}")
+        Log.i(TAG, "kill feature: ${kill.statusLabel()}")
         actionBar?.hide()                       // drop the "Bob Phase 0" title bar (it overlapped content on Android 15 edge-to-edge)
         val root = buildLayout()
         setContentView(root)
@@ -48,7 +47,7 @@ class MainActivity : Activity() {
 
     private fun buildLayout(): View {
         statusView = TextView(this).apply {
-            text = "bobcore ${RealLifecycleCore.version()}\nstatus: idle"
+            text = "${kill.statusLabel()}\nstatus: idle"
             textSize = 16f
             setPadding(40, 20, 40, 20)
         }
@@ -113,7 +112,7 @@ class MainActivity : Activity() {
         grantOverlayBtn.visibility = if (canOverlay) View.GONE else View.VISIBLE
         grantUsageBtn.visibility = if (canUsage) View.GONE else View.VISIBLE
         startBtn.isEnabled = canOverlay  // usage-access is OPTIONAL — does not gate Start
-        val statusLines = mutableListOf("bobcore ${RealLifecycleCore.version()}")
+        val statusLines = mutableListOf(kill.statusLabel())
         if (!canOverlay) statusLines += "Overlay permission required to start."
         if (!canUsage) statusLines += "Usage access NOT granted — overlay will stay visible even when HS is closed."
         statusView.text = statusLines.joinToString("\n")
@@ -137,15 +136,15 @@ class MainActivity : Activity() {
             statusView.text = "${statusView.text}\nOverlay permission required."
             return
         }
-        if (BobVpnService.liveSession != null) {     // VPN already running -> go straight to tier
+        if (kill.isRunning()) {                      // kill/VPN already running -> go straight to tier
             requestProjection(); return
         }
-        val prepare = VpnService.prepare(this)
-        if (prepare != null) {
-            startActivityForResult(prepare, REQ_VPN_AUTHORIZE)   // -> on OK: launchService() + requestProjection()
+        val consent = kill.prepareConsent(this)
+        if (consent != null) {
+            startActivityForResult(consent, REQ_VPN_AUTHORIZE)   // -> on OK: kill.start() + requestProjection()
             statusView.text = "${statusView.text}\nasking VPN authorization..."
         } else {
-            launchService(); requestProjection()
+            kill.start(this); requestProjection()    // clean flavor: start() is a no-op -> straight to overlay
         }
     }
 
@@ -156,16 +155,16 @@ class MainActivity : Activity() {
     }
 
     private fun onStopClicked() {
-        startService(Intent(this, BobVpnService::class.java).apply { action = BobVpnService.ACTION_STOP })
+        kill.stop(this)
         startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_STOP })
-        statusView.text = "bobcore ${RealLifecycleCore.version()}\nstatus: stop requested"
+        statusView.text = "${kill.statusLabel()}\nstatus: stop requested"
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_VPN_AUTHORIZE) {
-            if (resultCode == RESULT_OK) { launchService(); requestProjection() }   // chain into tier
+            if (resultCode == RESULT_OK) { kill.start(this); requestProjection() }   // chain into tier
             else statusView.text = "${statusView.text}\nVPN denied"
         } else if (requestCode == REQ_PROJECTION) {
             if (resultCode == RESULT_OK && data != null) {
@@ -181,11 +180,6 @@ class MainActivity : Activity() {
                 statusView.text = "${statusView.text}\nscreen capture denied"
             }
         }
-    }
-
-    private fun launchService() {
-        startForegroundService(Intent(this, BobVpnService::class.java).apply { action = BobVpnService.ACTION_START })
-        statusView.text = "bobcore ${RealLifecycleCore.version()}\nstatus: service started"
     }
 
     companion object {

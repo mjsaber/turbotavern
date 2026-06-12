@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- fullDebug: 拔线 dev/test tooling (moved out of src/debug so cleanDebug stays GPL-free). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!--
+          Debug-only IPC for test-spike-c.sh / sim scripts. exported=true is intentional,
+          guarded by android:enabled and only present in the fullDebug variant.
+        -->
+        <receiver
+            android:name=".TestReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="com.bobassist.phase0.TEST" />
+            </intent-filter>
+        </receiver>
+
+        <!-- DevRecorder (debug-only): session recorder with on-screen MARK button + screenshots. -->
+        <activity
+            android:name="com.bobassist.phase0.devrec.DevRecorderActivity"
+            android:exported="true"
+            android:label="DevRecorder" />
+        <service
+            android:name="com.bobassist.phase0.devrec.DevRecorderService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+    </application>
+</manifest>
