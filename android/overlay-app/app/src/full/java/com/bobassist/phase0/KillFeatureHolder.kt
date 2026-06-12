@@ -11,7 +11,7 @@ object KillFeatureHolder {
 }
 
 object VpnKillFeature : KillFeature {
-    override fun statusLabel() = "bobcore ${RealLifecycleCore.version()}"
+    override fun statusLabel() = "Turbo Tavern · bobcore ${RealLifecycleCore.version()}"
     override fun isRunning() = BobVpnService.liveSession != null
     override fun prepareConsent(context: Context): Intent? = VpnService.prepare(context)
     override fun start(context: Context) {

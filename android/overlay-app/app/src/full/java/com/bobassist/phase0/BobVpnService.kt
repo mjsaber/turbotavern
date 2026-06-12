@@ -272,7 +272,7 @@ class BobVpnService : VpnService() {
     private fun startForegroundNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getSystemService(NotificationManager::class.java).createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "Bob VPN", NotificationManager.IMPORTANCE_LOW)
+                NotificationChannel(CHANNEL_ID, "Turbo Tavern", NotificationManager.IMPORTANCE_LOW)
             )
         }
         val tapIntent = Intent(this, MainActivity::class.java)
@@ -283,7 +283,7 @@ class BobVpnService : VpnService() {
         )
 
         val notif: Notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Bob Assistant (Phase 0)")
+            .setContentTitle("Turbo Tavern")
             .setContentText("Hearthstone traffic routed through TUN")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(tapPI)

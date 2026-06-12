@@ -9,7 +9,7 @@ object KillFeatureHolder {
 }
 
 object NoopKillFeature : KillFeature {
-    override fun statusLabel() = "Bob Assistant"
+    override fun statusLabel() = "Turbo Tavern"
     override fun isRunning() = false
     override fun prepareConsent(context: Context): Intent? = null
     override fun start(context: Context) {}

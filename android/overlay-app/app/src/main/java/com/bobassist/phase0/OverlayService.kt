@@ -123,7 +123,7 @@ class OverlayService : Service() {
     private fun startForegroundNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getSystemService(NotificationManager::class.java).createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "Bob Overlay", NotificationManager.IMPORTANCE_LOW)
+                NotificationChannel(CHANNEL_ID, "Turbo Tavern", NotificationManager.IMPORTANCE_LOW)
             )
         }
         val tapPI = PendingIntent.getActivity(
@@ -132,7 +132,7 @@ class OverlayService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notif: Notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Bob Assistant")
+            .setContentTitle("Turbo Tavern")
             .setContentText("Tier overlay active")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(tapPI)
