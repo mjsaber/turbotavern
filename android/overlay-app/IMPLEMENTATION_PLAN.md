@@ -58,9 +58,13 @@ No stage is "done" on unit tests alone. Each stage must pass, in order:
 **Success Criteria:** `grep com.bobassist.gomobile src/main src/clean` → empty; both flavors assemble; full
 unit suite green; `clean` shows the overlay with NO VPN consent dialog.
 
-## Stage 2: Licensing hygiene — **[Not Started]**
-- `full`: bundle GPL-3.0 LICENSE + mihomo NOTICE (incl. name clause); About screen with Corresponding-Source URL.
-- `clean`: proprietary EULA; verify no GPL artifacts in the assembled APK.
+## Stage 2: Licensing hygiene — **[Complete]** (`7a94c00` + codex guard fix `a3261b0`)
+- `full`: bundles `assets/licenses/GPL-3.0.txt` (canonical) + `NOTICE.txt` (mihomo attribution, name clause, source offer). ✅
+- `clean`: bundles `assets/licenses/EULA.txt` (proprietary; zero-GPL statement + Blizzard disclaimer). ✅
+- `AboutActivity` (src/main) renders the flavor's bundled licenses in-app; reachable from MainActivity. ✅
+- Gradle guard fails `assembleFullRelease` while NOTICE has the `REPLACE-ME` source URL (verified). ✅
+- Verified APKs: clean = EULA only + no GPL/libgojni; full = GPL-3.0 + NOTICE + libgojni. ✅
+- **OPEN (blocks full distribution):** set the real GPL Corresponding-Source repo URL in NOTICE.txt.
 
 ## Stage 3: De-prototype + release hygiene — **[Not Started]**
 - Finalize applicationIds; real versionName/versionCode scheme; app label + adaptive icon + theme.
