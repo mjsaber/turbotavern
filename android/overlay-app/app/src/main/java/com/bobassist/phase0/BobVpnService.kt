@@ -1,12 +1,9 @@
 package com.bobassist.phase0
 
-import android.app.AppOpsManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.usage.UsageEvents
-import android.app.usage.UsageStatsManager
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
@@ -29,9 +26,9 @@ import android.view.WindowManager
 import com.bobassist.phase0.core.BattleCandidateCache
 import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.ConnectionCoreProvider
-import com.bobassist.phase0.core.ForegroundOverrideHolder
 import com.bobassist.phase0.core.RealLifecycleCore
 import com.bobassist.phase0.foreground.ForegroundDetector
+import com.bobassist.phase0.foreground.ForegroundQuery
 import com.bobassist.phase0.herotier.AndroidWindowHost
 import com.bobassist.phase0.herotier.Foreground
 import com.bobassist.phase0.herotier.HeroMatcher
@@ -74,6 +71,7 @@ class BobVpnService : VpnService() {
     private var pollHandler: Handler? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     @Volatile private var overlayRunning = false   // idempotency guard (P1 #4)
+    private val foregroundQuery by lazy { ForegroundQuery(this, HS_PACKAGE) }
 
     // --- hero-tier overlay (additive; independent of the kill-button path above) ---
     private var projection: MediaProjection? = null
@@ -296,57 +294,10 @@ class BobVpnService : VpnService() {
         breadcrumb("session started")             // ALSO emit new wording
     }
 
-    private fun hasUsageAccessPermission(): Boolean {
-        val appOps = getSystemService(AppOpsManager::class.java) ?: return false
-        val mode = appOps.unsafeCheckOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            applicationInfo.uid,
-            packageName,
-        )
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
+    private fun hasUsageAccessPermission(): Boolean = foregroundQuery.hasUsageAccessPermission()
 
-    /**
-     * Queries UsageStatsManager for the latest ACTIVITY_RESUMED event in the
-     * last 60 s. Returns the foreground package name, or null if the query
-     * returned an empty/null events stream — interpreted by the detector as
-     * "no recent events, keep previous state". Does NOT inspect permission
-     * state; the caller (detectorTick) decides between tick() vs reset()
-     * based on hasUsageAccessPermission(). See codex P1 #2 and round-1 P2 #5.
-     */
-    private fun queryForegroundPackage(): String? {
-        // Variant-routed override (debug builds may inject a fake foreground state).
-        // Release builds resolve to NoOpForegroundOverride which always returns null.
-        // No BuildConfig.DEBUG gate needed — the holder is selected per variant.
-        val fakeFg = ForegroundOverrideHolder.get().foregroundOverride()
-        if (fakeFg != null) return if (fakeFg) HS_PACKAGE else "com.example.notbob"
-
-        val usm = getSystemService(UsageStatsManager::class.java) ?: return lastForegroundPkg
-        val now = System.currentTimeMillis()
-        // queryEvents can return null when the user is locked (R+) — keep the last known package.
-        val events = runCatching { usm.queryEvents(now - 60_000L, now) }
-            .getOrNull() ?: return lastForegroundPkg
-        var latestTs = 0L
-        var latestPkg: String? = null
-        val ev = UsageEvents.Event()
-        while (events.hasNextEvent()) {
-            events.getNextEvent(ev)
-            if (ev.eventType == UsageEvents.Event.ACTIVITY_RESUMED && ev.timeStamp >= latestTs) {
-                latestTs = ev.timeStamp
-                latestPkg = ev.packageName
-            }
-        }
-        // STICKY: the foreground package only changes on a RESUMED event; an EMPTY 60s window means no
-        // app switch happened, i.e. we are STILL on the last-seen package — not "unknown". Without this,
-        // a long uninterrupted Hearthstone session (an entire BG match — exactly when the hero/trinket
-        // select screens appear) yields no events, the strict capture gate reads UNKNOWN, and the
-        // overlay never renders. Update the sticky value only when a real transition is observed.
-        if (latestPkg != null) lastForegroundPkg = latestPkg
-        return lastForegroundPkg
-    }
-
-    /** Last package seen ACTIVITY_RESUMED — sticky across empty query windows (see queryForegroundPackage). */
-    @Volatile private var lastForegroundPkg: String? = null
+    /** Foreground-app lookup for the 拔线 detector — delegates to the shared [ForegroundQuery]. */
+    private fun queryForegroundPackage(): String? = foregroundQuery.queryForegroundPackage()
 
     private fun tearDown() {
         disableTier(restoreForeground = false)   // service is stopping; don't re-post foreground
