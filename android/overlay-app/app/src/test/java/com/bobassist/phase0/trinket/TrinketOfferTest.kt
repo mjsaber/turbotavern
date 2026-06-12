@@ -13,6 +13,8 @@ class TrinketOfferTest {
           {"cardId":"L2","trinketClass":"lesser","tier":"B","avgPlacement":4.1,"names":{"enUS":"Goblin Wallet"}},
           {"cardId":"L_SHARED","trinketClass":"lesser","tier":"A","avgPlacement":3.9,"names":{"enUS":"Mystic Charm"}},
           {"cardId":"G_SHARED","trinketClass":"greater","tier":"C","avgPlacement":5.4,"names":{"enUS":"Mystic Charm"}},
+          {"cardId":"L_COIL","trinketClass":"lesser","tier":"B","avgPlacement":4.2,"names":{"enUS":"Copper Coil"}},
+          {"cardId":"G_COIL","trinketClass":"greater","tier":"A","avgPlacement":4.6,"names":{"enUS":"Copper Coil"}},
           {"cardId":"G1","trinketClass":"greater","tier":"S","avgPlacement":4.0,"names":{"enUS":"Grand Trove"}}
         ]}
     """.trimIndent()
@@ -36,6 +38,26 @@ class TrinketOfferTest {
     @Test fun matchCountCountsTrinketDictionaryHits() {
         assertEquals(2, TrinketOffer.matchCount(matcher, listOf(ln("Welcome Inn"), ln("Goblin Wallet"))))
         assertEquals(0, TrinketOffer.matchCount(matcher, listOf(ln("Choose a Trinket"), ln("Refresh"))))
+    }
+
+    @Test fun mostlySharedOfferStillResolvesAllViaCountInference() {
+        // 1 unique lesser + 2 shared names. asLesser resolves all 3; asGreater only the 2 shared.
+        // The strictly-larger lesser count wins, so every offered trinket gets a recommendation.
+        val recs = TrinketOffer.resolve(matcher, listOf(ln("Welcome Inn"), ln("Mystic Charm"), ln("Copper Coil")))
+        assertEquals(setOf("L1", "L_SHARED", "L_COIL"), recs.map { it.match.entry.cardId }.toSet())
+    }
+
+    @Test fun allSharedOfferReturnsNothing_safeRatherThanGuessingClass() {
+        // Every name exists in BOTH classes (Mystic Charm + Copper Coil). The class is undeterminable
+        // from names alone, and lesser vs greater differ in tier/avg — so guessing would risk a WRONG
+        // badge. resolve() must return empty (a missing badge beats a wrong one).
+        val recs = TrinketOffer.resolve(matcher, listOf(ln("Mystic Charm"), ln("Copper Coil")))
+        assertEquals(emptyList<TrinketRecommendation>(), recs)
+    }
+
+    @Test fun matchCountGateSignalCountsMostlySharedOffer() {
+        // gate must still fire on a mostly-shared trinket screen (it IS a trinket screen)
+        assertEquals(3, TrinketOffer.matchCount(matcher, listOf(ln("Welcome Inn"), ln("Mystic Charm"), ln("Copper Coil"))))
     }
 
     @Test fun emptyOfferEmptyRecs() {

@@ -30,6 +30,7 @@ class SelectCoordinator(
     private val handler: Handler,
     private val mainHandler: Handler,
     private val arbiter: SelectWindowArbiter = SelectWindowArbiter(),
+    private val forceOpen: () -> Boolean = { false },   // debug: bypass the gate to show the overlay during tuning
     private val probeMs: Long = 2000,
     private val captureIntervalMs: Long = 700,
     private val maxAttempts: Int = 8,
@@ -39,6 +40,7 @@ class SelectCoordinator(
     @Volatile private var started = false
     @Volatile private var active: SelectWindow = SelectWindow.NONE
     private var attempts = 0
+    private var wasForced = false
     private var loggedInert = false
 
     private val tick = object : Runnable {
@@ -94,7 +96,23 @@ class SelectCoordinator(
         val trinketRecs = runCatching { TrinketOffer.resolve(trinketMatcher, lines) }.getOrElse { emptyList() }
 
         val prev = active
-        val now = arbiter.onProbe(heroMatches = heroBadges.size, trinketMatches = trinketRecs.size)
+        val fo = forceOpen()
+        val now = when {
+            fo -> {                                     // debug force-open: bypass the gate, hero takes priority
+                wasForced = true
+                when {
+                    heroBadges.isNotEmpty() -> SelectWindow.HERO
+                    trinketRecs.isNotEmpty() -> SelectWindow.TRINKET
+                    else -> SelectWindow.NONE
+                }
+            }
+            wasForced -> {                              // falling edge of force-open: reset the gate + close
+                wasForced = false
+                arbiter.forceClose()
+                SelectWindow.NONE
+            }
+            else -> arbiter.onProbe(heroMatches = heroBadges.size, trinketMatches = trinketRecs.size)
+        }
         active = now
         if (com.bobassist.phase0.BuildConfig.DEBUG)
             breadcrumb("select: ocr=${lines.size} hero=${heroBadges.size} trinket=${trinketRecs.size} window=$now")

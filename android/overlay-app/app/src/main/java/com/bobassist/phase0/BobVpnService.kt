@@ -489,6 +489,7 @@ class BobVpnService : VpnService() {
             mainHandler = mainHandler,
             // §8.2 visual probe is the production trigger (Spike B: no select connection signature).
             arbiter = com.bobassist.phase0.trinket.SelectWindowArbiter(),
+            forceOpen = { BuildConfig.DEBUG && tierForceOpen },   // debug-only manual override (ACTION_TIER_FORCE_OPEN)
             breadcrumb = { msg -> breadcrumb(msg) },
         )
         tierCoordinator = coordinator

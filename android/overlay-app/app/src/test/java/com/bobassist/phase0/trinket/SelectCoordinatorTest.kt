@@ -71,6 +71,7 @@ class SelectCoordinatorTest {
 
     private var fg = Foreground.TRUE
     private var rotation = 0
+    private var forceOpenFlag = false
 
     @Before fun setUp() { ht = HandlerThread("select-test").apply { start() }; handler = Handler(ht.looper) }
     @After fun tearDown() { ht.quitSafely() }
@@ -83,6 +84,7 @@ class SelectCoordinatorTest {
             foreground = { fg }, currentRotation = { rotation },
             handler = handler, mainHandler = mainHandler,
             arbiter = SelectWindowArbiter(),
+            forceOpen = { forceOpenFlag },
             probeMs = 100, captureIntervalMs = 50, maxAttempts = 3, maxWindowMs = 10_000,
         )
 
@@ -143,6 +145,20 @@ class SelectCoordinatorTest {
         assertTrue(g.n >= 1)
         assertEquals("stale-rotation hero frame not rendered", 0, hr.renderCount)
         rotation = 0
+    }
+
+    @Test fun forceOpenBypassesGateAndClosesOnFallingEdge() {
+        // a single-trinket frame is BELOW the gate's openMatches=2, so it would never open normally;
+        // force-open shows it anyway (on-device tuning). The falling edge then closes it.
+        val g = SGrabber(); val hr = FakeHeroRenderer(); val tr = FakeTrinkRenderer()
+        forceOpenFlag = true
+        val singleTrinket = listOf(l("Welcome Inn", 0))
+        coord(g, SOcr(listOf(singleTrinket)), hr, tr).start()
+        repeat(8) { drain(50) }
+        assertTrue("forced open rendered the 1-match trinket", tr.renderCount >= 1)
+        forceOpenFlag = false
+        repeat(4) { drain(50) }
+        assertTrue("falling edge closed the forced window", tr.clearCount >= 1)
     }
 
     @Test fun projectionStopAndStopClose() {
