@@ -93,11 +93,18 @@ class OverlayService : Service() {
                 val code = intent.getIntExtra(EXTRA_RESULT_CODE, 0)   // 0 == RESULT_CANCELED
                 enableTier(code, data)
             }
-            ACTION_DISABLE_TIER, ACTION_STOP -> { disableTier(); return START_NOT_STICKY }
+            ACTION_DISABLE_TIER, ACTION_STOP -> disableTier()
             ACTION_TIER_FORCE_OPEN -> { if (BuildConfig.DEBUG) tierForceOpen = true }
             ACTION_TIER_FORCE_CLOSE -> { if (BuildConfig.DEBUG) tierForceOpen = false }
+            else -> {
+                // Sticky restart (null intent) or an unknown action: MediaProjection consent is one-shot,
+                // so a killed-and-restarted overlay cannot rebuild capture. Stop rather than linger as a
+                // zombie foreground service with no projection. (codex 1b P2)
+                if (tierCoordinator == null) { breadcrumb("overlay: restart without projection; stopping"); stopSelf() }
+            }
         }
-        return START_STICKY
+        // Never auto-restart: MediaProjection consent cannot be recovered after process death.
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
