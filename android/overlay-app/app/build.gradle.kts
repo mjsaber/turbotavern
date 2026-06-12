@@ -26,7 +26,7 @@ android {
     productFlavors {
         create("clean") {
             dimension = "sku"
-            applicationId = "com.bobassist"            // clean Play SKU — no VPN, no GPL core
+            applicationId = "com.turbotavern"          // clean Play SKU — no VPN, no GPL core
         }
         create("full") {
             dimension = "sku"
