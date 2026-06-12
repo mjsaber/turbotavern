@@ -30,6 +30,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="Licenses" />
+
         <service
             android:name=".OverlayService"
             android:foregroundServiceType="mediaProjection"

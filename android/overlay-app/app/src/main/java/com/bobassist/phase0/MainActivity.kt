@@ -77,6 +77,10 @@ class MainActivity : Activity() {
                 startActivity(intent)
             }
         }
+        val aboutBtn = Button(this).apply {
+            text = "About / Licenses"
+            setOnClickListener { startActivity(Intent(this@MainActivity, AboutActivity::class.java)) }
+        }
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(40, 80, 40, 40)
@@ -85,6 +89,7 @@ class MainActivity : Activity() {
             addView(stopBtn)
             addView(grantOverlayBtn)
             addView(grantUsageBtn)
+            addView(aboutBtn)
         }
     }
 

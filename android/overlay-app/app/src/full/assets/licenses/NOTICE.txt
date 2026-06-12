@@ -1,0 +1,40 @@
+Turbo Tavern — full (sideload) build
+=====================================
+
+This build of Turbo Tavern is free software, licensed under the GNU General
+Public License version 3 (GPL-3.0). The full license text is in GPL-3.0.txt.
+
+It bundles and links the following GPL-3.0 component, which makes this entire
+build a derivative work distributed under GPL-3.0:
+
+  mihomo (formerly Clash.Meta)
+  Copyright (C) MetaCubeX and contributors
+  https://github.com/MetaCubeX/mihomo
+  License: GPL-3.0
+  Pinned version: v1.19.25 (see android/bobcore/PINNED-VERSIONS.md)
+
+  "mihomo" is the name of the upstream project. Turbo Tavern is NOT affiliated
+  with, endorsed by, or sponsored by MetaCubeX, and does not use the "mihomo"
+  name to identify itself.
+
+CORRESPONDING SOURCE
+--------------------
+The complete Corresponding Source for this build — Turbo Tavern's own source
+plus the exact mihomo version linked — is published under GPL-3.0 at:
+
+  >>> SET BEFORE DISTRIBUTION <<<  https://github.com/REPLACE-ME/turbo-tavern
+
+  A matching git tag is published for every released APK. Do not distribute a
+  full-build APK until this URL hosts the matching source.
+
+OTHER COMPONENTS (permissively licensed — not GPL)
+--------------------------------------------------
+  - Google ML Kit Text Recognition .............. Google ML Kit Terms of Service
+  - ONNX Runtime ................................ MIT
+  - PaddleOCR PP-OCRv5 models ................... Apache-2.0
+
+HEARTHSTONE
+-----------
+Turbo Tavern is an unofficial, fan-made overlay assistant. It is not affiliated
+with, endorsed by, or sponsored by Blizzard Entertainment, Inc. Hearthstone is a
+trademark of Blizzard Entertainment, Inc.
