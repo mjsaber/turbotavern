@@ -2,7 +2,7 @@ package com.bobassist.phase0.integration
 
 import android.os.Build
 import android.os.Looper
-import com.bobassist.phase0.core.MihomoCore
+import com.bobassist.phase0.core.CloseResult
 import com.bobassist.phase0.overlay.OverlayState
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -44,7 +44,7 @@ class OverlaySessionCooldownTest {
 
     private fun driveToReadyAndKill() {
         factory.fakeConn.snapshotJson = oneCandidateJson(id = "c1")
-        factory.fakeConn.closeResults["c1"] = MihomoCore.CloseResult.Success
+        factory.fakeConn.closeResults["c1"] = CloseResult.Success
         factory.session.start()
         drainBoth()
         shadowOf(factory.pollThread.looper).idleFor(1_000, TimeUnit.MILLISECONDS)
@@ -79,7 +79,7 @@ class OverlaySessionCooldownTest {
         // proxies: (a) state must stay Cooldown across multiple 800ms poll cadences, and
         // (b) no new applyState calls happen on the main looper.
         factory.fakeConn.snapshotJson = oneCandidateJson("c1")
-        factory.fakeConn.closeResults["c1"] = MihomoCore.CloseResult.Success
+        factory.fakeConn.closeResults["c1"] = CloseResult.Success
         factory.session.start()
         drainBoth()
         shadowOf(factory.pollThread.looper).idleFor(1_000, TimeUnit.MILLISECONDS)

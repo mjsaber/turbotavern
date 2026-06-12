@@ -22,7 +22,7 @@ class BattleConnectionControllerTest {
             snapshot = { ONE_CANDIDATE_JSON },
             close = { id ->
                 closedId = id
-                MihomoCore.CloseResult.Success
+                CloseResult.Success
             },
         )
         val r = ctrl.killBattleSocket()
@@ -38,7 +38,7 @@ class BattleConnectionControllerTest {
             snapshot = { TWO_CANDIDATE_JSON },
             close = { id ->
                 closedId = id
-                MihomoCore.CloseResult.Success
+                CloseResult.Success
             },
         )
         val r = ctrl.killBattleSocket() as BattleConnectionController.KillResult.Success
@@ -50,7 +50,7 @@ class BattleConnectionControllerTest {
     fun `propagates AlreadyClosed result`() {
         val ctrl = BattleConnectionController(
             snapshot = { ONE_CANDIDATE_JSON },
-            close = { MihomoCore.CloseResult.AlreadyClosed },
+            close = { CloseResult.AlreadyClosed },
         )
         assertTrue(ctrl.killBattleSocket() is BattleConnectionController.KillResult.AlreadyClosed)
     }
@@ -59,7 +59,7 @@ class BattleConnectionControllerTest {
     fun `wraps unexpected close failures as Failure`() {
         val ctrl = BattleConnectionController(
             snapshot = { ONE_CANDIDATE_JSON },
-            close = { MihomoCore.CloseResult.CoreStopped },
+            close = { CloseResult.CoreStopped },
         )
         val r = ctrl.killBattleSocket()
         assertTrue(r is BattleConnectionController.KillResult.Failure)
@@ -85,7 +85,7 @@ class BattleConnectionControllerTest {
         var closedId: String? = null
         val ctrl = BattleConnectionController(
             snapshot = { error("snapshot must not be called on cached path") },
-            close = { id -> closedId = id; MihomoCore.CloseResult.Success },
+            close = { id -> closedId = id; CloseResult.Success },
         )
         val r = ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
             as BattleConnectionController.KillResult.Success
@@ -101,7 +101,7 @@ class BattleConnectionControllerTest {
         var snapshotCalls = 0
         val ctrl = BattleConnectionController(
             snapshot = { snapshotCalls++; "[]" },
-            close = { MihomoCore.CloseResult.Success },
+            close = { CloseResult.Success },
         )
         ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
         assertEquals(0, snapshotCalls)
@@ -111,7 +111,7 @@ class BattleConnectionControllerTest {
     fun `killCachedCandidate NotFound maps to Failure (stale cache)`() {
         val ctrl = BattleConnectionController(
             snapshot = { error("should not be called") },
-            close = { MihomoCore.CloseResult.NotFound },
+            close = { CloseResult.NotFound },
         )
         val r = ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
         assertTrue(r is BattleConnectionController.KillResult.Failure)
@@ -122,7 +122,7 @@ class BattleConnectionControllerTest {
     fun `killCachedCandidate AlreadyClosed maps to AlreadyClosed`() {
         val ctrl = BattleConnectionController(
             snapshot = { error("should not be called") },
-            close = { MihomoCore.CloseResult.AlreadyClosed },
+            close = { CloseResult.AlreadyClosed },
         )
         assertTrue(
             ctrl.killCachedCandidate(cand, candidatesAtKill = 1)
@@ -140,7 +140,7 @@ class BattleConnectionControllerTest {
             snapshot = { snapshots++; ONE_CANDIDATE_JSON },          // fresh snapshot has the rotated socket abc-1
             close = { id ->
                 closed += id
-                if (id == "cached-1") MihomoCore.CloseResult.NotFound else MihomoCore.CloseResult.Success
+                if (id == "cached-1") CloseResult.NotFound else CloseResult.Success
             },
         )
         val r = ctrl.killCachedCandidateThenRetry(cand, candidatesAtKill = 1)
@@ -154,7 +154,7 @@ class BattleConnectionControllerTest {
         var snapshots = 0
         val ctrl = BattleConnectionController(
             snapshot = { snapshots++; "[]" },                        // socket really gone
-            close = { MihomoCore.CloseResult.NotFound },
+            close = { CloseResult.NotFound },
         )
         val r = ctrl.killCachedCandidateThenRetry(cand, candidatesAtKill = 1)
         assertTrue(r is BattleConnectionController.KillResult.NoCandidate)
@@ -166,7 +166,7 @@ class BattleConnectionControllerTest {
         var snapshots = 0
         val ctrl = BattleConnectionController(
             snapshot = { snapshots++; "[]" },
-            close = { MihomoCore.CloseResult.Success },
+            close = { CloseResult.Success },
         )
         assertTrue(ctrl.killCachedCandidateThenRetry(cand, 1) is BattleConnectionController.KillResult.Success)
         assertEquals("Success must not trigger a snapshot", 0, snapshots)
@@ -177,7 +177,7 @@ class BattleConnectionControllerTest {
         var snapshots = 0
         val ctrl = BattleConnectionController(
             snapshot = { snapshots++; "[]" },
-            close = { MihomoCore.CloseResult.AlreadyClosed },
+            close = { CloseResult.AlreadyClosed },
         )
         assertTrue(ctrl.killCachedCandidateThenRetry(cand, 1) is BattleConnectionController.KillResult.AlreadyClosed)
         assertEquals(0, snapshots)

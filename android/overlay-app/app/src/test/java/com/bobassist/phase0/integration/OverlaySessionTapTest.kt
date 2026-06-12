@@ -2,7 +2,7 @@ package com.bobassist.phase0.integration
 
 import android.os.Build
 import android.os.Looper
-import com.bobassist.phase0.core.MihomoCore
+import com.bobassist.phase0.core.CloseResult
 import com.bobassist.phase0.overlay.OverlayState
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -107,7 +107,7 @@ class OverlaySessionTapTest {
     @Test
     fun `tap on Ready that returns Success transitions to Cooldown`() {
         factory.fakeConn.snapshotJson = oneCandidateJson(id = "battle-ok")
-        factory.fakeConn.closeResults["battle-ok"] = MihomoCore.CloseResult.Success
+        factory.fakeConn.closeResults["battle-ok"] = CloseResult.Success
         factory.session.start()
         drainBoth()
         shadowOf(factory.pollThread.looper).idleFor(1_000, TimeUnit.MILLISECONDS)

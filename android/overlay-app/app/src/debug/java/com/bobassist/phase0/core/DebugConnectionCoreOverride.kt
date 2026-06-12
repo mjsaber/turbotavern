@@ -13,14 +13,14 @@ import java.util.concurrent.atomic.AtomicReference
  */
 object DebugConnectionCoreOverride : ConnectionCoreFacade, ForegroundOverrideProvider {
     private val snapshotOverride = AtomicReference<String?>(null)
-    private val closeOverrides = AtomicReference<Map<String, MihomoCore.CloseResult>>(emptyMap())
+    private val closeOverrides = AtomicReference<Map<String, CloseResult>>(emptyMap())
     private val snapshotDelayMs = AtomicReference(0L)      // codex P1 #5
     private val closeDelayMs = AtomicReference(0L)
     private val foregroundOverrideRef = AtomicReference<Boolean?>(null)  // codex P1 #7 + round-4 P1 #36
 
     fun setSnapshot(json: String?) { snapshotOverride.set(json) }
     fun setSnapshotDelay(ms: Long) { snapshotDelayMs.set(ms) }
-    fun setCloseResult(id: String, result: MihomoCore.CloseResult) {
+    fun setCloseResult(id: String, result: CloseResult) {
         while (true) {
             val curr = closeOverrides.get()
             val next = curr + (id to result)
@@ -44,7 +44,7 @@ object DebugConnectionCoreOverride : ConnectionCoreFacade, ForegroundOverridePro
         return snapshotOverride.get() ?: RealConnectionCore.connectionsJson()
     }
 
-    override fun closeConnection(id: String): MihomoCore.CloseResult {
+    override fun closeConnection(id: String): CloseResult {
         val delay = closeDelayMs.get()
         if (delay > 0) Thread.sleep(delay)
         val explicit = closeOverrides.get()[id]
@@ -54,7 +54,7 @@ object DebugConnectionCoreOverride : ConnectionCoreFacade, ForegroundOverridePro
         // RealConnectionCore would always return NotFound for fake ids,
         // which breaks cooldown semantics in sim scenarios. Default to
         // Success for ids that came from the fake snapshot.
-        if (snapshotOverride.get() != null) return MihomoCore.CloseResult.Success
+        if (snapshotOverride.get() != null) return CloseResult.Success
         return RealConnectionCore.closeConnection(id)
     }
 }

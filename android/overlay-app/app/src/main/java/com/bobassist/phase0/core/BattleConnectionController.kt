@@ -6,13 +6,14 @@ import com.bobassist.phase0.util.TraceCycle
  * Wraps "find current HS battle socket and close it" into a single typed call.
  *
  * Injection-friendly: takes a `snapshot` lambda returning the raw connections
- * JSON and a `close` lambda taking an id and returning [MihomoCore.CloseResult].
- * In production, both lambdas thunk into [MihomoCore]; in tests, they take
- * fixture JSON / fixed results.
+ * JSON and a `close` lambda taking an id and returning [CloseResult]. In production
+ * (the `full` flavor) both lambdas thunk into the real mihomo core via
+ * [ConnectionCoreFacade]; in tests, they take fixture JSON / fixed results. This
+ * class itself is GPL-free (no mihomo/gomobile dependency).
  */
 class BattleConnectionController(
     private val snapshot: () -> String,
-    private val close: (String) -> MihomoCore.CloseResult,
+    private val close: (String) -> CloseResult,
 ) {
 
     sealed class KillResult {
@@ -49,14 +50,14 @@ class BattleConnectionController(
         cycle?.emit("close", "exit", "result" to r.toString())
 
         return when (r) {
-            MihomoCore.CloseResult.Success ->
+            CloseResult.Success ->
                 KillResult.Success(
                     closedId = cand.id,
                     destinationIp = cand.destinationIp,
                     destinationPort = cand.destinationPort,
                     candidatesAtKill = count,
                 )
-            MihomoCore.CloseResult.AlreadyClosed -> KillResult.AlreadyClosed
+            CloseResult.AlreadyClosed -> KillResult.AlreadyClosed
             else -> KillResult.Failure(r.toString())
         }
     }
@@ -80,14 +81,14 @@ class BattleConnectionController(
         cycle?.emit("close", "exit", "result" to r.toString())
 
         return when (r) {
-            MihomoCore.CloseResult.Success ->
+            CloseResult.Success ->
                 KillResult.Success(
                     closedId = cand.id,
                     destinationIp = cand.destinationIp,
                     destinationPort = cand.destinationPort,
                     candidatesAtKill = candidatesAtKill,
                 )
-            MihomoCore.CloseResult.AlreadyClosed -> KillResult.AlreadyClosed
+            CloseResult.AlreadyClosed -> KillResult.AlreadyClosed
             else -> KillResult.Failure(r.toString())
         }
     }
@@ -107,7 +108,7 @@ class BattleConnectionController(
         cycle: TraceCycle? = null,
     ): KillResult {
         val first = killCachedCandidate(cand, candidatesAtKill, cycle)
-        if (first is KillResult.Failure && first.reason == MihomoCore.CloseResult.NotFound.toString()) {
+        if (first is KillResult.Failure && first.reason == CloseResult.NotFound.toString()) {
             cycle?.emit("retry", "entry", "reason" to "stale_cached_id")
             return killBattleSocket(cycle)
         }

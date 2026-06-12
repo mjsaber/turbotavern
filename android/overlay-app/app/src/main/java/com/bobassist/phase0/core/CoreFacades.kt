@@ -6,7 +6,8 @@ import android.net.VpnService
  * Lifecycle ops on the embedded mihomo. Called once per VpnService start/stop;
  * NOT on the hot path. Separated from [ConnectionCoreFacade] so test code that
  * only needs connection inspection doesn't accidentally pull in the native
- * mihomo lifecycle path.
+ * mihomo lifecycle path. The production impl ([RealLifecycleCore]) lives in
+ * RealCoreFacades.kt (the GPL/`full`-flavor side); this interface is GPL-free.
  */
 interface LifecycleCoreFacade {
     fun version(): String
@@ -19,23 +20,10 @@ interface LifecycleCoreFacade {
 /**
  * Runtime connection-table inspection + close. Used by [BattleConnectionController]
  * on the hot path. In debug builds, [DebugConnectionCoreOverride] can intercept
- * to inject fake snapshots / close results.
+ * to inject fake snapshots / close results. GPL-free (returns the shared [CloseResult]);
+ * the production impl ([RealConnectionCore]) lives in RealCoreFacades.kt.
  */
 interface ConnectionCoreFacade {
     fun connectionsJson(): String
-    fun closeConnection(id: String): MihomoCore.CloseResult
-}
-
-object RealLifecycleCore : LifecycleCoreFacade {
-    override fun version() = MihomoCore.version()
-    override fun setProtector(service: VpnService) { MihomoCore.setProtector(service) }
-    override fun setup(homeDir: String) = MihomoCore.setup(homeDir)
-    override fun startTun(fd: Int, stack: String, gateway: String, dns: String) =
-        MihomoCore.startTun(fd, stack, gateway, dns)
-    override fun stopTun() = MihomoCore.stopTun()
-}
-
-object RealConnectionCore : ConnectionCoreFacade {
-    override fun connectionsJson() = MihomoCore.connectionsJson()
-    override fun closeConnection(id: String) = MihomoCore.closeConnection(id)
+    fun closeConnection(id: String): CloseResult
 }

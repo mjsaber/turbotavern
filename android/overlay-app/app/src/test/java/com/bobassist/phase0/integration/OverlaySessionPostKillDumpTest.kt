@@ -94,7 +94,7 @@ class OverlaySessionPostKillDumpTest {
     @Test
     fun `non-success kill schedules no dumps`() {
         factory.fakeConn.closeResults["battle-55"] =
-            com.bobassist.phase0.core.MihomoCore.CloseResult.AlreadyClosed
+            com.bobassist.phase0.core.CloseResult.AlreadyClosed
         tapOnReady("battle-55")
         shadowOf(factory.pollThread.looper).idleFor(9_000, TimeUnit.MILLISECONDS)
         drainBoth()

@@ -2,7 +2,7 @@ package com.bobassist.phase0.integration
 
 import android.os.Build
 import android.os.Looper
-import com.bobassist.phase0.core.MihomoCore
+import com.bobassist.phase0.core.CloseResult
 import com.bobassist.phase0.overlay.OverlayState
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -91,7 +91,7 @@ class OverlaySessionCacheTest {
     fun `T3 stale cached id NotFound with nothing to retry stays Ready and does not cooldown`() {
         startAndSettle(oneCandidateJson(id = "stale-1"))
         assertEquals(OverlayState.Ready, f().poller.currentState())
-        f().fakeConn.closeResults["stale-1"] = MihomoCore.CloseResult.NotFound
+        f().fakeConn.closeResults["stale-1"] = CloseResult.NotFound
         f().fakeConn.snapshotJson = "[]"   // the socket really rotated away → retry finds nothing
 
         f().session.handleTap()
@@ -110,7 +110,7 @@ class OverlaySessionCacheTest {
         startAndSettle(oneCandidateJson(id = "old-id"))
         assertEquals(OverlayState.Ready, f().poller.currentState())
         // cached id is stale (NotFound), but a freshly-rotated socket now exists in the table
-        f().fakeConn.closeResults["old-id"] = MihomoCore.CloseResult.NotFound
+        f().fakeConn.closeResults["old-id"] = CloseResult.NotFound
         f().fakeConn.snapshotJson = oneCandidateJson(id = "new-id", createdAt = 200L)
 
         val before = f().fakeConn.closeCallLog.size

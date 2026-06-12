@@ -1,7 +1,7 @@
 package com.bobassist.phase0.util
 
+import com.bobassist.phase0.core.CloseResult
 import com.bobassist.phase0.core.ConnectionCoreFacade
-import com.bobassist.phase0.core.MihomoCore
 
 class FakeConnectionCore : ConnectionCoreFacade {
     @Volatile var snapshotJson: String = "[]"
@@ -11,7 +11,7 @@ class FakeConnectionCore : ConnectionCoreFacade {
         java.util.Collections.synchronizedList(mutableListOf())
     val closeCallLog: MutableList<Pair<Long, String>> =
         java.util.Collections.synchronizedList(mutableListOf())
-    val closeResults: MutableMap<String, MihomoCore.CloseResult> =
+    val closeResults: MutableMap<String, CloseResult> =
         java.util.Collections.synchronizedMap(mutableMapOf())
     @Volatile var closeDelayMs: Long = 0L
 
@@ -19,9 +19,9 @@ class FakeConnectionCore : ConnectionCoreFacade {
         snapshotCallLog.add(android.os.SystemClock.elapsedRealtimeNanos())
         return snapshotJson
     }
-    override fun closeConnection(id: String): MihomoCore.CloseResult {
+    override fun closeConnection(id: String): CloseResult {
         closeCallLog.add(android.os.SystemClock.elapsedRealtimeNanos() to id)
         if (closeDelayMs > 0) Thread.sleep(closeDelayMs)
-        return closeResults[id] ?: MihomoCore.CloseResult.Success
+        return closeResults[id] ?: CloseResult.Success
     }
 }

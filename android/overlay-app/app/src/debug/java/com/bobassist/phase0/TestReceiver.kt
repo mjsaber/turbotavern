@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import com.bobassist.phase0.core.BattleConnectionController
+import com.bobassist.phase0.core.CloseResult
 import com.bobassist.phase0.core.DebugConnectionCoreOverride
 import com.bobassist.phase0.core.MihomoCore
 import java.io.File
@@ -94,11 +95,11 @@ class TestReceiver : BroadcastReceiver() {
                 val id = intent.getStringExtra("id") ?: return
                 val resultStr = intent.getStringExtra("result") ?: "Success"
                 val r = when (resultStr) {
-                    "Success" -> MihomoCore.CloseResult.Success
-                    "NotFound" -> MihomoCore.CloseResult.NotFound
-                    "AlreadyClosed" -> MihomoCore.CloseResult.AlreadyClosed
-                    "CoreStopped" -> MihomoCore.CloseResult.CoreStopped
-                    else -> MihomoCore.CloseResult.InternalError(-1)
+                    "Success" -> CloseResult.Success
+                    "NotFound" -> CloseResult.NotFound
+                    "AlreadyClosed" -> CloseResult.AlreadyClosed
+                    "CoreStopped" -> CloseResult.CoreStopped
+                    else -> CloseResult.InternalError(-1)
                 }
                 DebugConnectionCoreOverride.setCloseResult(id, r)
                 Log.i(TAG, "sim_set_close id=$id result=$r")

@@ -53,14 +53,6 @@ object MihomoCore {
             else -> CloseResult.InternalError(code)
         }
 
-    sealed class CloseResult {
-        object Success : CloseResult() { override fun toString() = "Success" }
-        object NotFound : CloseResult() { override fun toString() = "NotFound" }
-        object AlreadyClosed : CloseResult() { override fun toString() = "AlreadyClosed" }
-        object CoreStopped : CloseResult() { override fun toString() = "CoreStopped" }
-        data class InternalError(val code: Int) : CloseResult()
-    }
-
     private inline fun bobcoreCall(block: () -> String): Result<Unit> = runCatching {
         val err = block()
         if (err.isNotEmpty()) error(err)
