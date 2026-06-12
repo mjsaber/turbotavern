@@ -70,3 +70,17 @@ dependencies {
     testImplementation("androidx.test:core:1.5.0")
     testImplementation("androidx.test.ext:junit:1.1.5")
 }
+
+// GPL-3.0 compliance guard (codex Stage 2 P2): a full RELEASE build must not ship the placeholder
+// Corresponding-Source URL in NOTICE.txt. Debug dev builds may proceed (they are never distributed).
+tasks.matching { it.name == "assembleFullRelease" || it.name == "bundleFullRelease" }.configureEach {
+    doFirst {
+        val notice = file("src/full/assets/licenses/NOTICE.txt")
+        if (notice.readText().contains("REPLACE-ME")) {
+            throw GradleException(
+                "NOTICE.txt still contains the placeholder Corresponding-Source URL. Set the real GPL " +
+                    "source repository URL before building a full RELEASE APK (GPL-3.0 compliance)."
+            )
+        }
+    }
+}
