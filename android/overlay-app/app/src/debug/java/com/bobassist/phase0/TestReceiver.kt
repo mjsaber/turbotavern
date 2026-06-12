@@ -9,6 +9,7 @@ import android.util.Log
 import com.bobassist.phase0.core.BattleConnectionController
 import com.bobassist.phase0.core.CloseResult
 import com.bobassist.phase0.core.DebugConnectionCoreOverride
+import com.bobassist.phase0.core.DebugForegroundOverride
 import com.bobassist.phase0.core.MihomoCore
 import java.io.File
 
@@ -117,7 +118,7 @@ class TestReceiver : BroadcastReceiver() {
                     "null", "clear" -> null
                     else -> null
                 }
-                DebugConnectionCoreOverride.setForeground(parsed)
+                DebugForegroundOverride.setForeground(parsed)
                 if (parsed != null) BobVpnService.liveSession?.handleForegroundChange(parsed)
                 Log.i(TAG, "sim_set_foreground value=$parsed")
             }
@@ -130,6 +131,7 @@ class TestReceiver : BroadcastReceiver() {
             }
             "sim_clear_all" -> {
                 DebugConnectionCoreOverride.clearAll()
+                DebugForegroundOverride.clear()
                 Log.i(TAG, "sim_clear_all")
             }
             else -> Log.w(TAG, "unknown cmd=$cmd")

@@ -3,20 +3,17 @@ package com.bobassist.phase0.core
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Debug-variant override for [ConnectionCoreFacade]. Intercepts the
- * connection-table snapshot + close calls so tests / sim scripts can inject
- * fake state without touching the real mihomo core.
- *
- * codex round-3 P1 #23 + round-4 P1 #36: implements BOTH facades; renames the
- * private property to `foregroundOverrideRef` to avoid collision with the
- * interface method `foregroundOverride()`.
+ * Debug-variant override for [ConnectionCoreFacade]. Intercepts the connection-table snapshot + close
+ * calls so tests / sim scripts can inject fake state without touching the real mihomo core. The
+ * foreground-state override is split out into [DebugForegroundOverride] (GPL-free, shared by both
+ * flavors); this connection override is GPL-coupled (falls back to [RealConnectionCore]) and so lives
+ * in the `full` flavor's source set.
  */
-object DebugConnectionCoreOverride : ConnectionCoreFacade, ForegroundOverrideProvider {
+object DebugConnectionCoreOverride : ConnectionCoreFacade {
     private val snapshotOverride = AtomicReference<String?>(null)
     private val closeOverrides = AtomicReference<Map<String, CloseResult>>(emptyMap())
     private val snapshotDelayMs = AtomicReference(0L)      // codex P1 #5
     private val closeDelayMs = AtomicReference(0L)
-    private val foregroundOverrideRef = AtomicReference<Boolean?>(null)  // codex P1 #7 + round-4 P1 #36
 
     fun setSnapshot(json: String?) { snapshotOverride.set(json) }
     fun setSnapshotDelay(ms: Long) { snapshotDelayMs.set(ms) }
@@ -28,14 +25,11 @@ object DebugConnectionCoreOverride : ConnectionCoreFacade, ForegroundOverridePro
         }
     }
     fun setCloseDelay(ms: Long) { closeDelayMs.set(ms) }
-    fun setForeground(v: Boolean?) { foregroundOverrideRef.set(v) }
-    override fun foregroundOverride(): Boolean? = foregroundOverrideRef.get()
     fun clearAll() {
         snapshotOverride.set(null)
         closeOverrides.set(emptyMap())
         snapshotDelayMs.set(0)
         closeDelayMs.set(0)
-        foregroundOverrideRef.set(null)
     }
 
     override fun connectionsJson(): String {

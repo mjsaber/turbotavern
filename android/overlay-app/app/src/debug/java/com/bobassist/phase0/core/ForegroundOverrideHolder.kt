@@ -1,6 +1,6 @@
 package com.bobassist.phase0.core
 
-/** Debug-variant holder: routes through [DebugConnectionCoreOverride]. */
+/** Debug-variant holder: routes through the GPL-free [DebugForegroundOverride]. */
 object ForegroundOverrideHolder {
-    fun get(): ForegroundOverrideProvider = DebugConnectionCoreOverride
+    fun get(): ForegroundOverrideProvider = DebugForegroundOverride
 }
