@@ -321,11 +321,11 @@ class BobVpnService : VpnService() {
         val fakeFg = ForegroundOverrideHolder.get().foregroundOverride()
         if (fakeFg != null) return if (fakeFg) HS_PACKAGE else "com.example.notbob"
 
-        val usm = getSystemService(UsageStatsManager::class.java) ?: return null
+        val usm = getSystemService(UsageStatsManager::class.java) ?: return lastForegroundPkg
         val now = System.currentTimeMillis()
-        // queryEvents can return null when the user is locked (R+) — handle it.
+        // queryEvents can return null when the user is locked (R+) — keep the last known package.
         val events = runCatching { usm.queryEvents(now - 60_000L, now) }
-            .getOrNull() ?: return null
+            .getOrNull() ?: return lastForegroundPkg
         var latestTs = 0L
         var latestPkg: String? = null
         val ev = UsageEvents.Event()
@@ -336,8 +336,17 @@ class BobVpnService : VpnService() {
                 latestPkg = ev.packageName
             }
         }
-        return latestPkg
+        // STICKY: the foreground package only changes on a RESUMED event; an EMPTY 60s window means no
+        // app switch happened, i.e. we are STILL on the last-seen package — not "unknown". Without this,
+        // a long uninterrupted Hearthstone session (an entire BG match — exactly when the hero/trinket
+        // select screens appear) yields no events, the strict capture gate reads UNKNOWN, and the
+        // overlay never renders. Update the sticky value only when a real transition is observed.
+        if (latestPkg != null) lastForegroundPkg = latestPkg
+        return lastForegroundPkg
     }
+
+    /** Last package seen ACTIVITY_RESUMED — sticky across empty query windows (see queryForegroundPackage). */
+    @Volatile private var lastForegroundPkg: String? = null
 
     private fun tearDown() {
         disableTier(restoreForeground = false)   // service is stopping; don't re-post foreground
