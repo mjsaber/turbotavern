@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- clean (Lite) launcher foreground: the "turbo" bolt (compacted into the upper safe zone)
+         plus a "LITE" badge so the Play SKU is visually distinct from the full sideload build,
+         which uses the shared (no-badge) foreground. Replace the bolt with final art later. -->
+
+    <!-- "Turbo" lightning bolt, compact + raised to leave room for the badge -->
+    <path android:fillColor="#F5E6C8"
+        android:pathData="M58,20 L42,48 L53,48 L48,62 L68,42 L56,42 Z" />
+
+    <!-- LITE badge bar (dark, for contrast) -->
+    <path android:fillColor="#3E2810"
+        android:pathData="M24,64 H84 V82 H24 Z" />
+
+    <!-- "LITE" wordmark in cream block letters -->
+    <path android:fillColor="#F5E6C8" android:pathData="M30,68 H33 V78 H30 Z M30,75 H41 V78 H30 Z M45,68 H48 V78 H45 Z M51,68 H63 V70.5 H51 Z M55.5,68 H58.5 V78 H55.5 Z M66,68 H69 V78 H66 Z M66,68 H76 V70.5 H66 Z M66,72 H74 V74 H66 Z M66,75.5 H76 V78 H66 Z" />
+</vector>

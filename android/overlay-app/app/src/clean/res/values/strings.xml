@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- clean (Google Play) SKU label — "Lite" distinguishes it from the full sideload build,
+         which keeps the plain "Turbo Tavern" name. translatable=false: brand string, one value. -->
+    <string name="app_name" translatable="false">Turbo Tavern Lite</string>
+</resources>
