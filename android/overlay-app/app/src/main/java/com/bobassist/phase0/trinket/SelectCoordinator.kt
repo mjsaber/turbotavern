@@ -114,8 +114,13 @@ class SelectCoordinator(
             else -> arbiter.onProbe(heroMatches = heroBadges.size, trinketMatches = trinketRecs.size)
         }
         active = now
-        if (com.bobassist.phase0.BuildConfig.DEBUG)
-            breadcrumb("select: ocr=${lines.size} hero=${heroBadges.size} trinket=${trinketRecs.size} window=$now")
+        if (com.bobassist.phase0.BuildConfig.DEBUG) {
+            breadcrumb("select: ocr=${lines.size} hero=${heroBadges.size} trinket=${trinketRecs.size} rot=${frame.rotationDeg} cap=${frame.captureW}x${frame.captureH} window=$now")
+            // Diagnostic: when OCR found text but nothing matched, dump the recognized strings so an
+            // on-device session reveals whether it's misoriented capture, wrong screen, or a matcher gap.
+            if (lines.isNotEmpty() && heroBadges.isEmpty() && trinketRecs.isEmpty())
+                breadcrumb("select: ocr-text=[${lines.joinToString(" | ") { it.text }}]")
+        }
         onTransition(prev, now)
 
         val rotationDeg = frame.rotationDeg
