@@ -22,10 +22,12 @@ CORRESPONDING SOURCE
 The complete Corresponding Source for this build — Turbo Tavern's own source
 plus the exact mihomo version linked — is published under GPL-3.0 at:
 
-  >>> SET BEFORE DISTRIBUTION <<<  https://github.com/REPLACE-ME/turbo-tavern
+  https://github.com/mjsaber/turbotavern
 
-  A matching git tag is published for every released APK. Do not distribute a
-  full-build APK until this URL hosts the matching source.
+  A matching git tag is published for every released APK. NOTE: this repository
+  must be made PUBLIC before any full-build APK is distributed (it is private as
+  of this writing) — shipping the GPL binary while the source repo is private is
+  a GPL-3.0 violation.
 
 OTHER COMPONENTS (permissively licensed — not GPL)
 --------------------------------------------------
