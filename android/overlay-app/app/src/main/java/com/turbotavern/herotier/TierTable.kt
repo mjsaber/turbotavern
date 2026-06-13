@@ -9,12 +9,26 @@ import org.json.JSONObject
  * a missing badge is acceptable, a wrong badge is not (spec §7). [keys] still exposes ambiguous
  * keys so the fuzzy matcher can see them without ever resolving them.
  */
-class TierTable private constructor(private val byName: Map<String, HeroTier?>) {
+class TierTable private constructor(
+    private val byName: Map<String, HeroTier?>,
+    private val byFolded: Map<String, HeroTier?>,
+) {
 
     /** null when the key is ambiguous (multiple cardIds) or absent. */
     fun lookup(nameKey: String): HeroTier? = byName[nameKey]
 
     fun keys(): Set<String> = byName.keys
+
+    /**
+     * Lookup after folding OCR-emitted separator/decorative marks (·/‧/・…). Ambiguity-safe over the
+     * COMPLETE, identity-inclusive fold view: returns null if the folded form maps to >1 hero, INCLUDING
+     * a collision with a mark-less hero's canonical name (e.g. table holds both `foo‧bar` and `foobar`,
+     * so OCR `foo·bar` is ambiguous, not a badge for `foobar`). Missing beats wrong (spec §7).
+     */
+    fun lookupFolded(nameKey: String): HeroTier? = byFolded[foldSeparators(nameKey)]
+
+    /** Folded key space (marks removed) for the matcher's fuzzy pass; resolve hits via [lookupFolded]. */
+    fun foldedKeys(): Set<String> = byFolded.keys
 
     val size get() = byName.size
 
@@ -35,7 +49,7 @@ class TierTable private constructor(private val byName: Map<String, HeroTier?>) 
 
         fun fromJson(json: String): TierTable {
             val acc = HashMap<String, MutableSet<String>>()        // canonical key -> distinct cardIds
-            val foldAcc = HashMap<String, MutableSet<String>>()    // separator-folded alias -> distinct cardIds
+            val foldAcc = HashMap<String, MutableSet<String>>()    // folded key (IDENTITY-INCLUSIVE) -> cardIds
             val tierOf = HashMap<String, HeroTier>()               // cardId -> HeroTier
             val heroes = JSONObject(json).getJSONArray("heroes")
             for (i in 0 until heroes.length()) {
@@ -48,20 +62,19 @@ class TierTable private constructor(private val byName: Map<String, HeroTier?>) 
                     val k = NameKey.of(names.getString(loc))
                     if (k.isEmpty()) continue
                     acc.getOrPut(k) { HashSet() }.add(cid)
+                    // Identity-inclusive: a mark-LESS name folds to itself and still contributes here, so
+                    // a fold collision with such a name is detected as ambiguous (missing beats wrong).
                     val folded = foldSeparators(k)
-                    if (folded.isNotEmpty() && folded != k) foldAcc.getOrPut(folded) { HashSet() }.add(cid)
+                    if (folded.isNotEmpty()) foldAcc.getOrPut(folded) { HashSet() }.add(cid)
                 }
             }
             val resolved = HashMap<String, HeroTier?>()
             for ((k, cids) in acc) resolved[k] = if (cids.size == 1) tierOf[cids.first()] else null
-            // Folded aliases fill in keys the OCR can actually emit, but they NEVER override or poison a
-            // canonical key (so an alias collision can't break another hero's exact self-match). Among
-            // folded aliases themselves the same ambiguity rule applies: collision -> null, never wrong.
-            for ((k, cids) in foldAcc) {
-                if (k in resolved) continue
-                resolved[k] = if (cids.size == 1) tierOf[cids.first()] else null
-            }
-            return TierTable(resolved)
+            // Folded view: every name's separator-folded form -> tier, null on ANY collision (including a
+            // mark-less canonical that equals another hero's folded name). Reached only via lookupFolded.
+            val resolvedFold = HashMap<String, HeroTier?>()
+            for ((k, cids) in foldAcc) resolvedFold[k] = if (cids.size == 1) tierOf[cids.first()] else null
+            return TierTable(resolved, resolvedFold)
         }
     }
 }

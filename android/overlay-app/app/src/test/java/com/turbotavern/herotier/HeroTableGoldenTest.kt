@@ -125,6 +125,47 @@ class HeroTableGoldenTest {
         assertTrue("non-hero UI false positives:\n${fp.joinToString("\n")}", fp.isEmpty())
     }
 
+    // T-middot (live emulator 2026-06-13, the Cariel 凱瑞爾‧羅姆 miss): zhTW names separate with ‧
+    // (U+2027), ABSENT from ppocrv5_dict — so OCR emits the interchangeable middot · (U+00B7, which IS
+    // in the dict) or drops the mark. T1 only feeds the canonical name (with ‧), an input OCR can NEVER
+    // produce — exactly how the miss hid. Assert every separator-bearing hero resolves from BOTH the
+    // middot-substituted and the mark-dropped OCR-realistic forms (covers all such heroes, not just one).
+    @Test fun separatorBearingNamesResolveFromOcrRealisticForms() {
+        val sep = setOf('‧', '・', '•')     // ‧ ・ • — separators OCR substitutes/drops
+        val midDot = '·'                             // · — the substitution target (present in the dict)
+        var covered = 0
+        val fail = ArrayList<String>()
+        for ((cid, loc, name) in corpus) {
+            val k = NameKey.of(name)
+            if (k.none { it in sep }) continue
+            covered++
+            val asMiddot = buildString { for (c in k) append(if (c in sep) midDot else c) }
+            val dropped = k.filterNot { it in sep }
+            for (v in listOf(asMiddot, dropped)) {
+                val got = matcher.match(listOf(ln(v))).map { it.cardId }
+                if (cid !in got) fail.add("$cid/$loc \"$name\" via \"$v\" -> $got")
+            }
+        }
+        assertTrue("expected separator-bearing names in the shipped asset, found none", covered > 0)
+        assertTrue("OCR-realistic separator variants failed ($fail of $covered):\n${fail.joinToString("\n")}", fail.isEmpty())
+    }
+
+    // Data invariant: NO two DISTINCT heroes' names fold to the same key. The matcher's fold-collision
+    // paths (exact-markless, fuzzy, vertical-merge) are only PARTIALLY defined against collisions —
+    // codex flagged increasingly-narrow hypothetical merge interactions. Rather than harden the matcher
+    // against states that cannot occur, assert they cannot: this holds for the shipped asset, so those
+    // edge cases are UNREACHABLE. A future data update that introduces a collision fails loudly HERE,
+    // which is the signal to revisit matcher collision-safety — not to pre-handle the impossible.
+    @Test fun noFoldCollisionsInShippedAsset() {
+        val byFold = HashMap<String, MutableSet<String>>()
+        for ((cid, _, name) in corpus) {
+            val folded = TierTable.foldSeparators(NameKey.of(name))
+            if (folded.isNotEmpty()) byFold.getOrPut(folded) { HashSet() }.add(cid)
+        }
+        val collisions = byFold.filterValues { it.size > 1 }.map { "${it.key} -> ${it.value}" }
+        assertTrue("fold collisions in shipped hero asset (matcher assumes none):\n${collisions.joinToString("\n")}", collisions.isEmpty())
+    }
+
     /** Edge frame-stroke (both ends) + each single-char deletion when the key stays past shortLen. */
     private fun perturbations(name: String): List<String> = buildList {
         add("|$name"); add("$name|")
