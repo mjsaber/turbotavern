@@ -1,4 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Turbo Tavern</string>
+    <string name="tagline">Hearthstone Battlegrounds hero &amp; trinket tier overlay</string>
+    <string name="how_title">How it works</string>
+    <string name="how_1">1. Grant the permissions below.</string>
+    <string name="how_2">2. Tap Start and allow screen capture.</string>
+    <string name="how_3">3. Open Hearthstone — tier badges appear over hero &amp; trinket picks.</string>
+    <string name="perm_overlay">Display over other apps</string>
+    <string name="perm_overlay_why">Required — draws tier badges on top of Hearthstone.</string>
+    <string name="perm_capture">Screen capture</string>
+    <string name="perm_capture_why">Asked when you tap Start. The screen is read on-device to recognize heroes &amp; trinkets; nothing is uploaded.</string>
+    <string name="perm_usage">Usage access</string>
+    <string name="perm_usage_why">Recommended — hides the overlay when Hearthstone is not in front.</string>
+    <string name="status_granted">✓ Granted</string>
+    <string name="status_required">Required</string>
+    <string name="status_recommended">Recommended</string>
+    <string name="action_grant">Grant</string>
+    <string name="action_start">Start Turbo Tavern</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_about">About / Licenses</string>
+    <string name="start_blocked">Grant \"Display over other apps\" to start.</string>
+    <string name="status_running">Running — open Hearthstone.</string>
+    <string name="status_ready">Ready to start.</string>
 </resources>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tagline">爐石戰記・酒館戰棋 英雄與飾品強度 overlay</string>
+    <string name="how_title">使用方式</string>
+    <string name="how_1">1. 授予下方權限。</string>
+    <string name="how_2">2. 點「開始」並允許螢幕擷取。</string>
+    <string name="how_3">3. 開啟爐石戰記 — 選英雄與飾品時會浮現強度標記。</string>
+    <string name="perm_overlay">顯示在其他應用程式上層</string>
+    <string name="perm_overlay_why">必要 — 用來把強度標記畫在爐石上層。</string>
+    <string name="perm_capture">螢幕擷取</string>
+    <string name="perm_capture_why">點「開始」時詢問。畫面只在裝置本機辨識英雄與飾品；不會上傳任何內容。</string>
+    <string name="perm_usage">使用情況存取權</string>
+    <string name="perm_usage_why">建議 — 爐石不在前景時自動隱藏 overlay。</string>
+    <string name="status_granted">✓ 已授予</string>
+    <string name="status_required">必要</string>
+    <string name="status_recommended">建議</string>
+    <string name="action_grant">授予</string>
+    <string name="action_start">啟動 Turbo Tavern</string>
+    <string name="action_stop">停止</string>
+    <string name="action_about">關於 / 授權</string>
+    <string name="start_blocked">請先授予「顯示在其他應用程式上層」才能開始。</string>
+    <string name="status_running">執行中 — 請開啟爐石戰記。</string>
+    <string name="status_ready">準備就緒。</string>
+</resources>

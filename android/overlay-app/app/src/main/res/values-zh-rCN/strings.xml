@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tagline">炉石传说・酒馆战棋 英雄与饰品强度 overlay</string>
+    <string name="how_title">使用方式</string>
+    <string name="how_1">1. 授予下方权限。</string>
+    <string name="how_2">2. 点「开始」并允许屏幕捕获。</string>
+    <string name="how_3">3. 打开炉石传说 — 选英雄和饰品时会浮现强度标记。</string>
+    <string name="perm_overlay">显示在其他应用上层</string>
+    <string name="perm_overlay_why">必需 — 用来把强度标记画在炉石上层。</string>
+    <string name="perm_capture">屏幕捕获</string>
+    <string name="perm_capture_why">点「开始」时询问。画面只在设备本地识别英雄和饰品；不会上传任何内容。</string>
+    <string name="perm_usage">使用情况访问权限</string>
+    <string name="perm_usage_why">建议 — 炉石不在前台时自动隐藏 overlay。</string>
+    <string name="status_granted">✓ 已授予</string>
+    <string name="status_required">必需</string>
+    <string name="status_recommended">建议</string>
+    <string name="action_grant">授予</string>
+    <string name="action_start">启动 Turbo Tavern</string>
+    <string name="action_stop">停止</string>
+    <string name="action_about">关于 / 许可</string>
+    <string name="start_blocked">请先授予「显示在其他应用上层」才能开始。</string>
+    <string name="status_running">运行中 — 请打开炉石传说。</string>
+    <string name="status_ready">准备就绪。</string>
+</resources>

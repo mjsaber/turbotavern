@@ -3,104 +3,133 @@ package com.bobassist.phase0
 import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Intent
+import android.graphics.Typeface
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
-import com.bobassist.phase0.BuildConfig
 
 /**
- * Phase 0 verifier UI: two buttons (Start/Stop VPN). Spike B verifies HS
- * traffic appears in mihomo log via logcat (`adb logcat -s BobPhase0 GoLog`).
+ * First-run onboarding + launcher. Explains what Turbo Tavern does, walks the user through the
+ * permissions it needs (with rationale), and starts the overlay. All copy is localized (en/zh-CN/zh-TW).
  */
 class MainActivity : Activity() {
 
+    private val kill = KillFeatureHolder.get()
     private lateinit var statusView: TextView
     private lateinit var startBtn: Button
-    private lateinit var grantOverlayBtn: Button
-    private lateinit var grantUsageBtn: Button
-    private val kill = KillFeatureHolder.get()
+    private lateinit var overlayRow: PermRow
+    private lateinit var usageRow: PermRow
+
+    private class PermRow(val container: View, val status: TextView, val grant: Button)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i(TAG, "kill feature: ${kill.statusLabel()}")
-        actionBar?.hide()                       // drop the "Bob Phase 0" title bar (it overlapped content on Android 15 edge-to-edge)
+        actionBar?.hide()
         val root = buildLayout()
         setContentView(root)
-        applyTopInset(root)                     // pad below the status/nav bars (targetSdk 35 draws edge-to-edge)
-
-        // Debug-only: --ez auto_start true lets `adb am start MainActivity`
-        // drive the e2e test script without manual taps. Production must
-        // remove this branch (it's protected by BuildConfig.DEBUG but the
-        // Activity itself is exported so any app could try this intent).
-        if (BuildConfig.DEBUG && intent?.getBooleanExtra(EXTRA_AUTO_START, false) == true) {
-            onStartClicked()
-        }
+        applyInsets(root)
+        // Debug-only: `--ez auto_start true` drives the e2e flow without manual taps.
+        if (BuildConfig.DEBUG && intent?.getBooleanExtra(EXTRA_AUTO_START, false) == true) onStartClicked()
     }
+
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     private fun buildLayout(): View {
-        statusView = TextView(this).apply {
-            text = "${kill.statusLabel()}\nstatus: idle"
-            textSize = 16f
-            setPadding(40, 20, 40, 20)
+        val col = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(20), dp(20), dp(24))
         }
+        col.addView(text(getString(R.string.app_name), 28f, bold = true))
+        col.addView(text(getString(R.string.tagline), 14f).apply { setPadding(0, dp(2), 0, dp(20)) })
+
+        col.addView(text(getString(R.string.how_title), 16f, bold = true))
+        col.addView(
+            text("${getString(R.string.how_1)}\n${getString(R.string.how_2)}\n${getString(R.string.how_3)}", 14f)
+        )
+        col.addView(spacer(dp(20)))
+
+        overlayRow = permRow(getString(R.string.perm_overlay), getString(R.string.perm_overlay_why)) {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
+        col.addView(overlayRow.container)
+        usageRow = permRow(getString(R.string.perm_usage), getString(R.string.perm_usage_why)) {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        }
+        col.addView(usageRow.container)
+        col.addView(
+            text("• ${getString(R.string.perm_capture)} — ${getString(R.string.perm_capture_why)}", 12f)
+                .apply { setPadding(0, dp(8), 0, 0) }
+        )
+        col.addView(spacer(dp(24)))
+
         startBtn = Button(this).apply {
-            text = "Start Turbo Tavern"
+            text = getString(R.string.action_start)
             setOnClickListener { onStartClicked() }
         }
-        val stopBtn = Button(this).apply {
-            text = "Stop"
+        col.addView(startBtn)
+        col.addView(Button(this).apply {
+            text = getString(R.string.action_stop)
             setOnClickListener { onStopClicked() }
-        }
-        grantOverlayBtn = Button(this).apply {
-            text = "Grant Overlay Permission"
-            setOnClickListener {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName"),
-                )
-                // No result needed; onResume() re-checks when Settings closes.
-                startActivity(intent)
-            }
-        }
-        grantUsageBtn = Button(this).apply {
-            text = "Grant Usage Access (optional)"
-            setOnClickListener {
-                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                startActivity(intent)
-            }
-        }
-        val aboutBtn = Button(this).apply {
-            text = "About / Licenses"
+        })
+        statusView = text("", 13f).apply { setPadding(0, dp(10), 0, dp(16)) }
+        col.addView(statusView)
+        col.addView(Button(this).apply {
+            text = getString(R.string.action_about)
             setOnClickListener { startActivity(Intent(this@MainActivity, AboutActivity::class.java)) }
-        }
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(40, 80, 40, 40)
-            addView(statusView)
-            addView(startBtn)
-            addView(stopBtn)
-            addView(grantOverlayBtn)
-            addView(grantUsageBtn)
-            addView(aboutBtn)
-        }
+        })
+        return ScrollView(this).apply { addView(col) }
     }
 
-    /** Inset the content below the status & navigation bars (edge-to-edge under targetSdk 35). */
-    private fun applyTopInset(root: View) {
+    private fun text(s: String, sizeSp: Float, bold: Boolean = false) = TextView(this).apply {
+        text = s
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp)
+        if (bold) setTypeface(typeface, Typeface.BOLD)
+    }
+
+    private fun spacer(h: Int) = View(this).apply {
+        layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, h)
+    }
+
+    private fun permRow(title: String, why: String, onGrant: () -> Unit): PermRow {
+        val status = text("", 13f)
+        val grant = Button(this).apply {
+            text = getString(R.string.action_grant)
+            setOnClickListener { onGrant() }
+        }
+        val texts = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            addView(text(title, 15f, bold = true))
+            addView(text(why, 12f))
+            addView(status)
+        }
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(8), 0, dp(8))
+            addView(texts)
+            addView(grant)
+        }
+        return PermRow(row, status, grant)
+    }
+
+    private fun applyInsets(root: View) {
         root.setOnApplyWindowInsetsListener { v, insets ->
             @Suppress("DEPRECATION")
             val bars = if (Build.VERSION.SDK_INT >= 30)
                 insets.getInsets(WindowInsets.Type.systemBars()).let { it.top to it.bottom }
             else insets.systemWindowInsetTop to insets.systemWindowInsetBottom
-            v.setPadding(40, bars.first + 40, 40, bars.second + 40)
+            v.setPadding(0, bars.first, 0, bars.second)
             insets
         }
         root.requestApplyInsets()
@@ -113,47 +142,39 @@ class MainActivity : Activity() {
 
     private fun refreshPermissionUi() {
         val canOverlay = hasOverlayPermission()
-        val canUsage = hasUsageAccessPermission()
-        grantOverlayBtn.visibility = if (canOverlay) View.GONE else View.VISIBLE
-        grantUsageBtn.visibility = if (canUsage) View.GONE else View.VISIBLE
-        startBtn.isEnabled = canOverlay  // usage-access is OPTIONAL — does not gate Start
-        val statusLines = mutableListOf(kill.statusLabel())
-        if (!canOverlay) statusLines += "Overlay permission required to start."
-        if (!canUsage) statusLines += "Usage access NOT granted — overlay will stay visible even when HS is closed."
-        statusView.text = statusLines.joinToString("\n")
+        updateRow(overlayRow, canOverlay, getString(R.string.status_required))
+        updateRow(usageRow, hasUsageAccessPermission(), getString(R.string.status_recommended))
+        startBtn.isEnabled = canOverlay
+        statusView.text = when {
+            !canOverlay -> getString(R.string.start_blocked)
+            kill.isRunning() -> getString(R.string.status_running)
+            else -> getString(R.string.status_ready)
+        }
     }
 
-    private fun hasOverlayPermission(): Boolean = Settings.canDrawOverlays(this)
+    private fun updateRow(row: PermRow, granted: Boolean, neededLabel: String) {
+        row.status.text = if (granted) getString(R.string.status_granted) else neededLabel
+        row.grant.visibility = if (granted) View.GONE else View.VISIBLE
+    }
+
+    private fun hasOverlayPermission() = Settings.canDrawOverlays(this)
 
     private fun hasUsageAccessPermission(): Boolean {
         val appOps = getSystemService(AppOpsManager::class.java) ?: return false
-        val mode = appOps.unsafeCheckOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            applicationInfo.uid,
-            packageName,
-        )
-        return mode == AppOpsManager.MODE_ALLOWED
+        return appOps.unsafeCheckOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS, applicationInfo.uid, packageName,
+        ) == AppOpsManager.MODE_ALLOWED
     }
 
-    /** One step: ensure the VPN is up, then request screen-capture and enable the tier overlay. */
     private fun onStartClicked() {
-        if (!hasOverlayPermission()) {
-            statusView.text = "${statusView.text}\nOverlay permission required."
-            return
-        }
-        if (kill.isRunning()) {                      // kill/VPN already running -> go straight to tier
-            requestProjection(); return
-        }
+        if (!hasOverlayPermission()) { refreshPermissionUi(); return }
+        if (kill.isRunning()) { requestProjection(); return }
         val consent = kill.prepareConsent(this)
-        if (consent != null) {
-            startActivityForResult(consent, REQ_VPN_AUTHORIZE)   // -> on OK: kill.start() + requestProjection()
-            statusView.text = "${statusView.text}\nasking VPN authorization..."
-        } else {
-            kill.start(this); requestProjection()    // clean flavor: start() is a no-op -> straight to overlay
-        }
+        if (consent != null) startActivityForResult(consent, REQ_VPN_AUTHORIZE)
+        else { kill.start(this); requestProjection() }    // clean flavor: start() is a no-op
     }
 
-    /** Screen-capture consent (user may pick "single app" -> Hearthstone); result -> ENABLE_TIER. */
+    /** Screen-capture consent (entire screen or single-app); result -> ENABLE_TIER on OverlayService. */
     private fun requestProjection() {
         val mpm = getSystemService(MediaProjectionManager::class.java)
         startActivityForResult(mpm.createScreenCaptureIntent(), REQ_PROJECTION)
@@ -162,17 +183,15 @@ class MainActivity : Activity() {
     private fun onStopClicked() {
         kill.stop(this)
         startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_STOP })
-        statusView.text = "${kill.statusLabel()}\nstatus: stop requested"
+        refreshPermissionUi()
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQ_VPN_AUTHORIZE) {
-            if (resultCode == RESULT_OK) { kill.start(this); requestProjection() }   // chain into tier
-            else statusView.text = "${statusView.text}\nVPN denied"
-        } else if (requestCode == REQ_PROJECTION) {
-            if (resultCode == RESULT_OK && data != null) {
+        when (requestCode) {
+            REQ_VPN_AUTHORIZE -> if (resultCode == RESULT_OK) { kill.start(this); requestProjection() }
+            REQ_PROJECTION -> if (resultCode == RESULT_OK && data != null) {
                 startForegroundService(
                     Intent(this, OverlayService::class.java).apply {
                         action = OverlayService.ACTION_ENABLE_TIER
@@ -180,15 +199,11 @@ class MainActivity : Activity() {
                         putExtra(OverlayService.EXTRA_RESULT_DATA, data)
                     }
                 )
-                statusView.text = "${statusView.text}\ntier overlay enabling..."
-            } else {
-                statusView.text = "${statusView.text}\nscreen capture denied"
             }
         }
     }
 
     companion object {
-        private const val TAG = "BobPhase0"
         private const val REQ_VPN_AUTHORIZE = 1001
         private const val REQ_PROJECTION = 1002
         const val EXTRA_AUTO_START = "auto_start"
