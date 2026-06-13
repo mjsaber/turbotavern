@@ -66,10 +66,13 @@ unit suite green; `clean` shows the overlay with NO VPN consent dialog.
 - Verified APKs: clean = EULA only + no GPL/libgojni; full = GPL-3.0 + NOTICE + libgojni. ✅
 - **OPEN (blocks full distribution):** set the real GPL Corresponding-Source repo URL in NOTICE.txt.
 
-## Stage 3: De-prototype + release hygiene — **[Not Started]**
-- Finalize applicationIds; real versionName/versionCode scheme; app label + adaptive icon + theme.
-- Signing config reading from gitignored `keystore.properties` (user supplies the upload key).
-- Enable R8 minify + resource shrink (release) with keep rules for ONNX Runtime / ML Kit / gomobile.
+## Stage 3: De-prototype + release hygiene — **[Complete]** (`32e9118`, codex clean)
+- applicationIds finalized: clean=`com.turbotavern`, full=`com.bobassist.phase0`. ✅
+- versionName `0.0.1-prototype` → `0.1.0`; label "Turbo Tavern". ✅
+- Adaptive launcher icon (amber tavern bg + cream "turbo" bolt — placeholder for final art) + DeviceDefault.DayNight theme + brand colors; renders on-device. ✅
+- Signing config reads gitignored `keystore.properties` (graceful when absent) + `keystore.properties.example`. ✅
+- R8 minify + resource shrink (release) + keep rules for ONNX / ML Kit / gomobile; `cleanRelease` assembles (52.9MB). ✅
+- **OPEN:** user supplies the real upload keystore; runtime-smoke a signed release once available.
 
 ## Stage 4: Onboarding + Settings — **[Not Started]**
 - Replace the 5-button debug `MainActivity` with per-permission rationale onboarding + denial recovery.
