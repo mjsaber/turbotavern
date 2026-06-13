@@ -203,11 +203,17 @@ class OverlayService : Service() {
     /** Build + start the capture->ocr->match->render coordinator over [reader]. Reused across resizes. */
     private fun startCoordinator(reader: ImageReader) {
         val grabber = MediaProjectionGrabber(reader, captureW, captureH) { displayInfoNow() }
+        // Density-scale badge geometry so badges are a consistent PHYSICAL size across DPIs (raw px
+        // rendered tiny on high-DPI flagships like the OnePlus). (Stage 6)
+        val density = resources.displayMetrics.density
+        val badgePx = (BADGE_DP * density).toInt()
+        val gapPx = (GAP_DP * density).toInt()
+        val inflatePx = (HIGHLIGHT_INFLATE_DP * density).toInt()
         val overlay = TierOverlay(
             AndroidWindowHost(getSystemService(WindowManager::class.java)), this,
             opacityCap = { OpacityCap.of(this) },
         )
-        val renderer = OverlayBadgeRenderer(overlay, BADGE_PX, GAP_PX)
+        val renderer = OverlayBadgeRenderer(overlay, badgePx, gapPx)
         // Trinket overlay shares the SAME capture + OCR (SelectCoordinator OCRs once per round and
         // feeds both matchers); only the matcher/renderer differ. A SelectWindowArbiter mutually-
         // excludes the two overlays so the hero and trinket badges never both show.
@@ -216,7 +222,7 @@ class OverlayService : Service() {
             opacityCap = { OpacityCap.of(this) },
         )
         val trinketRenderer = OverlayTrinketRenderer(
-            trinketOverlay, BADGE_PX, GAP_PX, HIGHLIGHT_INFLATE_PX,
+            trinketOverlay, badgePx, gapPx, inflatePx,
         )
         val ht = HandlerThread("herotier").apply { start() }
         tierThread = ht
@@ -358,8 +364,8 @@ class OverlayService : Service() {
         const val EXTRA_RESULT_DATA = "tier_result_data"
         private const val TIER_ASSET = "herotier_v1.json"
         private const val TRINKET_ASSET = "trinkettier_v1.json"
-        private const val BADGE_PX = 64
-        private const val GAP_PX = 10
-        private const val HIGHLIGHT_INFLATE_PX = 12   // green ring sits just outside the trinket name
+        private const val BADGE_DP = 24               // density-scaled at render time (Stage 6)
+        private const val GAP_DP = 4
+        private const val HIGHLIGHT_INFLATE_DP = 5    // green ring sits just outside the trinket name
     }
 }
