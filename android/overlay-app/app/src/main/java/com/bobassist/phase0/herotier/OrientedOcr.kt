@@ -35,14 +35,15 @@ class OrientedOcr(
         }
         var best: List<OcrLine> = emptyList()
         var bestScore = -1
-        var bestDeg = 0
-        for (deg in candidates) {
+        var bestDeg = candidates.first()
+        for (deg in candidates) {                                          // evaluate ALL candidates, pick the best
             val lines = recognizeAt(frame, deg)
             val score = runCatching { scorer(lines) }.getOrElse { 0 }
             if (score > bestScore) { bestScore = score; best = lines; bestDeg = deg }
-            if (score > 0) break                                           // first matching rotation wins
         }
-        if (bestScore > 0 && frame.captureW < frame.captureH) lockedDeg = bestDeg
+        // Lock the winning rotation only on a CONFIDENT read (a real select screen shows several hero/
+        // trinket names), so a single spurious sideways match can't pin us to the wrong rotation. (codex)
+        if (frame.captureW < frame.captureH && bestScore >= LOCK_MIN_SCORE) lockedDeg = bestDeg
         return best
     }
 
@@ -65,6 +66,10 @@ class OrientedOcr(
     }
 
     companion object {
+        /** Minimum hero+trinket match count before we trust + cache a rotation (a real select screen
+         *  shows several names; 1 could be a spurious sideways read). */
+        private const val LOCK_MIN_SCORE = 2
+
         /**
          * Map a box detected on a bitmap rotated [deg] (90 or 270, clockwise, via [Matrix.postRotate])
          * back to the original pre-rotation coordinate space of size [origW]x[origH]. Pure + unit-tested.
