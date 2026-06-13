@@ -52,11 +52,11 @@ class MainActivity : Activity() {
             setPadding(40, 20, 40, 20)
         }
         startBtn = Button(this).apply {
-            text = "Start (VPN + Tier Overlay)"
+            text = "Start Turbo Tavern"
             setOnClickListener { onStartClicked() }
         }
         val stopBtn = Button(this).apply {
-            text = "Stop VPN"
+            text = "Stop"
             setOnClickListener { onStopClicked() }
         }
         grantOverlayBtn = Button(this).apply {

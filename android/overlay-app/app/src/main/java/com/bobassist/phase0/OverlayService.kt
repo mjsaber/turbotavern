@@ -256,6 +256,15 @@ class OverlayService : Service() {
         val vd = virtualDisplay ?: return
         val info = displayInfoNow()
         if (info.width == captureW && info.height == captureH) return   // no real size change
+        // HS Battlegrounds is landscape; a PORTRAIT reconfigure only happens when HS leaves the
+        // foreground (display rotates back to the launcher). Resizing the VirtualDisplay during that
+        // transition REVOKES the MediaProjection on some devices (OnePlus / Android 14) — which killed
+        // the overlay before it ever reached hero-select. Skip it: the overlay is paused while HS isn't
+        // in front anyway, and the capture stays correctly sized (landscape) for when HS returns.
+        if (info.height > info.width) {
+            breadcrumb("tier: skip portrait reconfigure to keep projection alive")
+            return
+        }
         stopCoordinator()
         val old = imageReader
         val newW = info.width
