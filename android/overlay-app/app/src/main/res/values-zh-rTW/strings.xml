@@ -21,4 +21,6 @@
     <string name="start_blocked">請先授予「顯示在其他應用程式上層」才能開始。</string>
     <string name="status_running">執行中 — 請開啟爐石戰記。</string>
     <string name="status_ready">準備就緒。</string>
+    <string name="notif_overlay">強度 overlay 執行中</string>
+    <string name="notif_vpn">拔線功能執行中</string>
 </resources>

@@ -283,8 +283,8 @@ class BobVpnService : VpnService() {
         )
 
         val notif: Notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Turbo Tavern")
-            .setContentText("Hearthstone traffic routed through TUN")
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.notif_vpn))
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(tapPI)
             .setOngoing(true)

@@ -22,4 +22,6 @@
     <string name="start_blocked">Grant \"Display over other apps\" to start.</string>
     <string name="status_running">Running — open Hearthstone.</string>
     <string name="status_ready">Ready to start.</string>
+    <string name="notif_overlay">Tier overlay active</string>
+    <string name="notif_vpn">Disconnect feature active</string>
 </resources>

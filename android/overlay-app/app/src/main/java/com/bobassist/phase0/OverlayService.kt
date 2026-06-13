@@ -133,8 +133,8 @@ class OverlayService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notif: Notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Turbo Tavern")
-            .setContentText("Tier overlay active")
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.notif_overlay))
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(tapPI)
             .setOngoing(true)

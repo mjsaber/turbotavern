@@ -21,4 +21,6 @@
     <string name="start_blocked">请先授予「显示在其他应用上层」才能开始。</string>
     <string name="status_running">运行中 — 请打开炉石传说。</string>
     <string name="status_ready">准备就绪。</string>
+    <string name="notif_overlay">强度 overlay 运行中</string>
+    <string name="notif_vpn">拔线功能运行中</string>
 </resources>
