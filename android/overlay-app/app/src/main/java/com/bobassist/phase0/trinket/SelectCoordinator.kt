@@ -32,6 +32,8 @@ class SelectCoordinator(
     private val mainHandler: Handler,
     private val arbiter: SelectWindowArbiter = SelectWindowArbiter(),
     private val forceOpen: () -> Boolean = { false },   // debug: bypass the gate to show the overlay during tuning
+    private val heroEnabled: () -> Boolean = { true },     // user setting (AppPrefs): show the hero overlay
+    private val trinketEnabled: () -> Boolean = { true },  // user setting (AppPrefs): show the trinket overlay
     private val probeMs: Long = 2000,
     private val captureIntervalMs: Long = 700,
     private val maxAttempts: Int = 8,
@@ -100,8 +102,8 @@ class SelectCoordinator(
         val frame = grabber.capture() ?: return
         val lines = runCatching { orientedOcr.recognize(frame) }
             .getOrElse { breadcrumb("select: ocr failed: ${it.message}"); emptyList() }
-        val heroBadges = runCatching { heroMatcher.match(lines) }.getOrElse { emptyList() }
-        val trinketRecs = runCatching { TrinketOffer.resolve(trinketMatcher, lines) }.getOrElse { emptyList() }
+        val heroBadges = if (heroEnabled()) runCatching { heroMatcher.match(lines) }.getOrElse { emptyList() } else emptyList()
+        val trinketRecs = if (trinketEnabled()) runCatching { TrinketOffer.resolve(trinketMatcher, lines) }.getOrElse { emptyList() } else emptyList()
 
         val prev = active
         val fo = forceOpen()

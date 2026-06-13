@@ -76,7 +76,10 @@ class SelectCoordinatorTest {
     @Before fun setUp() { ht = HandlerThread("select-test").apply { start() }; handler = Handler(ht.looper) }
     @After fun tearDown() { ht.quitSafely() }
 
-    private fun coord(g: SGrabber, ocr: SOcr, hr: FakeHeroRenderer, tr: FakeTrinkRenderer) =
+    private fun coord(
+        g: SGrabber, ocr: SOcr, hr: FakeHeroRenderer, tr: FakeTrinkRenderer,
+        heroEnabled: Boolean = true, trinketEnabled: Boolean = true,
+    ) =
         SelectCoordinator(
             grabber = g, ocr = ocr,
             heroMatcher = HeroMatcher(heroTable), heroRenderer = hr,
@@ -85,6 +88,7 @@ class SelectCoordinatorTest {
             handler = handler, mainHandler = mainHandler,
             arbiter = SelectWindowArbiter(),
             forceOpen = { forceOpenFlag },
+            heroEnabled = { heroEnabled }, trinketEnabled = { trinketEnabled },
             probeMs = 100, captureIntervalMs = 50, maxAttempts = 3, maxWindowMs = 10_000,
         )
 
@@ -159,6 +163,24 @@ class SelectCoordinatorTest {
         forceOpenFlag = false
         repeat(4) { drain(50) }
         assertTrue("falling edge closed the forced window", tr.clearCount >= 1)
+    }
+
+    @Test fun heroDisabledHidesHeroOverlayOnHeroScreen() {
+        // AppPrefs hero toggle OFF: even on a hero-select screen the hero overlay must never render.
+        val g = SGrabber(); val hr = FakeHeroRenderer(); val tr = FakeTrinkRenderer()
+        coord(g, SOcr(listOf(heroFrame, heroFrame, heroFrame)), hr, tr, heroEnabled = false).start()
+        repeat(8) { drain(50) }
+        assertEquals("hero overlay suppressed when the setting is off", 0, hr.renderCount)
+        assertEquals("no trinket on a hero screen", 0, tr.renderCount)
+    }
+
+    @Test fun trinketDisabledHidesTrinketOverlayOnTrinketScreen() {
+        // AppPrefs trinket toggle OFF: even on a trinket-shop screen the trinket overlay must never render.
+        val g = SGrabber(); val hr = FakeHeroRenderer(); val tr = FakeTrinkRenderer()
+        coord(g, SOcr(listOf(trinketFrame, trinketFrame, trinketFrame)), hr, tr, trinketEnabled = false).start()
+        repeat(8) { drain(50) }
+        assertEquals("trinket overlay suppressed when the setting is off", 0, tr.renderCount)
+        assertEquals("no hero on a trinket screen", 0, hr.renderCount)
     }
 
     @Test fun projectionStopAndStopClose() {

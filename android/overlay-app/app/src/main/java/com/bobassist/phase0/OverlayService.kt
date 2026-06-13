@@ -240,6 +240,8 @@ class OverlayService : Service() {
             // §8.2 visual probe is the production trigger (Spike B: no select connection signature).
             arbiter = SelectWindowArbiter(),
             forceOpen = { BuildConfig.DEBUG && tierForceOpen },   // debug-only manual override (ACTION_TIER_FORCE_OPEN)
+            heroEnabled = { AppPrefs.heroEnabled(this) },
+            trinketEnabled = { AppPrefs.trinketEnabled(this) },
             breadcrumb = { msg -> breadcrumb(msg) },
         )
         tierCoordinator = coordinator

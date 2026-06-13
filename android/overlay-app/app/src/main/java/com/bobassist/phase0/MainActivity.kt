@@ -84,6 +84,10 @@ class MainActivity : Activity() {
         statusView = text("", 13f).apply { setPadding(0, dp(10), 0, dp(16)) }
         col.addView(statusView)
         col.addView(Button(this).apply {
+            text = getString(R.string.action_settings)
+            setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
+        })
+        col.addView(Button(this).apply {
             text = getString(R.string.action_about)
             setOnClickListener { startActivity(Intent(this@MainActivity, AboutActivity::class.java)) }
         })

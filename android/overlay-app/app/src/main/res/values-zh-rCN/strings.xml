@@ -23,4 +23,9 @@
     <string name="status_ready">准备就绪。</string>
     <string name="notif_overlay">强度 overlay 运行中</string>
     <string name="notif_vpn">拔线功能运行中</string>
+    <string name="action_settings">设置</string>
+    <string name="settings_hero">英雄强度 overlay</string>
+    <string name="settings_hero_sum">选英雄时显示强度标记。</string>
+    <string name="settings_trinket">饰品强度 overlay</string>
+    <string name="settings_trinket_sum">选饰品时显示推荐。</string>
 </resources>
