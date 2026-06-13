@@ -93,17 +93,29 @@ dependencies {
     testImplementation("androidx.test.ext:junit:1.1.5")
 }
 
-// GPL-3.0 compliance guard (codex Stage 2 P2): a full RELEASE build must not ship the placeholder
-// Corresponding-Source URL in NOTICE.txt. Debug dev builds may proceed (they are never distributed).
+// GPL-3.0 compliance guard (codex Stage 2 P2; hardened dedup Phase 4): a full RELEASE build must
+// bundle a NOTICE with a REAL Corresponding-Source URL. Keyed off a single path constant so renaming
+// the asset can't silently disable the guard (it then fails "missing" instead of passing); rejects
+// placeholder markers and requires a real https://github.com/... source link. Debug dev builds may
+// proceed (they are never distributed).
+val noticePath = "src/full/assets/licenses/NOTICE.txt"
 tasks.matching { it.name == "assembleFullRelease" || it.name == "bundleFullRelease" }.configureEach {
     doFirst {
-        val notice = file("src/full/assets/licenses/NOTICE.txt")
-        if (notice.readText().contains("REPLACE-ME")) {
-            throw GradleException(
-                "NOTICE.txt still contains the placeholder Corresponding-Source URL. Set the real GPL " +
-                    "source repository URL before building a full RELEASE APK (GPL-3.0 compliance)."
-            )
+        val notice = file(noticePath)
+        if (!notice.exists()) throw GradleException(
+            "GPL Corresponding-Source NOTICE missing at $noticePath — the full RELEASE build must bundle it (GPL-3.0)."
+        )
+        val text = notice.readText()
+        val hasPlaceholder = listOf("REPLACE-ME", "SET BEFORE DISTRIBUTION", ">>>", "<<<").any { text.contains(it) }
+        // The project's own Corresponding-Source URL: a real https://github.com/... link that is
+        // neither a placeholder nor the upstream mihomo attribution URL (MetaCubeX/mihomo).
+        val hasRealSourceUrl = Regex("""https://github\.com/\S+""").findAll(text).map { it.value }.any {
+            !it.contains("REPLACE-ME") && !it.contains("MetaCubeX/mihomo")
         }
+        if (hasPlaceholder || !hasRealSourceUrl) throw GradleException(
+            "NOTICE.txt ($noticePath) has no valid GPL Corresponding-Source URL — set a real " +
+                "https://github.com/... source link (not a placeholder) before a full RELEASE build (GPL-3.0)."
+        )
     }
 }
 
