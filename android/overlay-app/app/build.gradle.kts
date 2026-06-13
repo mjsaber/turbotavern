@@ -106,3 +106,59 @@ tasks.matching { it.name == "assembleFullRelease" || it.name == "bundleFullRelea
         }
     }
 }
+
+// ── Clean-SKU containment guards (dedup Phase 2) ──────────────────────────────
+// The clean (Play) SKU must ship neither the mihomo/VPN native core nor the 拔线
+// VpnService. This is a Play-policy + APK-size guard (the whole repo is GPL, so it is
+// NOT a licensing matter): Google Play rejects 拔线 as game-cheating, and there is no
+// reason to ship the ~46MB libgojni.so the clean build never calls.
+
+// (a) Source gate — the GPL mihomo native AAR (com.bobassist.gomobile) must never be
+// referenced from any source set the clean variants COMPILE. Scoped to that package ONLY:
+// BobVpnService / MihomoCore / Real*Core references would already fail to compile in clean
+// (they live in src/full), and android.net.VpnService is a GPL-free AOSP class that
+// CoreFacades legitimately uses — so neither belongs in this gate (codex/critic false-positive
+// notes). The roots are every source set a clean variant pulls in: shared (main), flavor
+// (clean), buildType (debug/release), and flavor-buildType (cleanDebug/cleanRelease) — NOT the
+// full* sets, which legitimately carry the GPL core (codex P2: don't miss buildType sets).
+val cleanSourceRoots = listOf(
+    "src/main", "src/clean", "src/debug", "src/release", "src/cleanDebug", "src/cleanRelease",
+)
+val verifyCleanSourceGplFree by tasks.registering {
+    group = "verification"
+    description = "Fail if any clean-compiled source set references the GPL mihomo native core (com.bobassist.gomobile)."
+    doLast {
+        val hits = cleanSourceRoots.flatMap { root ->
+            fileTree(root) { include("**/*.kt") }.files
+                .filter { it.readText().contains("com.bobassist.gomobile") }
+                .map { it.relativeTo(projectDir).path }
+        }
+        if (hits.isNotEmpty()) throw GradleException(
+            "GPL mihomo core (com.bobassist.gomobile) leaked into a clean-compiled source set — keep it in src/full:\n" +
+                hits.joinToString("\n")
+        )
+    }
+}
+tasks.matching { it.name in setOf("assembleCleanDebug", "assembleCleanRelease", "bundleCleanRelease") }
+    .configureEach { dependsOn(verifyCleanSourceGplFree) }
+
+// (b) Built-artifact gate — the clean RELEASE artifact must not contain the GPL/VPN native lib.
+// Check the .so directly: R8 renames/strips dex classes (a dex class-name grep would
+// false-NEGATIVE on a minified build), but native libs are never renamed. Covers BOTH the APK
+// (assembleCleanRelease) and the Play AAB (bundleCleanRelease — the actual upload artifact;
+// codex P2: don't leave the bundle path unguarded). The `**/libgojni*.so` glob matches the APK
+// layout (lib/<abi>/) and the AAB layout (base/lib/<abi>/) alike.
+tasks.matching { it.name == "assembleCleanRelease" || it.name == "bundleCleanRelease" }.configureEach {
+    val isBundle = name == "bundleCleanRelease"
+    val dir = if (isBundle) "build/outputs/bundle/cleanRelease" else "build/outputs/apk/clean/release"
+    val ext = if (isBundle) ".aab" else ".apk"
+    doLast {
+        val artifact = file(dir).listFiles()?.firstOrNull { it.name.endsWith(ext) }
+            ?: throw GradleException("clean release artifact ($ext) not found in $dir for native-core verification")
+        val gpl = zipTree(artifact).matching { include("**/libgojni*.so") }.files
+        if (gpl.isNotEmpty()) throw GradleException(
+            "clean artifact ${artifact.name} contains the GPL/VPN native core (${gpl.joinToString { it.name }}) — " +
+                "it must ship only in the full sideload SKU."
+        )
+    }
+}
