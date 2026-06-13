@@ -6,3 +6,6 @@ local.properties
 .kotlin/
 app/libs/*.aar
 app/libs/*.jar
+keystore.properties
+*.jks
+*.keystore
