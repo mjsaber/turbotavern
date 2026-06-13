@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Both flavors are built + unit-tested so a clean-only wiring regression (e.g. the
+# KillFeatureHolder binding) is caught — testCleanDebug and testFullDebug each run their
+# own flavor's HolderContractTest. The clean-SKU containment guards (no GPL mihomo native
+# core in the Play artifact) run via the assemble tasks (dedup Phase 2).
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android/overlay-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build both flavors (debug) + clean source-containment gate
+        run: ./gradlew assembleCleanDebug assembleFullDebug verifyCleanSourceGplFree --no-daemon
+
+      - name: Unit tests — both flavors (exercises per-flavor binding contracts)
+        run: ./gradlew testCleanDebugUnitTest testFullDebugUnitTest --no-daemon
+
+      - name: Clean release containment guard (no GPL native core in the Play APK + AAB)
+        run: ./gradlew assembleCleanRelease bundleCleanRelease --no-daemon
