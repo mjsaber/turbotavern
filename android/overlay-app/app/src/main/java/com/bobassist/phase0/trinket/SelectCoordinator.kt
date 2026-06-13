@@ -5,6 +5,7 @@ import com.bobassist.phase0.herotier.BadgeRenderer
 import com.bobassist.phase0.herotier.Foreground
 import com.bobassist.phase0.herotier.HeroMatcher
 import com.bobassist.phase0.herotier.HeroOcr
+import com.bobassist.phase0.herotier.OrientedOcr
 import com.bobassist.phase0.herotier.ScreenGrabber
 
 /**
@@ -42,6 +43,13 @@ class SelectCoordinator(
     private var attempts = 0
     private var wasForced = false
     private var loggedInert = false
+
+    // Orientation-robust OCR: handles a portrait capture buffer of the landscape game (auto-detects the
+    // rotation that actually reads). Upright buffers (emulator/most phones) stay on rotation 0 unchanged.
+    private val orientedOcr = OrientedOcr(ocr) { lines ->
+        runCatching { heroMatcher.match(lines).size }.getOrElse { 0 } +
+            runCatching { TrinketOffer.matchCount(trinketMatcher, lines) }.getOrElse { 0 }
+    }
 
     private val tick = object : Runnable {
         override fun run() {
@@ -90,7 +98,7 @@ class SelectCoordinator(
             return
         }
         val frame = grabber.capture() ?: return
-        val lines = runCatching { ocr.recognize(frame) }
+        val lines = runCatching { orientedOcr.recognize(frame) }
             .getOrElse { breadcrumb("select: ocr failed: ${it.message}"); emptyList() }
         val heroBadges = runCatching { heroMatcher.match(lines) }.getOrElse { emptyList() }
         val trinketRecs = runCatching { TrinketOffer.resolve(trinketMatcher, lines) }.getOrElse { emptyList() }
