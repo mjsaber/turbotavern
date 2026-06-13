@@ -2,13 +2,13 @@
 <!-- debug (both flavors): only the GPL-free OCR probe. 拔线 dev tooling lives in src/fullDebug. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-        <!-- Spike-A OCR probe (debug-only). Trigger: am broadcast -a com.bobassist.phase0.OCR_PROBE -->
+        <!-- Spike-A OCR probe (debug-only). Trigger: am broadcast -a com.turbotavern.OCR_PROBE -->
         <receiver
-            android:name="com.bobassist.phase0.herotier.debug.OcrProbeReceiver"
+            android:name="com.turbotavern.herotier.debug.OcrProbeReceiver"
             android:exported="true"
             android:enabled="true">
             <intent-filter>
-                <action android:name="com.bobassist.phase0.OCR_PROBE" />
+                <action android:name="com.turbotavern.OCR_PROBE" />
             </intent-filter>
         </receiver>
     </application>

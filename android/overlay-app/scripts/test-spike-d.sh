@@ -22,7 +22,8 @@
 #   ./test-spike-d.sh stop
 set -uo pipefail
 
-BOB_PKG=com.bobassist.phase0
+BOB_PKG=com.turbotavern.full
+BOB_NS=com.turbotavern
 HS_PKG=com.blizzard.wtcg.hearthstone
 HOST_OUT=/tmp/spike-d
 DEVICE_DIR=/data/user/0/$BOB_PKG/files/spike-d
@@ -45,13 +46,13 @@ cmd_start() {
     adb shell appops set "$BOB_PKG" android:get_usage_stats allow >/dev/null 2>/dev/null || echo "[warn] could not appops-set android:get_usage_stats (OEM restriction?); requires manual grant once via Settings"
     adb logcat -c
     echo "[start] Launch MainActivity with auto-start"
-    adb shell am start -n "$BOB_PKG/.MainActivity" --ez auto_start true >/dev/null
+    adb shell am start -n "$BOB_PKG/$BOB_NS.MainActivity" --ez auto_start true >/dev/null
     sleep 4
     echo "[start] Launch HS"
     adb shell monkey -p "$HS_PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
     sleep 2
     echo "[start] record_start (snapshots every 500ms to $DEVICE_DIR/)"
-    adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd record_start >/dev/null
+    adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd record_start >/dev/null
     sleep 1
     adb logcat -d -s SpikeC:I 2>&1 | grep record_start | tail -1
     echo "Now play HS. Call:"
@@ -61,14 +62,14 @@ cmd_start() {
 
 cmd_mark() {
     local label="${1:-mark}"
-    adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd record_mark --es label "$label" >/dev/null
+    adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd record_mark --es label "$label" >/dev/null
     sleep 0.3
     adb logcat -d -s SpikeC:I 2>&1 | grep "record_mark label=$label" | tail -1
 }
 
 cmd_stop() {
     echo "[stop] record_stop"
-    adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd record_stop >/dev/null
+    adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd record_stop >/dev/null
     sleep 1
     adb logcat -d -s SpikeC:I 2>&1 | grep record_stop | tail -1
 

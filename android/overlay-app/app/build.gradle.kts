@@ -13,7 +13,7 @@ val keystoreProps = Properties().apply {
 }
 
 android {
-    namespace = "com.bobassist.phase0"
+    namespace = "com.turbotavern"
     compileSdk = 35
 
     buildFeatures {
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.bobassist.phase0"
+        applicationId = "com.turbotavern"
         minSdk = 29
         targetSdk = 35
         versionCode = 1
@@ -39,7 +39,7 @@ android {
         }
         create("full") {
             dimension = "sku"
-            applicationId = "com.bobassist.phase0"      // full sideload SKU — 拔线 + GPL; keeps the existing id
+            applicationId = "com.turbotavern.full"      // full sideload SKU — 拔线 + GPL (distinct id so it can coexist with the Play clean build)
         }
     }
 

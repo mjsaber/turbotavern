@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # sim-bg-kill.sh — drive deterministic scenarios against a debug build of
-# com.bobassist.phase0 to validate the overlay tap-to-skip path WITHOUT
+# com.turbotavern.full to validate the overlay tap-to-skip path WITHOUT
 # needing a real Hearthstone battle.
 #
 # Usage:
@@ -89,7 +89,7 @@ bootstrap_service() {
     fi
     adb logcat -c >/dev/null 2>&1 || true
     note "launch MainActivity with auto_start=true"
-    adb shell am start -n "$BOB_PKG/.MainActivity" --ez auto_start true >/dev/null
+    adb shell am start -n "$BOB_PKG/$BOB_NS.MainActivity" --ez auto_start true >/dev/null
     # Wait for the canonical breadcrumb (KEEP per plan §codex P2 #10).
     local deadline=$(( $(date +%s) + 30 ))
     while [ "$(date +%s)" -lt "$deadline" ]; do

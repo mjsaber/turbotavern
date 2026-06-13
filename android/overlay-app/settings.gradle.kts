@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BobAssistantPhase0"
+rootProject.name = "TurboTavern"
 include(":app")

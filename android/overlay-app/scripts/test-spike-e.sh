@@ -14,7 +14,8 @@
 #   - prompt user whether next BG round playable (f)
 set -uo pipefail
 
-BOB_PKG=com.bobassist.phase0
+BOB_PKG=com.turbotavern.full
+BOB_NS=com.turbotavern
 HS_PKG=com.blizzard.wtcg.hearthstone
 OUT_DIR=/tmp/spike-e
 DEVICE_RECORDING=/sdcard/spike-e.mp4
@@ -59,7 +60,7 @@ adb shell rm -f "$DEVICE_RECORDING"
 adb logcat -c
 
 echo "[3] Launch Bob VPN (auto_start) + HS"
-adb shell am start -n "$BOB_PKG/.MainActivity" --ez auto_start true >/dev/null
+adb shell am start -n "$BOB_PKG/$BOB_NS.MainActivity" --ez auto_start true >/dev/null
 sleep 4
 adb shell monkey -p "$HS_PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
 
@@ -85,7 +86,7 @@ sleep 2  # let screenrecord warm up
 
 echo "[6] Pre-kill snapshot — assert ≥1 candidate"
 adb logcat -c
-adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
+adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
 PRE_LINE=$(wait_for_log "SpikeC:I" "snapshot=" 5)
 PRE_JSON=$(echo "$PRE_LINE" | sed -E 's/.*snapshot=//')
 echo "$PRE_JSON" > "$OUT_DIR/pre.json"
@@ -101,7 +102,7 @@ fi
 
 echo "[7] Broadcast kill_battle"
 adb logcat -c
-adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd kill_battle >/dev/null
+adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd kill_battle >/dev/null
 KILL_LINE=$(wait_for_log "SpikeC:I" "kill_battle " 5)
 echo "$KILL_LINE" > "$OUT_DIR/kill.log"
 echo "  $KILL_LINE"
@@ -111,7 +112,7 @@ ACTUAL_ID=$(echo "$KILL_LINE" | sed -E 's/.* id=([^ ]+) .*/\1/')
 echo "[8] Post-kill snapshot — assert killed id is gone"
 sleep 1
 adb logcat -c
-adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
+adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
 POST_LINE=$(wait_for_log "SpikeC:I" "snapshot=" 5)
 POST_JSON=$(echo "$POST_LINE" | sed -E 's/.*snapshot=//')
 echo "$POST_JSON" > "$OUT_DIR/post.json"

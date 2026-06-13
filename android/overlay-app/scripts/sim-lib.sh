@@ -14,8 +14,9 @@
 #   . "$SCRIPT_DIR/sim-lib.sh"
 # shellcheck shell=bash
 
-BOB_PKG=com.bobassist.phase0
-BOB_TEST_ACTION="${BOB_PKG}.TEST"
+BOB_PKG=com.turbotavern.full
+BOB_NS=com.turbotavern
+BOB_TEST_ACTION="${BOB_NS}.TEST"
 
 # Single-quote a string for the DEVICE shell (Android sh). Wraps in single
 # quotes and escapes any embedded single quote as '\''.

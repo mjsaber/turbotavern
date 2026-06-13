@@ -6,7 +6,8 @@
 # Prereqs: debug APK installed; renders fetched (`cd data-pipeline && uv run bgtiers fetch-card-renders`).
 # Usage: SERIAL=<serial> scripts/ocr-corpus.sh [--strict]
 set -uo pipefail
-BOB=com.bobassist.phase0
+BOB=com.turbotavern.full
+BOB_NS=com.turbotavern
 DEV="${SERIAL:+-s $SERIAL}"
 cd "$(dirname "$0")/.."                                   # android/overlay-app
 RENDERS="${RENDERS:-../../data-pipeline/build/card-renders}"
@@ -21,7 +22,7 @@ fi
 
 # Un-stop the app (manifest receiver won't fire on a stopped package), then send it to background so
 # OcrProbe's goAsync() gets the long (~60s) window.
-adb $DEV shell am start -n "$BOB/.MainActivity" >/dev/null 2>&1 || { echo "install debug APK first"; exit 1; }
+adb $DEV shell am start -n "$BOB/$BOB_NS.MainActivity" >/dev/null 2>&1 || { echo "install debug APK first"; exit 1; }
 sleep 1; adb $DEV shell input keyevent KEYCODE_HOME >/dev/null 2>&1; sleep 1
 
 # The probe dir MUST be created by the app (uid u0_aXX), not by `adb shell mkdir` — on the emulator's
@@ -30,7 +31,7 @@ sleep 1; adb $DEV shell input keyevent KEYCODE_HOME >/dev/null 2>&1; sleep 1
 # app-owned; afterwards shell can push files into it (shell is in the ext_data_rw group).
 adb $DEV shell "rm -rf $PROBE" 2>/dev/null
 adb $DEV logcat -c
-adb $DEV shell am broadcast -a "$BOB.OCR_PROBE" -p "$BOB" >/dev/null
+adb $DEV shell am broadcast -a "$BOB_NS.OCR_PROBE" -p "$BOB" >/dev/null
 for i in $(seq 15); do
   adb $DEV logcat -d -s OcrProbe 2>/dev/null | grep -qE 'no PNGs|probe done' && break; sleep 1
 done
@@ -42,7 +43,7 @@ for loc in $LOCALES; do
   adb $DEV shell "rm -f $PROBE/*.png $PROBE/out/* 2>/dev/null"   # clear contents, keep app-owned dir
   adb $DEV push "${files[@]}" "$PROBE/" >/dev/null
   adb $DEV logcat -c
-  adb $DEV shell am broadcast -a "$BOB.OCR_PROBE" -p "$BOB" >/dev/null
+  adb $DEV shell am broadcast -a "$BOB_NS.OCR_PROBE" -p "$BOB" >/dev/null
   echo "[$loc] OCR running..."
   for i in $(seq 240); do
     adb $DEV logcat -d -s OcrProbe 2>/dev/null | grep -q 'probe done' && break

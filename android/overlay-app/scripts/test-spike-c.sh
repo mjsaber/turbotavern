@@ -11,7 +11,8 @@
 # Exits 0 iff all assertions pass.
 set -uo pipefail
 
-BOB_PKG=com.bobassist.phase0
+BOB_PKG=com.turbotavern.full
+BOB_NS=com.turbotavern
 HS_PKG=com.blizzard.wtcg.hearthstone
 OUT_DIR=/tmp/spike-c
 mkdir -p "$OUT_DIR"
@@ -65,7 +66,7 @@ adb shell appops set "$BOB_PKG" android:get_usage_stats allow >/dev/null 2>/dev/
 adb logcat -c
 
 echo "[3/10] Launch MainActivity with auto-start"
-adb shell am start -n "$BOB_PKG/.MainActivity" --ez auto_start true >/dev/null
+adb shell am start -n "$BOB_PKG/$BOB_NS.MainActivity" --ez auto_start true >/dev/null
 sleep 4
 
 echo "[4/10] Launch HS"
@@ -81,7 +82,7 @@ fi
 
 echo "[6/10] Broadcast snapshot"
 adb logcat -c
-adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
+adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
 SNAP_LINE=$(wait_for_log "SpikeC:I" "snapshot=" 5)
 [[ -n "$SNAP_LINE" ]] || { fail "no snapshot log"; SNAP_LINE=""; }
 echo "$SNAP_LINE" > "$OUT_DIR/snap1.log"
@@ -102,7 +103,7 @@ if [[ "$CONN_COUNT" -ge 1 ]]; then
 
     echo "[7/10] Broadcast kill $PICK_ID → expect Success"
     adb logcat -c
-    adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd kill --es id "$PICK_ID" >/dev/null
+    adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd kill --es id "$PICK_ID" >/dev/null
     KILL_LINE=$(wait_for_log "SpikeC:I" "kill id=" 5)
     echo "$KILL_LINE" > "$OUT_DIR/kill.log"
     if echo "$KILL_LINE" | grep -q "result=Success"; then
@@ -113,7 +114,7 @@ if [[ "$CONN_COUNT" -ge 1 ]]; then
 
     echo "[8/10] Snapshot again — id should be gone"
     adb logcat -c
-    adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
+    adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd snapshot >/dev/null
     SNAP2_LINE=$(wait_for_log "SpikeC:I" "snapshot=" 5)
     SNAP2_JSON=$(echo "$SNAP2_LINE" | sed -E 's/.*snapshot=//')
     echo "$SNAP2_JSON" > "$OUT_DIR/snap2.log"
@@ -126,7 +127,7 @@ fi
 
 echo "[9/10] Kill unknown id → expect NotFound"
 adb logcat -c
-adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd kill --es id "00000000-0000-0000-0000-000000000000" >/dev/null
+adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd kill --es id "00000000-0000-0000-0000-000000000000" >/dev/null
 NF_LINE=$(wait_for_log "SpikeC:I" "kill id=" 5)
 if echo "$NF_LINE" | grep -q "result=NotFound"; then
     ok "unknown id returns NotFound"
@@ -136,11 +137,11 @@ fi
 
 echo "[10/10] stop_core then kill → expect CoreStopped"
 adb logcat -c
-adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd stop_core >/dev/null
+adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd stop_core >/dev/null
 STOP_LINE=$(wait_for_log "SpikeC:I" "stop_core result=" 5)
 echo "  stop_core: $STOP_LINE"
 adb logcat -c
-adb shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB_PKG" --es cmd kill --es id "deadbeef-dead-dead-dead-deaddeaddead" >/dev/null
+adb shell am broadcast -a com.turbotavern.TEST -p "$BOB_PKG" --es cmd kill --es id "deadbeef-dead-dead-dead-deaddeaddead" >/dev/null
 CS_LINE=$(wait_for_log "SpikeC:I" "kill id=" 5)
 if echo "$CS_LINE" | grep -q "result=CoreStopped"; then
     ok "kill after stop_core returns CoreStopped"

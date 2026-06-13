@@ -1,21 +1,23 @@
-# Bob Assistant — Go-to-Market Implementation Plan
+# Turbo Tavern — Go-to-Market Implementation Plan
 
-**Strategy (locked 2026-06-12): two SKUs from one repo.**
+**Strategy (locked 2026-06-12; updated 2026-06-13): two SKUs from one repo, WHOLE repo open-source GPL-3.0.**
 
-- **`clean` flavor** → `com.bobassist` → **Google Play, closed-source**, freemium + subscription.
-  Overlay-only (hero tier + trinket recs via MediaProjection OCR). **ZERO GPL code.**
-- **`full` flavor** → `com.bobassist.full` → **sideload / F-Droid / GitHub Releases, GPL-3.0 open-source**, free.
+Namespace + repo + app all unified to **`turbotavern`** (renamed 2026-06-13 from `com.bobassist.phase0`).
+
+- **`clean` flavor** → `com.turbotavern` → **Google Play**, freemium + subscription.
+  Overlay-only (hero tier + trinket recs via MediaProjection OCR). No 拔线 / VpnService / mihomo.
+- **`full` flavor** → `com.turbotavern.full` → **sideload / F-Droid / GitHub Releases**, free.
   Everything in `clean` PLUS 拔线 (VpnService + mihomo). Lead-gen / enthusiast funnel.
 
-**Why the split is legally clean:** mihomo (GPL-3.0) is linked ONLY in `full`, so only `full` is a GPL
-derivative → published as GPL-3.0 source. `clean` contains no GPL code, so it stays proprietary. We own all
-non-mihomo Kotlin and use permissive libs (ML Kit, ONNX = Apache-2.0), so we may dual-license our own code
-(GPL in `full`, proprietary in `clean`).
+**Licensing (simplified 2026-06-13):** the WHOLE repo is GPL-3.0 and public on GitHub — both flavors. GPL is
+no longer a constraint; the repo itself is the Corresponding Source for both. The clean/full split PERSISTS,
+but now ONLY for **Google Play policy** (Play rejects 拔线 as game-cheating) + **Blizzard ban risk**, NOT
+licensing. `clean` still excludes VpnService/mihomo — for Play-policy + APK-size, not copyright.
 
-**Monetization:** premium data (trinket/comp recommendations) is **server-gated by subscription token**. The
-open `full` client cannot unlock it without a valid subscription (server + data stay proprietary; mihomo is
-GPL not AGPL → no network copyleft). Both SKUs hit the same backend. `full` is un-monetizable by GPL (anyone
-may redistribute it free) — that's fine, it's the free funnel; revenue lives in the `clean` Play subscription.
+**Monetization:** premium data (trinket/comp recommendations) is **server-gated by subscription token**. A
+fully-open client is fine — mihomo is GPL not AGPL → no network copyleft, and the server + data are not in
+this repo. The open client can't unlock premium without a valid token → no cannibalization. Revenue lives in
+the `clean` Play subscription; `full` is the free funnel.
 
 **Honest expectation:** hobby/portfolio scale (~$1–6万/yr gross), declining niche. Validate demand with a free
 beta before heavy paid-funnel investment. Blizzard ban risk on `full` is unchanged by open-sourcing — warn users.
@@ -67,7 +69,7 @@ unit suite green; `clean` shows the overlay with NO VPN consent dialog.
 - **OPEN (blocks full distribution):** set the real GPL Corresponding-Source repo URL in NOTICE.txt.
 
 ## Stage 3: De-prototype + release hygiene — **[Complete]** (`32e9118`, codex clean)
-- applicationIds finalized: clean=`com.turbotavern`, full=`com.bobassist.phase0`. ✅
+- applicationIds finalized: clean=`com.turbotavern`, full=`com.turbotavern.full`; namespace `com.turbotavern` (2026-06-13 repo-wide rename from `com.bobassist.phase0`). ✅
 - versionName `0.0.1-prototype` → `0.1.0`; label "Turbo Tavern". ✅
 - Adaptive launcher icon (amber tavern bg + cream "turbo" bolt — placeholder for final art) + DeviceDefault.DayNight theme + brand colors; renders on-device. ✅
 - Signing config reads gitignored `keystore.properties` (graceful when absent) + `keystore.properties.example`. ✅

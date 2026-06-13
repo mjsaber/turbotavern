@@ -8,7 +8,8 @@
 #   ./dev-record.sh pull        # pull the session to /tmp/devrec
 #   ./dev-record.sh analyze     # run analyze-recording.py over /tmp/devrec
 set -uo pipefail
-BOB=com.bobassist.phase0
+BOB=com.turbotavern.full
+BOB_NS=com.turbotavern
 DEV="${SERIAL:+-s $SERIAL}"
 HOST_OUT=/tmp/devrec
 cd "$(dirname "$0")/.."
@@ -18,11 +19,11 @@ case "${1:-}" in
     if [[ "${2:-}" == "--rebuild" ]]; then
         ./gradlew :app:assembleFullDebug -q && adb $DEV install -r app/build/outputs/apk/full/debug/app-full-debug.apk
     fi
-    adb $DEV shell am start -n "$BOB/com.bobassist.phase0.devrec.DevRecorderActivity"
+    adb $DEV shell am start -n "$BOB/com.turbotavern.devrec.DevRecorderActivity"
     echo "Tap 'Start Recording' + grant full-screen capture. Then play; tap MARK on screen (or: $0 mark)."
     ;;
-  mark) adb $DEV shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB" --es cmd devrec_mark >/dev/null && echo "marked (fallback)";;
-  stop) adb $DEV shell am broadcast -a com.bobassist.phase0.TEST -p "$BOB" --es cmd devrec_stop >/dev/null && echo "stopped";;
+  mark) adb $DEV shell am broadcast -a com.turbotavern.TEST -p "$BOB" --es cmd devrec_mark >/dev/null && echo "marked (fallback)";;
+  stop) adb $DEV shell am broadcast -a com.turbotavern.TEST -p "$BOB" --es cmd devrec_stop >/dev/null && echo "stopped";;
   pull)
     rm -rf "$HOST_OUT"; mkdir -p "$HOST_OUT"
     adb $DEV shell "run-as $BOB sh -c 'tar cf - files/devrec 2>/dev/null'" > "$HOST_OUT.tar" 2>/dev/null

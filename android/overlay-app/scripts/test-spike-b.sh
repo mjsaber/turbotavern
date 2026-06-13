@@ -13,7 +13,8 @@
 #   ./test-spike-b.sh --secs 90    # different capture window
 set -euo pipefail
 
-BOB_PKG=com.bobassist.phase0
+BOB_PKG=com.turbotavern.full
+BOB_NS=com.turbotavern
 HS_PKG=com.blizzard.wtcg.hearthstone
 OUT_DIR=/tmp/spike-b
 mkdir -p "$OUT_DIR"
@@ -46,7 +47,7 @@ adb shell run-as "$BOB_PKG" rm -f files/bob-breadcrumbs.log 2>/dev/null || true
 adb logcat -c
 
 echo "[5/8] Launch MainActivity with auto-start flag"
-adb shell am start -n "$BOB_PKG/.MainActivity" --ez auto_start true >/dev/null
+adb shell am start -n "$BOB_PKG/$BOB_NS.MainActivity" --ez auto_start true >/dev/null
 sleep 5
 
 echo "[7/8] Launch HS"

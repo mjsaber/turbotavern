@@ -14,7 +14,8 @@ export ANDROID_SDK_ROOT="$SDK" ANDROID_HOME="$SDK"
 SDKM="$SDK/cmdline-tools/latest/bin/sdkmanager"; [[ -x "$SDKM" ]] || SDKM="$(command -v sdkmanager)"
 AVDM="$SDK/cmdline-tools/latest/bin/avdmanager"; [[ -x "$AVDM" ]] || AVDM="$(command -v avdmanager)"
 EMUBIN="$SDK/emulator/emulator"
-BOB=com.bobassist.phase0
+BOB=com.turbotavern.full
+BOB_NS=com.turbotavern
 IMG="system-images;android-34;google_atd;arm64-v8a"
 IMGDIR="$SDK/system-images/android-34/google_atd/arm64-v8a"
 AVD=devrec-smoke
@@ -64,7 +65,7 @@ ui_tap_text() { # tap the center of the first node whose text= matches $1 (case-
 }
 try_tap() { for t in "$@"; do ui_tap_text "$t" && { echo "[ui] tapped '$t'"; return 0; }; done; return 1; }
 
-adb -s "$EMU" shell am start -n "$BOB/.devrec.DevRecorderActivity" >/dev/null || fail "am start"
+adb -s "$EMU" shell am start -n "$BOB/$BOB_NS.devrec.DevRecorderActivity" >/dev/null || fail "am start"
 sleep 2
 try_tap "Start Recording" "START RECORDING" "Start" || fail "no 'Start Recording' button"
 sleep 2                                                    # system consent dialog
@@ -74,9 +75,9 @@ for i in $(seq 20); do adb -s "$EMU" shell pidof "$BOB" >/dev/null 2>&1 && grep 
 
 # --- 5. fire marks + stop entirely over adb (no taps) ---
 for n in $(seq "$MARKS"); do
-  adb -s "$EMU" shell am broadcast -a "$BOB.TEST" -p "$BOB" --es cmd devrec_mark >/dev/null; sleep 1
+  adb -s "$EMU" shell am broadcast -a "$BOB_NS.TEST" -p "$BOB" --es cmd devrec_mark >/dev/null; sleep 1
 done
-adb -s "$EMU" shell am broadcast -a "$BOB.TEST" -p "$BOB" --es cmd devrec_stop >/dev/null; sleep 2
+adb -s "$EMU" shell am broadcast -a "$BOB_NS.TEST" -p "$BOB" --es cmd devrec_stop >/dev/null; sleep 2
 
 # --- 6. pull + analyze + assert ---
 SERIAL="$EMU" scripts/dev-record.sh pull || fail "pull"

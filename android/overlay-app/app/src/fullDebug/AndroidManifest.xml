@@ -11,17 +11,17 @@
             android:exported="true"
             android:enabled="true">
             <intent-filter>
-                <action android:name="com.bobassist.phase0.TEST" />
+                <action android:name="com.turbotavern.TEST" />
             </intent-filter>
         </receiver>
 
         <!-- DevRecorder (debug-only): session recorder with on-screen MARK button + screenshots. -->
         <activity
-            android:name="com.bobassist.phase0.devrec.DevRecorderActivity"
+            android:name="com.turbotavern.devrec.DevRecorderActivity"
             android:exported="true"
             android:label="DevRecorder" />
         <service
-            android:name="com.bobassist.phase0.devrec.DevRecorderService"
+            android:name="com.turbotavern.devrec.DevRecorderService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
     </application>
