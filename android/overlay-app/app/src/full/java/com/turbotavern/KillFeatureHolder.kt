@@ -6,8 +6,8 @@ import android.net.VpnService
 import com.turbotavern.core.RealLifecycleCore
 
 /** Full (sideload) flavor: real VPN-backed 拔线 via [BobVpnService] + the GPL-3.0 mihomo core. */
-object KillFeatureHolder {
-    fun get(): KillFeature = VpnKillFeature
+object KillFeatureHolder : KillFeatureBinding() {
+    override fun get(): KillFeature = VpnKillFeature
 }
 
 object VpnKillFeature : KillFeature {

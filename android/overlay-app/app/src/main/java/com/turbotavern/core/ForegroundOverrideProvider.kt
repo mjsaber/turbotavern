@@ -18,3 +18,11 @@ interface ForegroundOverrideProvider {
 object NoOpForegroundOverride : ForegroundOverrideProvider {
     override fun foregroundOverride(): Boolean? = null
 }
+
+/**
+ * Compile-time contract for the buildType-specific `ForegroundOverrideHolder` (debug/release).
+ * Subclassing fixes [get]'s signature so the two copies can't drift. (Dedup strategy Phase 1.)
+ */
+abstract class ForegroundOverrideBinding {
+    abstract fun get(): ForegroundOverrideProvider
+}

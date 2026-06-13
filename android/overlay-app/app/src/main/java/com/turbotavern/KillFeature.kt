@@ -28,3 +28,12 @@ interface KillFeature {
     /** Stop the kill/VPN service. clean: no-op. */
     fun stop(context: Context)
 }
+
+/**
+ * Compile-time contract for the flavor-specific `KillFeatureHolder`. Each flavor's holder MUST
+ * subclass this, so changing [get]'s signature here breaks BOTH src/clean and src/full at compile
+ * time — selector drift becomes a build error, not a latent runtime fork. (Dedup strategy Phase 1.)
+ */
+abstract class KillFeatureBinding {
+    abstract fun get(): KillFeature
+}
