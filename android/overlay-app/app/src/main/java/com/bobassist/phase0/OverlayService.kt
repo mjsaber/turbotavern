@@ -24,6 +24,7 @@ import android.view.Display
 import android.view.WindowManager
 import com.bobassist.phase0.foreground.ForegroundQuery
 import com.bobassist.phase0.herotier.AndroidWindowHost
+import com.bobassist.phase0.herotier.Foreground
 import com.bobassist.phase0.herotier.HeroMatcher
 import com.bobassist.phase0.herotier.MediaProjectionGrabber
 import com.bobassist.phase0.herotier.MlKitHeroOcr
@@ -256,13 +257,14 @@ class OverlayService : Service() {
         val vd = virtualDisplay ?: return
         val info = displayInfoNow()
         if (info.width == captureW && info.height == captureH) return   // no real size change
-        // HS Battlegrounds is landscape; a PORTRAIT reconfigure only happens when HS leaves the
-        // foreground (display rotates back to the launcher). Resizing the VirtualDisplay during that
-        // transition REVOKES the MediaProjection on some devices (OnePlus / Android 14) — which killed
-        // the overlay before it ever reached hero-select. Skip it: the overlay is paused while HS isn't
-        // in front anyway, and the capture stays correctly sized (landscape) for when HS returns.
-        if (info.height > info.width) {
-            breadcrumb("tier: skip portrait reconfigure to keep projection alive")
+        // Skip the resize ONLY for the transient portrait rotation when HS LEAVES the foreground
+        // (display rotates back to the launcher): resizing the VirtualDisplay during that transition
+        // REVOKES the MediaProjection on some devices (OnePlus / Android 14), which killed the overlay
+        // before it ever reached hero-select. When HS is STILL foreground a portrait buffer is the
+        // OrientedOcr-supported case and MUST be resized so the capture matches the live display. (codex)
+        if (info.height > info.width &&
+            StrictForeground.of(foregroundQuery.queryForegroundPackage(), HS_PACKAGE) != Foreground.TRUE) {
+            breadcrumb("tier: skip portrait reconfigure while HS not foreground (keep projection alive)")
             return
         }
         stopCoordinator()
