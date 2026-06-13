@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Turbo Tavern</string>
+    <string name="app_name" translatable="false">Turbo Tavern</string>
     <string name="tagline">Hearthstone Battlegrounds hero &amp; trinket tier overlay</string>
     <string name="how_title">How it works</string>
     <string name="how_1">1. Grant the permissions below.</string>
