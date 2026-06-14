@@ -5,10 +5,15 @@ on:
     branches: [master]
   pull_request:
 
-# Both flavors are built + unit-tested so a clean-only wiring regression (e.g. the
-# KillFeatureHolder binding) is caught — testCleanDebug and testFullDebug each run their
-# own flavor's HolderContractTest. The clean-SKU containment guards (no GPL mihomo native
-# core in the Play artifact) run via the assemble tasks (dedup Phase 2).
+# CI builds + unit-tests the CLEAN (Play) SKU only. The full SKU links libs/bobcore.aar — a
+# native gomobile-bind artifact (GPL mihomo core) that requires the Go toolchain + Android NDK
+# to produce and is intentionally gitignored, so it can't be built on the hosted runner without
+# a heavyweight native pipeline. The clean variant is the Play-distributed artifact and carries
+# the regression surface worth gating here: the clean binding contract (testCleanDebug runs its
+# own KillFeatureHolderContractTest — NoopKillFeature wiring), the clean source-containment gate
+# (no GPL mihomo core compiled into clean, dedup Phase 1/2), and the clean release containment
+# guards (no GPL native core in the Play APK + AAB). The full flavor's wiring is still verified
+# locally where bobcore.aar is present (testFullDebugUnitTest + the full contract test).
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -27,11 +32,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build both flavors (debug) + clean source-containment gate
-        run: ./gradlew assembleCleanDebug assembleFullDebug verifyCleanSourceGplFree --no-daemon
+      - name: Build clean (debug) + clean source-containment gate
+        run: ./gradlew assembleCleanDebug verifyCleanSourceGplFree --no-daemon
 
-      - name: Unit tests — both flavors (exercises per-flavor binding contracts)
-        run: ./gradlew testCleanDebugUnitTest testFullDebugUnitTest --no-daemon
+      - name: Unit tests — clean flavor (exercises the clean binding contract)
+        run: ./gradlew testCleanDebugUnitTest --no-daemon
 
       - name: Clean release containment guard (no GPL native core in the Play APK + AAB)
         run: ./gradlew assembleCleanRelease bundleCleanRelease --no-daemon
