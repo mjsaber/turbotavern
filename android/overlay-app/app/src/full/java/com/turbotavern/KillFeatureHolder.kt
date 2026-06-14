@@ -13,6 +13,7 @@ object KillFeatureHolder : KillFeatureBinding() {
 object VpnKillFeature : KillFeature {
     override fun statusLabel() = "Turbo Tavern · bobcore ${RealLifecycleCore.version()}"
     override fun isRunning() = BobVpnService.liveSession != null
+    override fun providesKillFeature() = true
     override fun prepareConsent(context: Context): Intent? = VpnService.prepare(context)
     override fun start(context: Context) {
         context.startForegroundService(

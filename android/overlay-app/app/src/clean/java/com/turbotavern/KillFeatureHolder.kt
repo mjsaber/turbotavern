@@ -11,6 +11,7 @@ object KillFeatureHolder : KillFeatureBinding() {
 object NoopKillFeature : KillFeature {
     override fun statusLabel() = "Turbo Tavern"
     override fun isRunning() = false
+    override fun providesKillFeature() = false
     override fun prepareConsent(context: Context): Intent? = null
     override fun start(context: Context) {}
     override fun stop(context: Context) {}

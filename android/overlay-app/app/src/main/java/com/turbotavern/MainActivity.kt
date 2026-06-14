@@ -1,6 +1,7 @@
 package com.turbotavern
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.AppOpsManager
 import android.content.Intent
 import android.graphics.Typeface
@@ -29,6 +30,7 @@ class MainActivity : Activity() {
     private lateinit var startBtn: Button
     private lateinit var overlayRow: PermRow
     private lateinit var usageRow: PermRow
+    private var pendingStart = false   // "Open settings" was tapped at the Start gate; onResume continues if granted
 
     private class PermRow(val container: View, val status: TextView, val grant: Button)
 
@@ -38,8 +40,13 @@ class MainActivity : Activity() {
         val root = buildLayout()
         setContentView(root)
         applyInsets(root)
-        // Debug-only: `--ez auto_start true` drives the e2e flow without manual taps.
-        if (BuildConfig.DEBUG && intent?.getBooleanExtra(EXTRA_AUTO_START, false) == true) onStartClicked()
+        // Debug-only: `--ez auto_start true` drives the e2e flow without manual taps. Bypass the Usage
+        // Access dialog (a noninteractive harness can't dismiss it) and take the "Start anyway" path —
+        // the 拔线 e2e (scripts/sim-bg-kill.sh) doesn't need Usage Access; rating harnesses grant it
+        // separately. Overlay permission is still required. (codex)
+        if (BuildConfig.DEBUG && intent?.getBooleanExtra(EXTRA_AUTO_START, false) == true) {
+            if (hasOverlayPermission()) continueStartAfterUsageDecision() else refreshPermissionUi()
+        }
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -142,12 +149,18 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refreshPermissionUi()
+        // Returning from Usage Access settings after "Open settings": if it's now granted, finish the
+        // start the user already initiated; otherwise drop the flag (they'll tap Start again).
+        if (pendingStart) {
+            pendingStart = false
+            if (hasUsageAccessPermission()) continueStartAfterUsageDecision()
+        }
     }
 
     private fun refreshPermissionUi() {
         val canOverlay = hasOverlayPermission()
         updateRow(overlayRow, canOverlay, getString(R.string.status_required))
-        updateRow(usageRow, hasUsageAccessPermission(), getString(R.string.status_recommended))
+        updateRow(usageRow, hasUsageAccessPermission(), getString(R.string.status_required))
         startBtn.isEnabled = canOverlay
         statusView.text = when {
             !canOverlay -> getString(R.string.start_blocked)
@@ -170,12 +183,42 @@ class MainActivity : Activity() {
         ) == AppOpsManager.MODE_ALLOWED
     }
 
-    private fun onStartClicked() {
-        if (!hasOverlayPermission()) { refreshPermissionUi(); return }
+    // Usage Access is REQUIRED for the rating overlay: without it the strict foreground gate reads UNKNOWN
+    // and the overlay never captures (the silent-failure this fixes). [startGate] gates it BEFORE the
+    // kill.isRunning() shortcut in continueStartAfterUsageDecision(), so a full user with the VPN already
+    // up cannot slip into a silently-rating-less projection. (codex)
+    private fun onStartClicked() = when (startGate(hasOverlayPermission(), hasUsageAccessPermission())) {
+        StartGate.NEEDS_OVERLAY -> refreshPermissionUi()
+        StartGate.NEEDS_USAGE -> showUsageAccessDialog()
+        StartGate.PROCEED -> continueStartAfterUsageDecision()
+    }
+
+    /** The original start flow, reached once overlay is granted and the usage decision is made. */
+    private fun continueStartAfterUsageDecision() {
         if (kill.isRunning()) { requestProjection(); return }
         val consent = kill.prepareConsent(this)
         if (consent != null) startActivityForResult(consent, REQ_VPN_AUTHORIZE)
         else { kill.start(this); requestProjection() }    // clean flavor: start() is a no-op
+    }
+
+    /**
+     * Usage Access missing at Start. Explain it is required for ratings and route to Settings. "Open
+     * settings" arms [pendingStart] so [onResume] auto-continues once granted — nothing is running yet at
+     * the pre-start dialog, so the coordinator's per-tick re-check cannot help (codex). The full SKU also
+     * offers "Start anyway" (its Disconnect feature works without Usage Access); clean does not.
+     */
+    private fun showUsageAccessDialog() {
+        val full = kill.providesKillFeature()
+        val builder = AlertDialog.Builder(this)
+            .setTitle(R.string.usage_required_title)
+            .setMessage(if (full) R.string.usage_required_body_full else R.string.usage_required_body_overlay)
+            .setPositiveButton(R.string.action_open_settings) { _, _ ->
+                pendingStart = true
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            }
+        if (full) builder.setNegativeButton(R.string.action_start_anyway) { _, _ -> continueStartAfterUsageDecision() }
+        else builder.setNegativeButton(android.R.string.cancel, null)
+        builder.show()
     }
 
     /** Screen-capture consent (entire screen or single-app); result -> ENABLE_TIER on OverlayService. */
@@ -212,4 +255,17 @@ class MainActivity : Activity() {
         private const val REQ_PROJECTION = 1002
         const val EXTRA_AUTO_START = "auto_start"
     }
+}
+
+/** Start-button gate, extracted pure so it is unit-testable without an Activity/Robolectric (codex). */
+internal enum class StartGate { NEEDS_OVERLAY, NEEDS_USAGE, PROCEED }
+
+/**
+ * Decide what the Start button must do. Overlay permission is hard-required; Usage Access is required for
+ * ratings and is gated HERE — before the kill.isRunning() shortcut — so a running VPN can never bypass it.
+ */
+internal fun startGate(hasOverlay: Boolean, hasUsage: Boolean): StartGate = when {
+    !hasOverlay -> StartGate.NEEDS_OVERLAY
+    !hasUsage -> StartGate.NEEDS_USAGE
+    else -> StartGate.PROCEED
 }

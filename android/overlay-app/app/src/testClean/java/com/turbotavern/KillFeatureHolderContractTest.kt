@@ -19,4 +19,8 @@ class KillFeatureHolderContractTest {
     @Test fun cleanKillFeatureNeverRuns() {
         assertFalse(KillFeatureHolder.get().isRunning())
     }
+
+    @Test fun cleanProvidesNoKillFeature() {
+        assertFalse(KillFeatureHolder.get().providesKillFeature())   // clean shows no "Start anyway"
+    }
 }

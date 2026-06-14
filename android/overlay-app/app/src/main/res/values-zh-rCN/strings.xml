@@ -10,7 +10,7 @@
     <string name="perm_capture">屏幕捕获</string>
     <string name="perm_capture_why">点「开始」时询问。画面只在设备本地识别英雄和饰品；不会上传任何内容。</string>
     <string name="perm_usage">使用情况访问权限</string>
-    <string name="perm_usage_why">建议 — 炉石不在前台时自动隐藏 overlay。</string>
+    <string name="perm_usage_why">评级必需 — overlay 用它识别炉石前台并显示英雄与饰品强度。</string>
     <string name="status_granted">✓ 已授予</string>
     <string name="status_required">必需</string>
     <string name="status_recommended">建议</string>
@@ -19,6 +19,11 @@
     <string name="action_stop">停止</string>
     <string name="action_about">关于 / 许可</string>
     <string name="start_blocked">请先授予「显示在其他应用上层」才能开始。</string>
+    <string name="usage_required_title">评级需要使用情况访问权限</string>
+    <string name="usage_required_body_full">Turbo Tavern 需要使用情况访问权限来识别炉石是否在前台并显示英雄与饰品强度。没有它强度不会显示 — 但你仍可启动以使用拔线等其他功能。</string>
+    <string name="usage_required_body_overlay">Turbo Tavern 需要使用情况访问权限来识别炉石是否在前台并显示英雄与饰品强度。没有它 overlay 无法显示任何内容。</string>
+    <string name="action_open_settings">打开设置</string>
+    <string name="action_start_anyway">仍然启动</string>
     <string name="status_running">运行中 — 请打开炉石传说。</string>
     <string name="status_ready">准备就绪。</string>
     <string name="notif_overlay">强度 overlay 运行中</string>

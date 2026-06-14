@@ -17,6 +17,13 @@ interface KillFeature {
     fun isRunning(): Boolean
 
     /**
+     * Does this build offer the 拔线 (Disconnect) feature? full: true; clean: false. Lets the shared
+     * [MainActivity] decide whether "Start anyway" is meaningful when Usage Access (required for ratings)
+     * is missing — only the full SKU has a feature that works without it. No flavor/BuildConfig reflection.
+     */
+    fun providesKillFeature(): Boolean
+
+    /**
      * Returns a consent Intent the caller must launch via startActivityForResult, or null if no consent
      * is needed (already authorized, or the clean flavor). On null the caller proceeds straight to [start].
      */

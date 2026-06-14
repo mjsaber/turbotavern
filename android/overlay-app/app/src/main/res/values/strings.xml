@@ -11,7 +11,7 @@
     <string name="perm_capture">Screen capture</string>
     <string name="perm_capture_why">Asked when you tap Start. The screen is read on-device to recognize heroes &amp; trinkets; nothing is uploaded.</string>
     <string name="perm_usage">Usage access</string>
-    <string name="perm_usage_why">Recommended — hides the overlay when Hearthstone is not in front.</string>
+    <string name="perm_usage_why">Required for ratings — the overlay uses it to detect Hearthstone and show hero &amp; trinket tiers.</string>
     <string name="status_granted">✓ Granted</string>
     <string name="status_required">Required</string>
     <string name="status_recommended">Recommended</string>
@@ -20,6 +20,11 @@
     <string name="action_stop">Stop</string>
     <string name="action_about">About / Licenses</string>
     <string name="start_blocked">Grant \"Display over other apps\" to start.</string>
+    <string name="usage_required_title">Usage Access needed for ratings</string>
+    <string name="usage_required_body_full">Turbo Tavern needs Usage Access to detect when Hearthstone is in front and show hero &amp; trinket ratings. Without it, ratings won\'t appear — but you can still start for the other features.</string>
+    <string name="usage_required_body_overlay">Turbo Tavern needs Usage Access to detect when Hearthstone is in front and show hero &amp; trinket ratings. Without it, the overlay can\'t show anything.</string>
+    <string name="action_open_settings">Open settings</string>
+    <string name="action_start_anyway">Start anyway</string>
     <string name="status_running">Running — open Hearthstone.</string>
     <string name="status_ready">Ready to start.</string>
     <string name="notif_overlay">Tier overlay active</string>

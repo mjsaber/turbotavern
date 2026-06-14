@@ -1,6 +1,7 @@
 package com.turbotavern
 
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -12,5 +13,9 @@ import org.junit.Test
 class KillFeatureHolderContractTest {
     @Test fun fullFlavorBindsVpnKillFeature() {
         assertSame(VpnKillFeature, KillFeatureHolder.get())
+    }
+
+    @Test fun fullProvidesKillFeature() {
+        assertTrue(VpnKillFeature.providesKillFeature())   // full offers "Start anyway"; literal, no native call
     }
 }

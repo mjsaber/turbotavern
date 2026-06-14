@@ -10,7 +10,7 @@
     <string name="perm_capture">螢幕擷取</string>
     <string name="perm_capture_why">點「開始」時詢問。畫面只在裝置本機辨識英雄與飾品；不會上傳任何內容。</string>
     <string name="perm_usage">使用情況存取權</string>
-    <string name="perm_usage_why">建議 — 爐石不在前景時自動隱藏 overlay。</string>
+    <string name="perm_usage_why">評級必要 — overlay 用它辨識爐石前景並顯示英雄與飾品強度。</string>
     <string name="status_granted">✓ 已授予</string>
     <string name="status_required">必要</string>
     <string name="status_recommended">建議</string>
@@ -19,6 +19,11 @@
     <string name="action_stop">停止</string>
     <string name="action_about">關於 / 授權</string>
     <string name="start_blocked">請先授予「顯示在其他應用程式上層」才能開始。</string>
+    <string name="usage_required_title">評級需要使用情況存取權</string>
+    <string name="usage_required_body_full">Turbo Tavern 需要使用情況存取權來辨識爐石是否在前景並顯示英雄與飾品強度。沒有它強度不會顯示 — 但你仍可啟動以使用拔線等其他功能。</string>
+    <string name="usage_required_body_overlay">Turbo Tavern 需要使用情況存取權來辨識爐石是否在前景並顯示英雄與飾品強度。沒有它 overlay 無法顯示任何內容。</string>
+    <string name="action_open_settings">開啟設定</string>
+    <string name="action_start_anyway">仍要啟動</string>
     <string name="status_running">執行中 — 請開啟爐石戰記。</string>
     <string name="status_ready">準備就緒。</string>
     <string name="notif_overlay">強度 overlay 執行中</string>
