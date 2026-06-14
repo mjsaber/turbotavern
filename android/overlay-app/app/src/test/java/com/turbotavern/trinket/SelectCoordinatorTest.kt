@@ -39,7 +39,8 @@ private class SOcr(private val script: List<List<OcrLine>>) : HeroOcr {
 }
 private class FakeHeroRenderer : BadgeRenderer {
     var renderCount = 0; var clearCount = 0; var last: List<HeroBadge> = emptyList()
-    override fun render(badges: List<HeroBadge>, transform: Transform) { renderCount++; last = badges }
+    val renders = mutableListOf<Set<String>>()           // cardId set per render, for flicker assertions
+    override fun render(badges: List<HeroBadge>, transform: Transform) { renderCount++; last = badges; renders += badges.map { it.cardId }.toSet() }
     override fun clear() { clearCount++ }
 }
 private class FakeTrinkRenderer : TrinketRenderer {
@@ -78,7 +79,7 @@ class SelectCoordinatorTest {
 
     private fun coord(
         g: SGrabber, ocr: SOcr, hr: FakeHeroRenderer, tr: FakeTrinkRenderer,
-        heroEnabled: Boolean = true, trinketEnabled: Boolean = true,
+        heroEnabled: Boolean = true, trinketEnabled: Boolean = true, heroMaxMisses: Int = 2,
     ) =
         SelectCoordinator(
             grabber = g, ocr = ocr,
@@ -90,6 +91,7 @@ class SelectCoordinatorTest {
             forceOpen = { forceOpenFlag },
             heroEnabled = { heroEnabled }, trinketEnabled = { trinketEnabled },
             probeMs = 100, captureIntervalMs = 50, maxAttempts = 3, maxWindowMs = 10_000,
+            heroMaxMisses = heroMaxMisses,
         )
 
     private fun drain(ms: Long) { shadowOf(ht.looper).idleFor(ms, TimeUnit.MILLISECONDS); shadowOf(Looper.getMainLooper()).idle() }
@@ -192,5 +194,60 @@ class SelectCoordinatorTest {
         val n = g.n
         c.stop(); drain(300)
         assertEquals(n, g.n)
+    }
+
+    // Bug 2 (live hero 4↔3 flicker): one hero is momentarily missed by OCR while the window stays HERO
+    // (gate keeps it open on >=1 match). The stabilizer holds the missed hero so its badge never blinks.
+    @Test fun heroBadgeHeldAcrossSingleFrameMiss_noFlicker() {
+        val g = SGrabber(); val hr = FakeHeroRenderer(); val tr = FakeTrinkRenderer()
+        val sneedOnly = listOf(l("Sneed", 0))               // H2 (Rafaam) dropped by OCR this frame
+        coord(g, SOcr(listOf(heroFrame, sneedOnly, heroFrame)), hr, tr).start()
+        repeat(12) { drain(50) }
+        assertTrue("hero overlay opened", hr.renders.isNotEmpty())
+        assertTrue("every render shows BOTH heroes — the held badge never blinks: ${hr.renders}",
+            hr.renders.all { it == setOf("H1", "H2") })
+    }
+
+    // Control / in-test A/B: with no hold (heroMaxMisses=0 = the old behavior) the same missed frame
+    // drops the hero, so a render shows only H1 — i.e. the flicker. Proves the stabilizer is the fix.
+    @Test fun withoutHold_singleFrameMissDropsHero_reproducesFlicker() {
+        val g = SGrabber(); val hr = FakeHeroRenderer(); val tr = FakeTrinkRenderer()
+        val sneedOnly = listOf(l("Sneed", 0))
+        coord(g, SOcr(listOf(heroFrame, sneedOnly, heroFrame)), hr, tr, heroMaxMisses = 0).start()
+        repeat(12) { drain(50) }
+        assertTrue("control: with no hold a render shows only H1 (the blink): ${hr.renders}",
+            hr.renders.any { it == setOf("H1") })
+    }
+
+    // Forced close (foreground loss) must reset the stabilizer — else held heroes leak into the NEXT
+    // hero window. Open with {H1,H2}, lose foreground (closeAll), reopen with a DIFFERENT pair {H3,H4};
+    // no render after reopen may contain the old heroes. (codex P2 on closeAll reset coverage.)
+    @Test fun foregroundLossResetsHeroStabilizer_noStaleLeakOnReopen() {
+        val table = TierTable.fromJson(
+            """{"heroes":[{"cardId":"H1","tier":"S","names":{"enUS":"Sneed"}},
+                          {"cardId":"H2","tier":"A","names":{"enUS":"Rafaam"}},
+                          {"cardId":"H3","tier":"B","names":{"enUS":"Brann"}},
+                          {"cardId":"H4","tier":"B","names":{"enUS":"Tess"}}]}""")
+        val g = SGrabber(); val hr = FakeHeroRenderer(); val tr = FakeTrinkRenderer()
+        val firstPair = listOf(l("Sneed", 0), l("Rafaam", 20))    // H1,H2
+        val secondPair = listOf(l("Brann", 0), l("Tess", 20))     // H3,H4
+        val c = SelectCoordinator(
+            grabber = g, ocr = SOcr(listOf(firstPair, firstPair, secondPair)),
+            heroMatcher = HeroMatcher(table), heroRenderer = hr,
+            trinketMatcher = TrinketMatcher(trinketTable), trinketRenderer = tr,
+            foreground = { fg }, currentRotation = { rotation },
+            handler = handler, mainHandler = mainHandler, arbiter = SelectWindowArbiter(),
+            forceOpen = { false }, heroEnabled = { true }, trinketEnabled = { true },
+            probeMs = 100, captureIntervalMs = 50, maxAttempts = 3, maxWindowMs = 10_000, heroMaxMisses = 2,
+        )
+        c.start()
+        drain(80)                                       // open + render {H1,H2}
+        assertTrue("opened with first pair", hr.renders.any { it == setOf("H1", "H2") })
+        fg = Foreground.FALSE; drain(150)               // closeAll -> must reset stabilizer (no capture while fg false)
+        hr.renders.clear()
+        fg = Foreground.TRUE; repeat(10) { drain(50) }  // reopen with the second pair
+        assertTrue("reopened with the new pair", hr.renders.any { it == setOf("H3", "H4") })
+        assertTrue("no stale H1/H2 leaked into the reopened window: ${hr.renders}",
+            hr.renders.none { it.contains("H1") || it.contains("H2") })
     }
 }

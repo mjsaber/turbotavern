@@ -3,6 +3,7 @@ package com.turbotavern.trinket
 import android.os.Handler
 import com.turbotavern.herotier.BadgeRenderer
 import com.turbotavern.herotier.Foreground
+import com.turbotavern.herotier.HeroBadge
 import com.turbotavern.herotier.HeroMatcher
 import com.turbotavern.herotier.HeroOcr
 import com.turbotavern.herotier.OrientedOcr
@@ -38,6 +39,7 @@ class SelectCoordinator(
     private val captureIntervalMs: Long = 700,
     private val maxAttempts: Int = 8,
     private val maxWindowMs: Long = 15_000,
+    private val heroMaxMisses: Int = 2,                  // hold a hero badge across this many absent frames (anti-flicker)
     private val breadcrumb: (String) -> Unit = {},
 ) {
     @Volatile private var started = false
@@ -45,6 +47,11 @@ class SelectCoordinator(
     private var attempts = 0
     private var wasForced = false
     private var loggedInert = false
+
+    // Temporal anti-flicker for the hero overlay: per-frame OCR jitter drops a different hero on different
+    // frames, and the renderer rebuilds every frame, so a single-frame miss blinks a badge. Render the
+    // recently-seen union instead. Heroes only (fixed select set); NOT trinkets (the shop can change offers).
+    private val heroStabilizer = BadgeStabilizer<HeroBadge>(keyOf = { it.cardId }, maxMisses = heroMaxMisses)
 
     // Orientation-robust OCR: handles a portrait capture buffer of the landscape game (auto-detects the
     // rotation that actually reads). Upright buffers (emulator/most phones) stay on rotation 0 unchanged.
@@ -77,8 +84,13 @@ class SelectCoordinator(
         started = false
         breadcrumb("SelectCoordinator.stop")
         handler.removeCallbacksAndMessages(null)
-        active = SelectWindow.NONE; attempts = 0
+        active = SelectWindow.NONE; attempts = 0; wasForced = false
         arbiter.forceClose()
+        // stop() runs on the caller (main) thread, but heroStabilizer is thread-confined to the handler
+        // thread (update() iterates its non-thread-safe map). Marshal the reset onto the handler so it
+        // serializes AFTER any in-flight tick's update() instead of racing it (codex). closeAll()/
+        // onTransition() already run on the handler, so their resets are fine.
+        handler.post { heroStabilizer.reset() }
         mainHandler.post { runCatching { heroRenderer.clear(); trinketRenderer.clear() } }
     }
 
@@ -143,10 +155,19 @@ class SelectCoordinator(
         // Render the window decided for THIS frame; re-check at render time that it's still the active
         // one (it may have closed / switched while this runnable sat on the main queue).
         val renderWindow = now
+        // Stabilize the hero set AFTER the stale-rotation guard above, so a dropped rotated frame never
+        // resets misses or replaces held boxes (a held box could otherwise later render against the wrong
+        // transform). The union bridges transient per-frame OCR misses so a badge doesn't blink. The gate
+        // (arbiter.onProbe) still saw the RAW count — only what we RENDER is stabilized.
+        val heroToRender = if (renderWindow == SelectWindow.HERO) heroStabilizer.update(heroBadges) else heroBadges
+        // Live proof of the anti-flicker hold: raw < rendered means a transient OCR miss was bridged this
+        // frame (the badge would otherwise have blinked). Only logged on a hold, DEBUG-only.
+        if (com.turbotavern.BuildConfig.DEBUG && renderWindow == SelectWindow.HERO && heroToRender.size > heroBadges.size)
+            breadcrumb("select: hero hold raw=${heroBadges.size} -> rendered=${heroToRender.size}")
         mainHandler.post {
             if (!started || active != renderWindow || currentRotation() != rotationDeg) return@post
             when (renderWindow) {
-                SelectWindow.HERO -> if (heroBadges.isNotEmpty()) runCatching { heroRenderer.render(heroBadges, transform) }
+                SelectWindow.HERO -> if (heroToRender.isNotEmpty()) runCatching { heroRenderer.render(heroToRender, transform) }
                 SelectWindow.TRINKET -> if (trinketRecs.isNotEmpty()) runCatching { trinketRenderer.render(trinketRecs, transform) }
                 SelectWindow.NONE -> {}
             }
@@ -158,7 +179,7 @@ class SelectCoordinator(
         if (prev == now) return
         // clear whichever overlay is no longer active
         when (prev) {
-            SelectWindow.HERO -> mainHandler.post { runCatching { heroRenderer.clear() } }
+            SelectWindow.HERO -> { heroStabilizer.reset(); mainHandler.post { runCatching { heroRenderer.clear() } } }
             SelectWindow.TRINKET -> mainHandler.post { runCatching { trinketRenderer.clear() } }
             SelectWindow.NONE -> {}
         }
@@ -178,6 +199,7 @@ class SelectCoordinator(
         active = SelectWindow.NONE
         attempts = 0
         arbiter.forceClose()
+        heroStabilizer.reset()      // forced closes (foreground-lost / timeout / projection-stop) bypass onTransition; don't leak held heroes into the next window (codex)
         if (had != SelectWindow.NONE) mainHandler.post { runCatching { heroRenderer.clear(); trinketRenderer.clear() } }
     }
 }
